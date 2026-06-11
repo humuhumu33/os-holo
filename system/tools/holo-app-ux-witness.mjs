@@ -12,12 +12,13 @@
 //     2 SEALED   — the canonical doctrine object (etc/holo-ux/doctrine.uor.json) exists + re-derives (L5).
 //     3 INHERIT  — every served app loads the engine (holo-theme.js / -ui-kernel.js / -ui.js) → gets it.
 //     4 VOICE    — every app's manifest (name/summary/description) is jargon-free (signal-over-noise).
-//   RATCHET (no-new-violations vs the committed baseline — the burn-down to full adherence):
-//     5 MOTION   — an app that animates honors prefers-reduced-motion (sacred-resources · WCAG 2.3.3);
-//                  the current offenders are baselined and no NEW one may regress (run --update-baseline
-//                  to record a burn-down). Read-only over the app repo — no edits, no re-lock.
+//     5 MOTION   — every app honors prefers-reduced-motion via the OS-wide guard it inherits (the OS guard
+//                  exists + every app inherits it + no app overrides it with its own !important motion).
+//     6 NATIVE   — no app shows an unconditional Apple-only modifier glyph (⌘/⌥): the host's modifier is
+//                  derived (HoloPlatform / metaKey) or rendered by the inherited data-holo-shortcut rewriter.
+//   Read-only over the app repo — no edits, no re-lock.
 //
-//   node tools/holo-app-ux-witness.mjs [--update-baseline]
+//   node tools/holo-app-ux-witness.mjs
 //   Scope: each app's authored index.html + holospace.json in the served app repo. Override: HOLO_APPS_DIR.
 
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
@@ -29,8 +30,6 @@ import { verify } from "../os/usr/lib/holo/holo-object.mjs";
 const here = dirname(fileURLToPath(import.meta.url));
 const OS = join(here, "../os");
 const APPS = process.env.HOLO_APPS_DIR || "C:/Users/pavel/Desktop/Hologram Apps/apps";
-const BASELINE = join(here, "holo-app-ux-baseline.json");
-const UPDATE = process.argv.includes("--update-baseline");
 
 const ENGINE = ["holo-theme.js", "holo-ui-kernel.js", "holo-ui.js", "holo-ux.js"];
 const read = (p) => { try { return readFileSync(p, "utf8"); } catch { return ""; } };
@@ -69,24 +68,50 @@ for (const id of appIds) {
   if (hits.length) jargonApps.push({ id, terms: hits });
 }
 
-// ── 5 · MOTION — animates ⇒ honors prefers-reduced-motion (ratchet vs baseline) ───────────────────
-const animatesUnguarded = appIds.filter((id) => {
-  const html = effectiveHtml(id);
-  const animates = /@keyframes|\banimation\s*:|\btransition\s*:/.test(html);
-  return animates && !/prefers-reduced-motion/.test(html);
-});
-let baseline = { note: "Ratchet baseline for Holo UX reduced-motion adherence (ADR-0062). Apps that animate without a prefers-reduced-motion guard; no NEW app may regress, burning this down only ever passes.", floor: "prefers-reduced-motion", animatingUnguarded: [], total: 0 };
-if (existsSync(BASELINE)) { try { baseline = JSON.parse(read(BASELINE)); } catch {} }
-const baseSet = new Set(baseline.animatingUnguarded || []);
-const motionNew = animatesUnguarded.filter((id) => !baseSet.has(id));     // regressions — must be empty
-const motionFixed = (baseline.animatingUnguarded || []).filter((id) => !animatesUnguarded.includes(id)); // burned down
+// strip <script>…</script> and comments so a check sees only VISIBLE authored markup (a Ctrl in a
+// JS string / a code comment / a terminal hint is not a UI idiom).
+const visibleMarkup = (html) => html
+  .replace(/<script[\s\S]*?<\/script>/gi, " ")
+  .replace(/<!--[\s\S]*?-->/g, " ");
+// an app "adapts the modifier at runtime" if it derives it from the host (HoloPlatform / the
+// inherited data-holo-* signals / a metaKey branch / the data-holo-shortcut rewriter).
+const adaptsModifier = (html) => /profileFor|HoloPlatform|HoloUX|data-holo-(?:mod|platform|shortcut)|metaKey|\.apple\b/.test(html);
 
-if (UPDATE) {
-  const next = { ...baseline, animatingUnguarded: [...animatesUnguarded].sort(), total: animatesUnguarded.length };
-  writeFileSync(BASELINE, JSON.stringify(next, null, 2) + "\n");
-  console.log(`baseline updated — ${animatesUnguarded.length} app(s) animate without a reduced-motion guard`);
-  baseline = next;
+// ── 5 · MOTION — every app honors prefers-reduced-motion (ABSOLUTE, via the inherited shared guard) ──
+// The OS provides ONE universal guard in holo-theme.css (`:where(*,*::before,*::after){animation/
+// transition-duration:…!important}` under prefers-reduced-motion), injected into EVERY app by the
+// engine — so an app honors reduced motion by inheriting it; it does NOT need its own copy (Law L2).
+// The only thing the shared !important guard can't neutralize is an app's OWN !important motion, so
+// THAT is the one real violation. Conformant = the OS guard exists + every app inherits it (loads the
+// engine) or has its own guard + no app has unbeatable !important motion.
+const themeCss = read(join(OS, "usr/lib/holo/holo-theme.css"));
+const osMotionGuard = /@media\s*\(\s*prefers-reduced-motion:\s*reduce\s*\)/.test(themeCss)
+  && /animation-duration:[^;]*!important/.test(themeCss) && /transition-duration:[^;]*!important/.test(themeCss);
+const motionOverride = appIds.filter((id) => {
+  const html = effectiveHtml(id);
+  const ownGuard = /prefers-reduced-motion/.test(html);
+  const hardMotion = /(animation|transition)[^;:{}]*:[^;{}]*!important/i.test(visibleMarkup(html));
+  return hardMotion && !ownGuard;                          // its own !important motion the shared guard can't beat
+});
+const motionOk = osMotionGuard && motionOverride.length === 0 && (appIds.length === 0 || unwired.length === 0);
+
+// ── 6 · NATIVE-ADAPTIVE — no app shows an unconditional Apple-only modifier glyph (⌘ ⌥) ──────────────
+// The native-adaptive tenet: the modifier must adapt to the host. A bare ⌘/⌥ in visible markup is
+// simply WRONG on the ~85% of hosts that aren't Apple. It's fine when the app adapts at runtime
+// (HoloPlatform / metaKey), when the glyph is paired with its non-Apple form (e.g. "Ctrl/⌘"), or when
+// it uses the inherited data-holo-shortcut rewriter. Code/comments/terminal Ctrl are excluded (not UI).
+const APPLE_GLYPH = /[⌘⌥]/;
+const nativeViolations = [];
+for (const id of appIds) {
+  const html = effectiveHtml(id);
+  if (adaptsModifier(html)) continue;                      // derives the modifier from the host — adaptive
+  const vis = visibleMarkup(html);
+  const lines = vis.split(/\r?\n/).filter((ln) => APPLE_GLYPH.test(ln) && !/ctrl|alt|\bcmd\b/i.test(ln)); // unpaired
+  if (lines.length) nativeViolations.push({ id, count: lines.length });
 }
+// the enabler must exist in the inherited runtime so apps have a zero-branch way to be adaptive.
+const uxRuntime = read(join(OS, "usr/lib/holo/holo-ux.js"));
+const shortcutEnabler = /data-holo-shortcut/.test(uxRuntime) && /renderChord|applyShortcuts/.test(uxRuntime);
 
 // ── verdict ───────────────────────────────────────────────────────────────────────────────────────
 const checks = {
@@ -94,7 +119,9 @@ const checks = {
   "the canonical Holo UX doctrine object exists + re-derives to its content address (Law L5)": sealedOk,
   "every served app loads the engine → inherits Holo UX (native-OS feel · tier · obligations)": appIds.length > 0 && unwired.length === 0,
   "every app's manifest is jargon-free (signal-over-noise · the plain voice register)": jargonApps.length === 0,
-  "no NEW app animates without honoring prefers-reduced-motion (sacred resources · WCAG 2.3.3 ratchet)": motionNew.length === 0,
+  "every app honors prefers-reduced-motion — the OS provides one universal guard + every app inherits it + none overrides it (sacred resources · WCAG 2.3.3)": motionOk,
+  "no app shows an unconditional Apple-only modifier glyph (⌘/⌥) — the modifier adapts to the host (native-adaptive)": nativeViolations.length === 0,
+  "the inherited runtime offers the data-holo-shortcut rewriter so apps adapt the modifier with no per-app branch": shortcutEnabler,
 };
 const witnessed = Object.values(checks).every(Boolean);
 
@@ -102,20 +129,22 @@ console.log(`Holo UX app conformance — ${appIds.length} apps scanned`);
 for (const [k, v] of Object.entries(checks)) console.log(`${v ? "PASS" : "FAIL"} — ${k}`);
 if (unwired.length) console.log("  unwired:", unwired.join(", "));
 if (jargonApps.length) console.log("  jargon:", jargonApps.map((a) => `${a.id}[${a.terms.join(",")}]`).join(", "));
-if (motionNew.length) console.log("  NEW unguarded animation:", motionNew.join(", "));
-console.log(`  reduced-motion ratchet — baseline ${baseline.total || (baseline.animatingUnguarded||[]).length} · now ${animatesUnguarded.length} · burned down ${motionFixed.length}${motionFixed.length ? " (" + motionFixed.join(", ") + " — run --update-baseline)" : ""}`);
+if (!osMotionGuard) console.log("  MISSING the OS-wide reduced-motion guard in holo-theme.css");
+if (motionOverride.length) console.log("  own !important motion (shared guard can't beat):", motionOverride.join(", "));
+if (nativeViolations.length) console.log("  non-adaptive Apple glyph:", nativeViolations.map((v) => `${v.id}(${v.count})`).join(", "));
 
 writeFileSync(join(here, "holo-app-ux-witness.result.json"), JSON.stringify({
-  spec: "Every served holospace app strictly adheres to the canonical Holo UX doctrine (ADR-0062): it inherits the whole doctrine by loading the one engine (holo-theme.js bootstraps holo-ux.js — the native-OS feel, capability tier, resource budget and propagation reach every app with no per-app script, Law L2); its manifest holds the plain voice (signal-over-noise); and a no-new-regression ratchet drives every app to honor prefers-reduced-motion (sacred resources · WCAG 2.3.3). Read-only static analysis of the served app repo.",
-  authority: "ADR-0062 (Holo UX doctrine) · ADR-0030/0057 (Holo UI) · WCAG 2.2 (2.3.3 Animation from Interactions · 1.4.x readability) · the plain voice register (holo-voice.mjs) · RAIL / W3C Web Performance · the 'betterer' no-new-violations ratchet · static analysis of the served app repo",
+  spec: "Every served holospace app strictly adheres to the canonical Holo UX doctrine (ADR-0062): it inherits the whole doctrine by loading the one engine (holo-theme.js bootstraps holo-ux.js — the native-OS feel, capability tier, resource budget and propagation reach every app with no per-app script, Law L2); its manifest holds the plain voice (signal over noise); it honors prefers-reduced-motion through the OS-wide guard every app inherits (sacred resources · WCAG 2.3.3); and its modifier keys are native-adaptive (no unconditional Apple-only glyph — the host's modifier is derived, or rendered by the inherited data-holo-shortcut rewriter). Read-only static analysis of the served app repo.",
+  authority: "ADR-0062 (Holo UX doctrine) · ADR-0030/0057 (Holo UI) · W3C UA Client Hints (host modifier) · WCAG 2.2 (2.3.3 Animation from Interactions · 1.4.x readability) · the plain voice register (holo-voice.mjs) · RAIL / W3C Web Performance · static analysis of the served app repo",
   witnessed,
-  covers: ["holo-ux", "every-application", "inherits-doctrine", "native-os-feel", "plain-voice", "reduced-motion", "sacred-resources", "ratchet", "strict-conformance"],
+  covers: ["holo-ux", "every-application", "inherits-doctrine", "native-os-feel", "native-adaptive-modifier", "plain-voice", "reduced-motion", "sacred-resources", "strict-conformance"],
   appsScanned: appIds.length,
   doctrineKappa: doctrine?.id || null,
   checks,
   unwired, jargonApps,
-  reducedMotion: { baseline: (baseline.animatingUnguarded || []).length, now: animatesUnguarded.length, regressions: motionNew, burnedDown: motionFixed, animatingUnguarded: animatesUnguarded },
+  reducedMotion: { osGuard: osMotionGuard, everyAppInherits: appIds.length > 0 && unwired.length === 0, overrides: motionOverride },
+  nativeAdaptive: { violations: nativeViolations, enabler: shortcutEnabler },
 }, null, 2) + "\n");
 
-console.log(`\nholo-app-ux: ${witnessed ? "WITNESSED" : "FAILED"} · ${appIds.length} apps · ${animatesUnguarded.length} motion-unguarded (ratcheted)`);
+console.log(`\nholo-app-ux: ${witnessed ? "WITNESSED" : "FAILED"} · ${appIds.length} apps · motion ${motionOk ? "universal" : "GAP"} · native-adaptive ${nativeViolations.length === 0 ? "ok" : nativeViolations.length + " gap"}`);
 process.exit(witnessed ? 0 : 1);

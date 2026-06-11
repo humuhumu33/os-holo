@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <rect width="48" height="48" rx="11" fill="#1d2330"/>
+  <rect x="6" y="6" width="36" height="36" rx="8" fill="#0f1620" stroke="#3daee9" stroke-width="1.4"/>
+  <!-- the Plasma "cashew" mark, abstracted -->
+  <path d="M16 13 C28 11, 36 17, 35 24 C34 31, 26 35, 17 33 C22 33, 30 30, 30 24 C30 18, 23 15, 16 13 Z" fill="#3daee9"/>
+  <circle cx="18" cy="32" r="3.4" fill="#3daee9"/>
+</svg>

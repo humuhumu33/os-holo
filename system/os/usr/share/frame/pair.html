@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Hologram — Approve sign-in</title>
+<!-- The PHONE side of Holo Pair ("scan QR to Access"). The desktop showed a QR carrying its device
+     key + a single-use channel. This page (opened by scanning that QR) asks the operator — already
+     signed in on THIS phone — to approve, unlocks their self-sovereign key with a biometric, mints a
+     scoped, revocable delegation for the desktop's key (the operator's key NEVER leaves this phone),
+     and drops it E2E-encrypted on the channel. The desktop polls, verifies (Law L5), and signs in. -->
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; min-height: 100%; background: #07041a; color: #e7e9ff;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif; -webkit-text-size-adjust: 100%; }
+  #app { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 22px; box-sizing: border-box; }
+  .card { width: 100%; max-width: 420px; background: #0d0a24; border: 1px solid #2a2550; border-radius: 22px;
+    padding: 28px 24px; box-shadow: 0 24px 80px rgba(0,0,0,.5); text-align: center; }
+  h1 { font-size: 22px; margin: 0 0 8px; }
+  .sub { opacity: .72; font-size: max(var(--holo-font-min, 16px), 15px); line-height: 1.5; margin-bottom: 22px; }
+  .dev { font-weight: 700; color: #fff; }
+  .who { display: flex; align-items: center; gap: 12px; justify-content: center; background: #06041a;
+    border: 1px solid #2a2550; border-radius: 14px; padding: 12px 16px; margin-bottom: 20px; }
+  .avatar { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; flex: 0 0 auto; }
+  .who .lbl { text-align: left; }
+  .who .lbl b { font-size: max(var(--holo-font-min, 16px), 15px); } .who .lbl span { opacity: .55; font-size: max(var(--holo-font-min, 16px), 12px); display: block; }
+  input { width: 100%; box-sizing: border-box; height: 50px; border-radius: 12px; border: 1px solid #3a356a;
+    background: #06041a; color: #fff; padding: 0 14px; font-size: 16px; margin-bottom: 12px; outline: none; }
+  button { width: 100%; height: 54px; border: 0; border-radius: 14px; font-size: 17px; font-weight: 700; cursor: pointer; }
+  .approve { background: #4682b4; color: #fff; margin-bottom: 10px; }
+  .approve:disabled { opacity: .6; }
+  .deny { background: transparent; color: #8b94bd; }
+  .status { margin-top: 14px; font-size: max(var(--holo-font-min, 16px), 14px); min-height: 20px; opacity: .9; }
+  .ok { color: #86efac; } .err { color: #fca5a5; }
+  a { color: #7aa7d8; }
+</style>
+</head>
+<body>
+<div id="app"><div class="card" id="card">Loading…</div></div>
+
+<script type="module">
+import { roster, unlock } from "./_shared/holo-identity.mjs";
+import { teeReason, teeName, teeAssert } from "./_shared/holo-webauthn.mjs";
+import { urlToOffer, mintDeviceGrant, postGrant } from "./_shared/holo-pair.mjs";
+
+const card = document.getElementById("card");
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+try {
+  const offer = await urlToOffer(location.href);
+  const ops = await roster().catch(() => []);
+  if (!ops.length) {
+    card.innerHTML = `<h1>Sign in here first</h1><div class="sub">To approve another device, sign in on <b>this phone</b> first — then scan again.</div><a href="./login.html">Open sign-in</a>`;
+  } else {
+    await render(offer, ops[0]);   // v1: the most recent operator on this phone
+  }
+} catch (e) {
+  card.innerHTML = `<h1>Couldn't read this code</h1><div class="sub err">${esc(e && e.message || e)}</div>`;
+}
+
+async function render(offer, op) {
+  const reason = await teeReason();
+  const useBio = !reason && !!op.cred;
+  const av = op.avatar || { hue: 210, glyph: (op.label || "?").slice(0, 2).toUpperCase() };
+  const dev = esc(offer.deviceName || "a device");
+  card.innerHTML = `
+    <h1>Approve sign-in?</h1>
+    <div class="sub"><span class="dev">${dev}</span> wants to sign in as you. Your key stays on this phone.</div>
+    <div class="who"><div class="avatar" style="background:hsl(${av.hue|0},58%,46%)">${esc(av.glyph)}</div>
+      <div class="lbl"><b>${esc(op.label || "You")}</b><span>${esc(op.kappa.split(":").pop().slice(0, 14))}…</span></div></div>
+    ${useBio ? "" : `<input id="pp" type="password" placeholder="${reason ? "Your passphrase" : "Passphrase"}" autocomplete="current-password" />`}
+    <button class="approve" id="ok">${useBio ? "Approve with " + esc(teeName()) : "Approve"}</button>
+    <button class="deny" id="no">Not now</button>
+    <div class="status" id="st"></div>`;
+  const stEl = card.querySelector("#st");
+  const st = (t, cls = "") => { stEl.className = "status " + cls; stEl.textContent = t; };
+  if (reason && !op.cred) st(reason + " — use your passphrase");
+  card.querySelector("#no").onclick = () => { st("Dismissed — you can close this tab."); };
+  const ok = card.querySelector("#ok");
+  ok.onclick = async () => {
+    ok.disabled = true;
+    try {
+      st("Verifying it's you…");
+      let principal;
+      if (useBio) { const { secret } = await teeAssert({ credentialId: op.cred }); principal = await unlock(op.kappa, secret); }
+      else { const pp = card.querySelector("#pp").value; if (!pp) { st("Enter your passphrase", "err"); ok.disabled = false; return; } principal = await unlock(op.kappa, pp); }
+      st("Authorizing this device…");
+      const { blob } = await mintDeviceGrant(principal, offer);
+      await postGrant(offer.channel, blob);
+      st("✓ Approved — your desktop is signing in. You can close this tab.", "ok");
+      ok.style.display = "none"; card.querySelector("#no").style.display = "none";
+      const pf = card.querySelector("#pp"); if (pf) pf.style.display = "none";
+    } catch (e) {
+      st((e && e.message || e) + "", "err"); ok.disabled = false;
+    }
+  };
+}
+</script>
+</body>
+</html>

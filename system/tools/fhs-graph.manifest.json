@@ -1,6 +1,6 @@
 {
   "@type": "prov:Collection",
-  "root": "did:holo:sha256:c5203506862ff15c4bde8c9954c411eef0eb2f2fb7cc062bc323ee7621972450",
+  "root": "did:holo:sha256:dd65fd8d5874ff058d1216af2a5109ddade583215c5a9c9d34a24a6064c2dbc6",
   "nodes": 33,
   "generatedBy": "tools/gen-fhs-graph.mjs",
   "nodesList": [
@@ -150,7 +150,7 @@
     },
     {
       "fhs": "/opt",
-      "did": "did:holo:sha256:176f2cce113ac50abfb14611eae4378f3ba30665d0f949cd044b51caaaf07efd",
+      "did": "did:holo:sha256:b6011aa7a09ef2d39e73c8c17a6387caeaa87abbfe17db4783219ca51e8c0a27",
       "kind": "pin",
       "parts": 0,
       "datasets": 17,
@@ -262,7 +262,7 @@
     },
     {
       "fhs": "/",
-      "did": "did:holo:sha256:c5203506862ff15c4bde8c9954c411eef0eb2f2fb7cc062bc323ee7621972450",
+      "did": "did:holo:sha256:dd65fd8d5874ff058d1216af2a5109ddade583215c5a9c9d34a24a6064c2dbc6",
       "kind": "content",
       "parts": 19,
       "datasets": 0,

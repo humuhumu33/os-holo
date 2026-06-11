@@ -161,9 +161,25 @@ Rectangle {
 
                 Column {
                     width: parent.width
-                    visible: userModel.count > 0 && !container.asking
+                    spacing: 6
+                    visible: !container.asking
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
+                        text: "Sign in with phone"
+                        color: "#266294"
+                        font.pixelSize: 11
+                        onClicked: sddm.pairWithPhone()
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: "Continue as guest"
+                        color: "#266294"
+                        font.pixelSize: 11
+                        onClicked: sddm.guest()
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: userModel.count > 0
                         text: "Use another identity"
                         color: "#266294"
                         font.pixelSize: 11

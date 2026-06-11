@@ -86,19 +86,102 @@ function readRel(rel, stats) {
   return null;
 }
 
+// dev WEB proxy — Holo Browser fetches `<base>web?url=<URL>` to load the LIVE web2 (server-side, so
+// no CORS / X-Frame-Options block); it then mints those bytes into a κ and re-derives them (Law L5)
+// before rendering. DEV-ONLY (not part of the shipped serverless OS); mirrors Holo Browser's
+// documented optional companion proxy ("absent on static GitHub Pages").
+async function webProxy(target, res) {
+  if (!target) { res.writeHead(400, COI); return res.end("missing url"); }
+  // Un-HTML-encode entities that leak in from rewritten hrefs (a result link like
+  // …/l/?uddg=…&amp;rut=… → real "&"). URLs never legitimately contain a literal "&amp;".
+  target = String(target).replace(/&amp;/gi, "&").replace(/&#0?38;/g, "&");
+  if (!/^https?:\/\//i.test(target)) target = "https://" + String(target).replace(/^\/+/, "");
+  // DuckDuckGo wraps each result link in a /l/?uddg=<dest> redirect — unwrap to the real destination
+  // so a clicked result loads the page itself, not DDG's JS interstitial (which mints to a blank κ).
+  try { const u = new URL(target); if (/(^|\.)duckduckgo\.com$/i.test(u.hostname) && /^\/l\/?$/.test(u.pathname) && u.searchParams.get("uddg")) target = u.searchParams.get("uddg"); } catch (e) {}
+  try {
+    const r = await fetch(target, { redirect: "follow", headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36", "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" } });
+    // DUMB PIPE: return the raw bytes. Holo Browser's loading-seam SW (browser-sw.js) does all the
+    // work on top — it mints the bytes into a κ, injects <base>, rewrites links to webview/w/… and
+    // proxies subresources back through here. (An earlier version injected <base>/click-intercept
+    // here; that DOUBLE-handled what the SW already does and broke clicked links — keep it dumb.)
+    const buf = Buffer.from(await r.arrayBuffer());
+    res.writeHead(r.status >= 200 && r.status < 500 ? r.status : 502,
+      { ...COI, "content-type": r.headers.get("content-type") || "text/html; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "no-store" });
+    res.end(buf);
+  } catch (e) { res.writeHead(502, { ...COI, "content-type": "text/plain", "access-control-allow-origin": "*" }); res.end("web proxy failed: " + ((e && e.message) || e)); }
+}
+
+// dev PAIR mailbox — a CONTENT-BLIND rendezvous for "scan QR to Access" (Holo Pair). The phone POSTs
+// the E2E-encrypted, operator-signed grant under a single-use channel; the desktop GETs it (then it is
+// deleted — single-use). The relay never inspects the bytes (they are encrypted + signed; the desktop
+// re-derives the operator κ and refuses tampering, Law L5), exactly like holo-wire's content-blind
+// relay. DEV-ONLY (mirrors the messenger P2 transport; on a static Pages deploy a hosted relay/mesh
+// plays this role). In-memory, 5-min TTL, 64 KB cap.
+const PAIR_BOX = new Map();
+const PAIR_TTL = 5 * 60 * 1000;
+function pairMailbox(req, res, channel) {
+  for (const [k, v] of PAIR_BOX) if (Date.now() - v.at > PAIR_TTL) PAIR_BOX.delete(k);
+  const H = { ...COI, "access-control-allow-origin": "*", "cache-control": "no-store" };
+  if (req.method === "OPTIONS") { res.writeHead(204, { ...H, "access-control-allow-methods": "GET,POST,OPTIONS", "access-control-allow-headers": "content-type" }); return res.end(); }
+  if (req.method === "POST" || req.method === "PUT") {
+    const chunks = []; let n = 0;
+    req.on("data", (c) => { n += c.length; if (n > 65536) { req.destroy(); return; } chunks.push(c); });
+    req.on("end", () => { PAIR_BOX.set(channel, { bytes: Buffer.concat(chunks), at: Date.now() }); res.writeHead(204, H); res.end(); });
+    req.on("error", () => { try { res.writeHead(400, H); res.end(); } catch {} });
+    return;
+  }
+  const e = PAIR_BOX.get(channel);
+  if (!e) { res.writeHead(204, H); return res.end(); }                 // nothing yet — desktop keeps polling
+  PAIR_BOX.delete(channel);                                            // single-use
+  res.writeHead(200, { ...H, "content-type": "application/octet-stream" }); res.end(e.bytes);
+}
+
+// dev DEVELOP backend — runs the offline super-resolution → κ-pin pipeline (develop-sr.mjs)
+// and streams its NDJSON progress. ffmpeg reads the source URL directly (HLS/DASH/MP4/WebM),
+// upscales, re-encodes to CMAF, pins every byte, writes a PROV-O receipt, registers the owned
+// κ-item. DEV-ONLY (mirrors /ingest); on a static deploy this runs offline as a CLI.
+function developRoute(req, res) {
+  if (req.method !== "POST") { res.writeHead(405, COI); return res.end("POST only"); }
+  const chunks = []; let n = 0;
+  req.on("data", (c) => { n += c.length; if (n > 100000) req.destroy(); else chunks.push(c); });
+  req.on("end", () => {
+    let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || "{}"); } catch {}
+    if (!body.source) { res.writeHead(400, COI); return res.end("missing source"); }
+    const height = Math.max(360, Math.min(4320, parseInt(body.height, 10) || 2160));
+    const seconds = Math.max(0, Math.min(120, parseInt(body.seconds, 10) || 12));
+    const id = (String(body.id || "src").replace(/[^\w-]/g, "").slice(0, 24)) || "src";
+    const args = [join(here, "develop-sr.mjs"), "--json", "--source", String(body.source), "--height", String(height),
+      "--seconds", String(seconds), "--id", id, "--title", String(body.title || "Untitled").slice(0, 80)];
+    if (body.poster) args.push("--poster", String(body.poster));
+    if (body.topics) args.push("--topics", String(body.topics));
+    res.writeHead(200, { ...COI, "content-type": "application/x-ndjson", "cache-control": "no-store", "access-control-allow-origin": "*" });
+    const p = spawn(process.execPath, args, { cwd: here, windowsHide: true });
+    let finished = false;
+    p.stdout.on("data", (d) => res.write(d));
+    p.on("close", (code) => { finished = true; if (code && code !== 0) res.write(JSON.stringify({ stage: "error", msg: "exit " + code }) + "\n"); res.end(); });
+    res.on("close", () => { if (!finished) { try { p.kill(); } catch {} } });   // kill only on real client disconnect
+  });
+}
+
 export function makeHandler(stats = { os2: 0, apps: 0, orig: new Set(), miss: new Set() }) {
   return (req, res) => {
     let route = decodeURIComponent((req.url || "/").split("?")[0].split("#")[0]);
     // dev media backend — capability probe + SoundCloud (yt-dlp) proxy, served same-origin
     if (route === "/caps") return sendJson(res, { fetch: true, ingestAudio: false, ytdlp: HAS_YTDLP, soundcloud: HAS_YTDLP });
     if (route.startsWith("/sc/")) { scRoute(route.slice(4), new URLSearchParams((req.url || "").split("?")[1] || ""), res); return; }
-    // The ONE desktop shell (apps/sdk — the SDK/World windowed canvas) is the single canonical
-    // Hologram OS environment: every application opens as a window INSIDE it. In dev the bare root
-    // opens it directly; the gateways (index.html · /boot.html) take the full chain (SDDM greeter →
-    // this same shell). The Platform Manager is folded behind /home.html?manage.
+    if (route === "/develop") { developRoute(req, res); return; }   // dev SR→κ-pin backend (Holo Player "Develop to 8K")
+    if ((route === "/web" || route.endsWith("/web")) && /[?&]url=/.test(req.url || "")) { webProxy(new URLSearchParams((req.url || "").split("?")[1] || "").get("url"), res); return; }
+    const mPair = route.match(/^\/\.pair\/([A-Za-z0-9\-_]{8,64})$/);   // Holo Pair content-blind rendezvous
+    if (mPair) { pairMailbox(req, res, mPair[1]); return; }
+    // Hologram OS boots into HOLO BROWSER — the universal navigator over the UOR content-addressable
+    // substrate (the "spaceship"): every object (an app, a holospace, the live web, a holo://κ, an
+    // IPFS CID, the native AI) is reached the same way, fetched/minted/re-derived + verified (Law L5),
+    // in one tab model. The spatial desktop (apps/sdk) is just one object you can navigate to; the
+    // Platform Manager is folded behind /home.html?manage.
     if (route === "/" || route === "") {
       const qs = (req.url || "").includes("?") ? "?" + (req.url.split("?")[1] || "") : "";
-      res.writeHead(302, { ...COI, Location: "/apps/sdk/index.html" + qs });
+      res.writeHead(302, { ...COI, Location: "/apps/browser/index.html" + qs });
       return res.end();
     }
     let rel;

@@ -1,0 +1,62 @@
+{
+  "ok": true,
+  "pass": 11,
+  "fail": 0,
+  "results": [
+    {
+      "name": "happy path: device accepts the operator's grant",
+      "ok": true,
+      "detail": "did:holo:sha256:2717fdee6016…"
+    },
+    {
+      "name": "QR offer round-trips via deep link",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tampered ciphertext refused",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "forged signature refused",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "swapped issuer key refused (L5)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "wrong device (audience) refused",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "expired grant refused",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "capability escalation refused",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "revocation verifies to the grant id",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "revoked grant refused",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "replay to another pairing refused",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

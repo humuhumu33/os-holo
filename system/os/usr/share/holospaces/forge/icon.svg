@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Holo Forge">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff8a3d"/>
+      <stop offset="1" stop-color="#ff4d6d"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#15171c"/>
+  <!-- content-address hexagon -->
+  <path d="M32 11 L49 21 V41 L32 51 L15 41 V21 Z" fill="none" stroke="url(#g)" stroke-width="2.4" stroke-linejoin="round"/>
+  <!-- compile arrow: source → artifact -->
+  <path d="M24 32 H37" stroke="url(#g)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M34 27 L40 32 L34 37" fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- the κ -->
+  <text x="32" y="25" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#ffd9c2">κ</text>
+</svg>

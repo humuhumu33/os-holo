@@ -1,0 +1,314 @@
+{
+  "@context": {
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "schema": "https://schema.org/",
+    "hosprod": "https://hologram.os/ns/product#",
+    "hosux": "https://hologram.os/ns/ux#",
+    "label": "rdfs:label",
+    "comment": "rdfs:comment",
+    "subClassOf": {
+      "@id": "rdfs:subClassOf",
+      "@type": "@id"
+    },
+    "isDefinedBy": {
+      "@id": "rdfs:isDefinedBy",
+      "@type": "@id"
+    },
+    "inScheme": {
+      "@id": "skos:inScheme",
+      "@type": "@id"
+    },
+    "prefLabel": "skos:prefLabel",
+    "definition": "skos:definition",
+    "obligation": "hosprod:obligation",
+    "realizedBy": "hosprod:realizedBy",
+    "hemisphere": "hosprod:hemisphere",
+    "draws": "hosprod:draws"
+  },
+  "@id": "https://hologram.os/ns/product",
+  "@type": "owl:Ontology",
+  "label": "Hologram OS — Holo Product foundation (hosprod:)",
+  "comment": "The canonical upstream foundation for building beautiful, valuable and delightful Hologram-native products (ADR-0065): it bundles + balances Holo UI (look) and Holo UX (experience) as ten faculties, and a hybrid delivery method. Mints only the genuinely-new product terms (Faculty · hemisphere · realizedBy · MethodPhase · obligation · draws); the faculties bind the existing Holo UI tokens + the sealed Holo UX doctrine by content address. Re-derived from holo-product.mjs (no drift).",
+  "dcterms:license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "@graph": [
+    {
+      "@id": "hosprod:Foundation",
+      "@type": "rdfs:Class",
+      "label": "Product Foundation",
+      "comment": "The one bundle that balances the UI and UX faculties under a delivery method.",
+      "isDefinedBy": "https://hologram.os/ns/product",
+      "subClassOf": "skos:ConceptScheme"
+    },
+    {
+      "@id": "hosprod:Faculty",
+      "@type": "rdfs:Class",
+      "label": "Product Faculty",
+      "comment": "One capability of building a product (a UX or UI faculty), bound to where it is wired and a checkable obligation.",
+      "isDefinedBy": "https://hologram.os/ns/product",
+      "subClassOf": "skos:Concept"
+    },
+    {
+      "@id": "hosprod:MethodPhase",
+      "@type": "rdfs:Class",
+      "label": "Method Phase",
+      "comment": "One phase of the hybrid delivery method, drawing on named project-management frameworks.",
+      "isDefinedBy": "https://hologram.os/ns/product",
+      "subClassOf": "skos:Concept"
+    },
+    {
+      "@id": "hosprod:hemisphere",
+      "@type": "rdf:Property",
+      "label": "hemisphere",
+      "comment": "Which half a faculty belongs to: ux (experience) or ui (look). Keeps the balance explicit.",
+      "isDefinedBy": "https://hologram.os/ns/product",
+      "range": "xsd:string"
+    },
+    {
+      "@id": "hosprod:realizedBy",
+      "@type": "rdf:Property",
+      "label": "realized by",
+      "comment": "The canonical OS artifact that already wires a faculty (a path or κ).",
+      "isDefinedBy": "https://hologram.os/ns/product"
+    },
+    {
+      "@id": "hosprod:obligation",
+      "@type": "rdf:Property",
+      "label": "obligation",
+      "comment": "The checkable rule a faculty or phase places on a product. OS-specific product term.",
+      "isDefinedBy": "https://hologram.os/ns/product",
+      "range": "xsd:string"
+    },
+    {
+      "@id": "hosprod:draws",
+      "@type": "rdf:Property",
+      "label": "draws from",
+      "comment": "A project-management framework a method phase draws from (cited, never minted).",
+      "isDefinedBy": "https://hologram.os/ns/product",
+      "range": "xsd:string"
+    },
+    {
+      "@id": "https://hologram.os/ns/product#faculties",
+      "@type": [
+        "skos:ConceptScheme",
+        "hosprod:Foundation"
+      ],
+      "prefLabel": "Holo Product faculties — Holo UI ⊕ Holo UX, balanced (ADR-0065)",
+      "comment": "Left brain (UX faculties) and right brain (UI faculties) are equal partners: a beautiful product that does not work, and a working product that is not beautiful, both fail Holo Product. Combine and balance the two, every time.",
+      "dcterms:license": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "@id": "https://hologram.os/ns/product#method",
+      "@type": "skos:ConceptScheme",
+      "prefLabel": "Holo Product method — the hybrid delivery lifecycle (ADR-0065)",
+      "comment": "A hybrid drawing on Agile · Scrum · Kanban · Waterfall · Lean · PRINCE2 · Six Sigma · Hybrid; predictive governance (ADR · gate) with agile execution (iterate · flow)."
+    },
+    {
+      "@id": "hosprod:interaction-design",
+      "@type": [
+        "skos:Concept",
+        "hosprod:Faculty"
+      ],
+      "prefLabel": "Interaction Design",
+      "hemisphere": "ux",
+      "realizedBy": "usr/lib/holo/holo-ux.js",
+      "obligation": "Interaction adapts to the host (native-adaptive feel + data-holo-shortcut) and propagates from one source over the postMessage tree — bound, not re-implemented.",
+      "inScheme": "https://hologram.os/ns/product#faculties"
+    },
+    {
+      "@id": "hosprod:wireframes-prototypes",
+      "@type": [
+        "skos:Concept",
+        "hosprod:Faculty"
+      ],
+      "prefLabel": "Wireframes & Prototypes",
+      "hemisphere": "ux",
+      "realizedBy": "usr/lib/holo/holo-phi.css",
+      "obligation": "Structure is laid on the golden-ratio proportion system (holo-phi) and the zone/layout grid — a coherent skeleton before any skin.",
+      "inScheme": "https://hologram.os/ns/product#faculties"
+    },
+    {
+      "@id": "hosprod:information-architecture",
+      "@type": [
+        "skos:Concept",
+        "hosprod:Faculty"
+      ],
+      "prefLabel": "Information Architecture",
+      "hemisphere": "ux",
+      "realizedBy": "usr/share/ns/fs.jsonld",
+      "obligation": "Content is organized as the one self-verifying, content-addressed FHS/holospace graph — findable, navigable, addressable by κ.",
+      "inScheme": "https://hologram.os/ns/product#faculties"
+    },
+    {
+      "@id": "hosprod:user-research",
+      "@type": [
+        "skos:Concept",
+        "hosprod:Faculty"
+      ],
+      "prefLabel": "User Research",
+      "hemisphere": "ux",
+      "realizedBy": "usr/lib/holo/holo-capability.mjs",
+      "obligation": "The product meets the real user + device: the capability tier and operator context are resolved, not assumed (treat their resources as sacred).",
+      "inScheme": "https://hologram.os/ns/product#faculties"
+    },
+    {
+      "@id": "hosprod:scenarios",
+      "@type": [
+        "skos:Concept",
+        "hosprod:Faculty"
+      ],
+      "prefLabel": "Scenarios",
+      "hemisphere": "ux",
+      "realizedBy": "usr/lib/holo/holo-voice.mjs",
+      "obligation": "Every flow is told in the plain voice (why → how → what), self-descriptive, revealing power on the user's curiosity — never a manual.",
+      "inScheme": "https://hologram.os/ns/product#faculties"
+    },
+    {
+      "@id": "hosprod:visual-design",
+      "@type": [
+        "skos:Concept",
+        "hosprod:Faculty"
+      ],
+      "prefLabel": "Visual Design",
+      "hemisphere": "ui",
+      "realizedBy": "usr/lib/holo/holo-theme.js",
+      "obligation": "The look is driven by the one Holo UI engine (palette · presentation · accent), inherited live — beautiful and coherent out of the box.",
+      "inScheme": "https://hologram.os/ns/product#faculties"
+    },
+    {
+      "@id": "hosprod:colors",
+      "@type": [
+        "skos:Concept",
+        "hosprod:Faculty"
+      ],
+      "prefLabel": "Colors",
+      "hemisphere": "ui",
+      "realizedBy": "usr/lib/holo/holo-theme.css",
+      "obligation": "Colour flows through the canonical --holo-* palette tokens; no attention-grabbing hardcodes bypass them (signal over noise).",
+      "inScheme": "https://hologram.os/ns/product#faculties"
+    },
+    {
+      "@id": "hosprod:graphic-design",
+      "@type": [
+        "skos:Concept",
+        "hosprod:Faculty"
+      ],
+      "prefLabel": "Graphic Design",
+      "hemisphere": "ui",
+      "realizedBy": "usr/lib/holo/holo-icons.js",
+      "obligation": "Iconography is the κ-pinned Holo Icons library — every glyph a content-addressed, self-verifying object, not a one-off asset.",
+      "inScheme": "https://hologram.os/ns/product#faculties"
+    },
+    {
+      "@id": "hosprod:layouts",
+      "@type": [
+        "skos:Concept",
+        "hosprod:Faculty"
+      ],
+      "prefLabel": "Layouts",
+      "hemisphere": "ui",
+      "realizedBy": "usr/lib/holo/holo-mobile.css",
+      "obligation": "Layout adapts by container with safe-area, the 8px rhythm and the tap-target floor — one responsive system, mobile through desktop.",
+      "inScheme": "https://hologram.os/ns/product#faculties"
+    },
+    {
+      "@id": "hosprod:typography",
+      "@type": [
+        "skos:Concept",
+        "hosprod:Faculty"
+      ],
+      "prefLabel": "Typography",
+      "hemisphere": "ui",
+      "realizedBy": "usr/lib/holo/holo-theme.css",
+      "obligation": "Type is the canonical --holo-font-* tokens with the --holo-font-min readability floor; no token-rendered text falls below it.",
+      "inScheme": "https://hologram.os/ns/product#faculties"
+    },
+    {
+      "@id": "hosprod:discover",
+      "@type": [
+        "skos:Concept",
+        "hosprod:MethodPhase"
+      ],
+      "prefLabel": "Discover",
+      "draws": [
+        "Lean",
+        "Agile"
+      ],
+      "obligation": "Name the value and the user before building — the product's manifest states what it is for, in the plain voice (maximize value, minimize waste).",
+      "inScheme": "https://hologram.os/ns/product#method"
+    },
+    {
+      "@id": "hosprod:define",
+      "@type": [
+        "skos:Concept",
+        "hosprod:MethodPhase"
+      ],
+      "prefLabel": "Define",
+      "draws": [
+        "PRINCE2",
+        "Waterfall"
+      ],
+      "obligation": "Every product is a recorded decision: an ADR captures why/what, and its structure is content-addressed (a controlled, documented stage).",
+      "inScheme": "https://hologram.os/ns/product#method"
+    },
+    {
+      "@id": "hosprod:design",
+      "@type": [
+        "skos:Concept",
+        "hosprod:MethodPhase"
+      ],
+      "prefLabel": "Design",
+      "draws": [
+        "Agile"
+      ],
+      "obligation": "Design to BOTH doctrines at once — adhere to Holo UI (look) and Holo UX (experience); the two hemispheres are balanced, neither skipped.",
+      "inScheme": "https://hologram.os/ns/product#method"
+    },
+    {
+      "@id": "hosprod:build",
+      "@type": [
+        "skos:Concept",
+        "hosprod:MethodPhase"
+      ],
+      "prefLabel": "Build",
+      "draws": [
+        "Scrum",
+        "Kanban",
+        "Lean"
+      ],
+      "obligation": "Build iteratively as re-derivable κ-objects within the declared resource budget — continuous flow, work visualized, waste eliminated.",
+      "inScheme": "https://hologram.os/ns/product#method"
+    },
+    {
+      "@id": "hosprod:verify",
+      "@type": [
+        "skos:Concept",
+        "hosprod:MethodPhase"
+      ],
+      "prefLabel": "Verify",
+      "draws": [
+        "Six Sigma"
+      ],
+      "obligation": "Done is proven, not asserted: a witness re-derives the product to its content address (Law L5) and the fail-closed gate refuses anything unwitnessed.",
+      "inScheme": "https://hologram.os/ns/product#method"
+    },
+    {
+      "@id": "hosprod:deliver-iterate",
+      "@type": [
+        "skos:Concept",
+        "hosprod:MethodPhase"
+      ],
+      "prefLabel": "Deliver & Iterate",
+      "draws": [
+        "Kanban",
+        "Agile"
+      ],
+      "obligation": "Ship as a self-verifying holo://κ and keep flowing — a product evolves continuously without ever breaking the gate (no regression).",
+      "inScheme": "https://hologram.os/ns/product#method"
+    }
+  ]
+}

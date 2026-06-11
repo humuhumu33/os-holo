@@ -15,8 +15,8 @@
     "P6",
     "P7"
   ],
-  "appsTotal": 32,
-  "appsAdmitted": 32,
+  "appsTotal": 33,
+  "appsAdmitted": 33,
   "appsRefused": [],
   "checks": {
     "failClosedByDefault": true,

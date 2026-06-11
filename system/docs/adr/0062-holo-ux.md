@@ -75,10 +75,19 @@ holospace.
   app inherits the WHOLE doctrine (native feel · tier · budget · propagation) with **no per-app
   script tag and no app-repo re-lock**. `tools/holo-app-ux-witness.mjs` proves that inheritance is
   real for every served app (the carrier is intact + the doctrine object re-derives + every app
-  loads the engine), and holds each app to the two obligations checkable in its own shell: its
-  manifest keeps the plain voice (jargon-free — already 0 across the corpus, enforced absolutely),
-  and a no-new-regression ratchet (`holo-app-ux-baseline.json`) drives every app to honor
-  `prefers-reduced-motion` (WCAG 2.3.3) — read-only, the burn-down only ever passes.
+  loads the engine), and holds each app to its own-shell obligations: its manifest keeps the plain
+  voice (jargon-free — 0 across the corpus, enforced absolutely); it honors `prefers-reduced-motion`
+  through the ONE OS-wide guard every app inherits from `holo-theme.css` (`:where(*,*::before,
+  *::after){animation/transition-duration:…!important}` — Law L2, no per-app copy, and no app may
+  override it with its own `!important` motion); and its modifier keys are NATIVE-ADAPTIVE — no
+  unconditional Apple-only glyph (⌘/⌥): the host modifier is derived (HoloPlatform/`metaKey`) or
+  rendered by the inherited `data-holo-shortcut` helper added to `holo-ux.js` (⌘N on macOS, Ctrl+N
+  on Windows/Linux). For hints an app builds in JS (command palettes, dynamically-rendered rows)
+  where an attribute can't reach, the inherited runtime also exposes `HoloUX.shortcut("mod+Enter")`.
+  The whole corpus already adhered — built on the shared engine — so this gates the truth strictly;
+  `capture` (button tooltips) and `workspace` (VS Code activity bar + command palette + tab close,
+  matching Monaco's own platform-adaptive `CtrlCmd`) were refactored to the helper as worked
+  examples. The witness is read-only — no per-app churn for conformance.
 
 **Consequences.** The experience is now a canonical, self-verifying κ-object every holospace binds
 AND is held to — "feels native, familiar and effortless, treats my resources as sacred" becomes the

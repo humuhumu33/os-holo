@@ -21,11 +21,21 @@
     font: 13px/1.6 ui-monospace, monospace; text-align: center; padding: 24px; }
   #fallback.on { display: grid; }
   #fallback code { color: #f87171; display: block; margin-top: 8px; word-break: break-all; max-width: 600px; }
+  /* "Continue as guest" — the frictionless door beside biometric Access (the viral default path). */
+  #guestlink { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 20;
+    background: rgba(255,255,255,.08); color: #e8eaf2; border: 1px solid rgba(255,255,255,.20);
+    border-radius: 999px; padding: 9px 22px; font: 16px/1 "Oxygen", "Segoe UI", system-ui, sans-serif;
+    cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); opacity: 0;
+    transition: opacity .3s ease, background .15s; pointer-events: none; }
+  #guestlink.show { opacity: 1; pointer-events: auto; }
+  #guestlink:hover { background: rgba(255,255,255,.16); }
+  #guestlink:active { transform: translateX(-50%) scale(.97); }
 </style>
 </head>
 <body>
 <div id="stage"></div>
 <div id="fallback"><div>The display manager could not start.<code id="fallbackMsg"></code></div></div>
+<button id="guestlink" type="button">Continue as guest →</button>
 
 <script type="module">
 import { QmlEngine, parseThemeConf, createDomBackend } from "./_shared/holo-qml.mjs";
@@ -65,6 +75,17 @@ try {
   if (ctx.sddm) ctx.sddm.refresh = remeasure;   // QML reveal() calls sddm.refresh() to re-fit the card
   window.__holoQml = engine;     // introspectable by agents / the render_qml MCP tool
 
+  // "Continue as guest" — the frictionless door beside biometric Access. Mints an ephemeral,
+  // non-persistent key (sddm.guest()) and enters the ONE desktop shell; the operator can sign in
+  // later from inside the shell. Same path the headless ?guest=1 URL takes.
+  const gl = document.getElementById("guestlink");
+  if (gl && ctx.sddm && ctx.sddm.guest) { gl.classList.add("show"); gl.addEventListener("click", () => { gl.textContent = "Entering…"; ctx.sddm.guest(); }); }
+
+  // Seamless headless access: /login.html?guest=1 enters as a non-persistent guest immediately —
+  // the one-URL door for an AI agent (a human taps "Continue as guest" instead). `next` is honoured.
+  const q = new URLSearchParams(location.search);
+  if ((q.get("guest") === "1" || q.get("as") === "guest") && ctx.sddm && ctx.sddm.guest) { ctx.sddm.guest(); }
+  else
   // Component.onCompleted focuses the field; nudge it once layout settles
   setTimeout(() => { const f = stage.querySelector("input"); if (f && document.activeElement !== f) f.focus(); }, 60);
 } catch (e) {

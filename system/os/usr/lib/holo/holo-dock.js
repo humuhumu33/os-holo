@@ -60,6 +60,7 @@
   var LIB_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 5h7v14H4zM13 5h7v6h-7zM13 13h7v6h-7z"/></svg>';
   var NEW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
   var KBD_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>';
+  var SHARE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V3M8 7l4-4 4 4"/></svg>';
   function dirOf(s) { var m = String(s || "").match(/([^\/]+)\/[^\/]*$/); return m ? m[1] : ""; }
 
   // ── the bundle model — a pin entry is an app id (string) OR a group {id,name,items:[id…]} ──
@@ -150,6 +151,8 @@
   }
   function launch(id) {
     closeFlyout();
+    // Holo Browser is the universal navigator: a dock tap opens that object in a browser tab.
+    if (W.HoloBrowser && W.HoloBrowser.openApp) { var bi = appInfo(id); try { W.HoloBrowser.openApp(bi.landing, bi.name, "holo://" + id); } catch (e) {} return; }
     if (inSdk()) { try { W.__world.launchById(id); } catch (e) {} setTimeout(updateRunning, 60); return; }
     var i = hf(), f = frame(); if (!i || !f) return;
     i.src = "holospace.html?app=" + encodeURIComponent(id);
@@ -165,6 +168,7 @@
     updateRunning();
   }
   function startAction() {
+    if (W.HoloBrowser && W.HoloBrowser.newTab) { try { W.HoloBrowser.newTab(); return; } catch (e) {} }
     if (inSdk()) { if (W.__world.openSpot) { try { W.__world.openSpot(); return; } catch (e) {} } clickEl("open"); return; }
     if (isFramed()) revealDesktop();
   }
@@ -283,9 +287,11 @@
 
     var tray = el("div", { "class": "holo-dock-tray" });
     if (sdk) {
+      // Build · (Run = the home/start button) · Share — the three native holospace verbs, ubiquitous.
       var actions = el("div", { "class": "holo-dock-actions" });
+      actions.appendChild(actionBtn("Build — author a component → κ", NEW_SVG, function () { clickEl("author"); }));
+      actions.appendChild(actionBtn("Share — a link anyone can open instantly (no sign-in)", SHARE_SVG, function () { clickEl("share-btn"); }));
       actions.appendChild(actionBtn("Component library", LIB_SVG, function () { clickEl("library"); }));
-      actions.appendChild(actionBtn("New component", NEW_SVG, function () { clickEl("author"); }));
       actions.appendChild(actionBtn("Virtual keyboard", KBD_SVG, function () { clickEl("keyboard-btn"); }));
       tray.appendChild(actions);
     }

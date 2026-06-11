@@ -8,6 +8,15 @@
 <meta name="theme-color" content="#000000" />
 <meta property="og:title" content="Hologram OS — a sovereign internet computer" />
 <meta property="og:description" content="Boots entirely in your browser, rooted in your own hardware. No server, no install." />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Hologram OS" />
+<meta property="og:image" content="os/usr/share/icons/og-card.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Hologram OS — Build · Run · Share" />
+<meta name="twitter:description" content="Serverless apps you share with a link. Open one and it runs instantly — no install, no sign-in." />
+<meta name="twitter:image" content="os/usr/share/icons/og-card.png" />
 <link rel="manifest" href="os/etc/manifest.webmanifest" />
 <link rel="icon" type="image/svg+xml" href="os/usr/share/icons/hologram-dark.svg" />
 <link rel="alternate icon" href="os/usr/share/icons/icon-192.png" />
@@ -252,24 +261,27 @@
         const reg = await navigator.serviceWorker.register(root + "holo-fhs-sw.js", { type: "module", scope: root }).catch(() => null);
         if (reg && !navigator.serviceWorker.controller) {
           await new Promise((res) => { if (reg.active) return res(); const w = reg.installing || reg.waiting; if (!w) return res(); w.addEventListener("statechange", function () { if (this.state === "activated") res(); }); setTimeout(res, 4000); });
+          // wait until the worker actually CONTROLS this client (clients.claim propagated) so the
+          // streamlined redirect resolves every byte through the κ route — no race, no unmapped 404.
+          if (!navigator.serviceWorker.controller) await Promise.race([new Promise((r) => navigator.serviceWorker.addEventListener("controllerchange", r, { once: true })), new Promise((r) => setTimeout(r, 2000))]);
         }
       }
     } catch {}
-    // Power-on: the Constitution is sealed and the κ worker controls this client, so hand straight off
-    // to the Plymouth SPLASH — the boot animation — and let IT carry the client into the desktop shell
-    // (apps/sdk), the ONE canonical holospace inside which every application opens as a window. The
-    // splash is the seamless bridge: the gateway dissolves into the animation, the animation into the
-    // desktop. The boot MENU (rEFInd) stays reachable directly (boot.html). Every byte is still
-    // κ-verified by the worker (L5). Paths are relative to this gateway's dir, so they resolve in either root.
-    const next = "home.html";   // the splash carries the client here (the SDDM greeter + apps/sdk desktop aren't in this thin OS image)
+    // Frictionless by DEFAULT (the viral path): straight into the ONE desktop shell (apps/sdk —
+    // ENCLOSED in the image, so it boots standalone), which signs in as a non-persistent GUEST so a
+    // shared holospace link (?app=… / ?open=…) runs INSTANTLY, zero context needed. Sign-in (device
+    // biometric) is one tap IN the shell. Opt-in: ?signin → the full SDDM greeter; the rEFInd boot
+    // MENU stays reachable (boot.html). Every byte is still κ-verified by the worker (L5).
     try {
-      localStorage.setItem("holo-splash:bg", "dark");                       // splash on solid #000 — the SAME black as this gateway
       const TK = "holo.theme.v1", s = JSON.parse(localStorage.getItem(TK) || "{}");
-      s.palette = "dark"; localStorage.setItem(TK, JSON.stringify(s));       // pin the OS palette DARK so home + every app match the black boot — ONE consistent experience
+      s.palette = "dark"; localStorage.setItem(TK, JSON.stringify(s));       // pin the OS palette DARK so the desktop matches the black gateway
     } catch {}
-    document.body.classList.add("leaving");   // dissolve the gateway content; the black bg is shared, so only the content crossfades into the splash
-    const splashURL = root + "splash.html?" + new URLSearchParams({ next, menu: "boot.html", duration: "12", theme: "holo-pulse", label: "Hologram OS", logo: "boot/icons/os_hologram.svg" });
-    setTimeout(() => location.replace(splashURL), 240);
+    document.body.classList.add("leaving");   // dissolve the gateway content; the shared black bg crossfades into the shell
+    const params = new URLSearchParams(location.search);
+    const dest = params.has("signin")
+      ? root + "login.html?" + new URLSearchParams({ next: "apps/sdk/index.html", label: "Hologram OS", logo: "boot/icons/os_hologram.svg" })
+      : root + "apps/sdk/index.html" + location.search + location.hash;
+    setTimeout(() => location.replace(dest), 240);
   }
   $("enter").addEventListener("click", boot);
   // No auto-boot — the gateway stays a STATIC splash until the user acts. Boot is an explicit

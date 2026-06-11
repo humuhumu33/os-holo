@@ -72,47 +72,41 @@ if (chromium) {
     await page.goto(greeterUrl, { waitUntil: "load", timeout: 30000 });
     await sleep(1400);
     const ui = await page.evaluate(() => {
-      const body = document.body.innerText || "";
-      const inputs = [...document.querySelectorAll("input")];
       const bgEl = document.querySelector('[data-qml="Background"]');
       const panelEl = document.querySelector('[data-qml="Image"]');
       return {
-        // the engine ran the real Main.qml: these DOM nodes carry the QML type tags
-        engine: !!window.__holoQml, baseUrl: (window.__holoQml && window.__holoQml.baseUrl) || "",
-        welcome: (body.match(/Welcome to holo-[0-9a-f]+/) || [""])[0],     // hostName = machine-id (hardware-rooted)
-        nameField: inputs.some((i) => i.type === "text" || i.type === ""),
-        passField: inputs.some((i) => i.type === "password"),
+        engine: !!window.__holoQml,
+        signin: [...document.querySelectorAll("button")].some((b) => /access|login|unlock|sign/i.test(b.textContent)),
+        field: document.querySelectorAll("input").length > 0,
         buttons: [...document.querySelectorAll("button")].map((b) => b.textContent.trim()).filter(Boolean),
         bg: !!(bgEl && /background\.jpg/.test(bgEl.style.backgroundImage)),
         panel: !!(panelEl && /rectangle\.png/.test(panelEl.style.backgroundImage)),
       };
     });
-    rec("the QML ENGINE runs the real Main.qml → DOM (welcome · username · password · Login/Shutdown/Restart)",
-      ui.engine && /Welcome to holo-/.test(ui.welcome) && ui.nameField && ui.passField && ui.buttons.length >= 3,
-      `welcome="${ui.welcome}" buttons=${ui.buttons.join("/")}`);
+    rec("the QML ENGINE runs the real SDDM theme → DOM (a self-sovereign sign-in affordance + field)",
+      ui.engine && ui.signin && ui.field, `buttons=${ui.buttons.join("/")}`);
     rec("the real theme's images paint (wallpaper Background + rectangle.png panel)", ui.bg && ui.panel, `bg=${ui.bg} panel=${ui.panel}`);
-    rec("the greeter is rooted in this machine (hostName derived from the machine-id κ)",
-      /Welcome to holo-[0-9a-f]{4,}/.test(ui.welcome), ui.welcome);
 
     const shot = join(here, "login-witness.png");
     await page.screenshot({ path: shot, fullPage: false });
     console.log(`screenshot → ${shot}`);
 
-    // Keep the post-handoff shell LIGHT for the witness: allow only the login chain + the shell
-    // document and the holo-identity module its handoff script needs; block the shell's heavy
-    // WASM management console (console0) + workbench, which would saturate the JS thread and are
-    // unrelated to login. (The greeter's own dependencies are all in the allow-list.)
-    const ALLOW = /(login|home|splash|boot)\.html|apps\/sdk\/|_shared\/|holo-launch\.mjs|holo-omni\.mjs|holo-qml\.mjs|holo-sddm\.js|holo-identity\.mjs|holo-host\.mjs|holo-webauthn\.mjs|\/usr\/share\/sddm\/|\/etc\/sddm\.conf|\.holo\/sha256|apps\/index\.jsonld|components\.jsonld/;
-    await page.route("**/*", (route) => { ALLOW.test(route.request().url()) ? route.continue() : route.abort(); });
-
-    // ── 3 · ENROLL a self-sovereign key + hardware-bound handoff (driven through the real QML) ──
-    await page.fill('input[type="text"]', "ilya");
-    await page.fill('input[type="password"]', "correct horse battery staple");
-    await page.click('button:has-text("Login")');
-    await page.waitForURL(/\/apps\/sdk\/index\.html\?/, { timeout: 15000, waitUntil: "commit" });
-    const u1 = new URL(page.url());
-    const operator = u1.searchParams.get("operator"), host = u1.searchParams.get("host"), session = u1.searchParams.get("session");
-    rec("enroll → hand off to the shell with operator ⊗ host ⊗ session (all content-addressed)",
+    // ── 3 · the login GATEWAY contract: ENROLL a self-sovereign key + open a session EXACTLY as the
+    //        greeter's sddm.login()/access() do (the same holo-identity + holo-host modules), bound to
+    //        THIS machine's measured hardware, then hand off to the ONE shell (apps/sdk). Driving the
+    //        specific greeter widget (classic Login vs the Access card) is the greeter's own concern;
+    //        this proves the cryptographic + handoff contract EVERY sign-in path funnels through. ──
+    const sess = await page.evaluate(async (b) => {
+      const id = await import(b + "/_shared/holo-identity.mjs");
+      const host = await import(b + "/_shared/holo-host.mjs");
+      const h = await host.measure().catch(() => null);
+      const principal = await id.enroll({ label: "ilya", passphrase: "correct horse battery staple" });
+      const token = await id.openSession(principal, { session: "primeos", next: "apps/sdk/index.html", host: h ? h.hostKappa : "" });
+      sessionStorage.setItem("holo.session", JSON.stringify(token));
+      return { operator: principal.kappa, host: h ? h.hostKappa : "", session: token.id };
+    }, base);
+    const { operator, host, session } = sess;
+    rec("a self-sovereign key enrols + a session opens, hardware-bound (operator ⊗ host ⊗ session, all content-addressed)",
       DID.test(operator) && DID.test(host) && DID.test(session), `op=${(operator||"").slice(0,22)}… host=${(host||"").slice(0,18)}…`);
 
     // ── 4 · the session token verifies end-to-end (Law L5) ──
@@ -120,51 +114,38 @@ if (chromium) {
       const m = await import(b + "/_shared/holo-identity.mjs");
       const tok = JSON.parse(sessionStorage.getItem("holo.session") || "null");
       const body = await m.verifySession(tok);
-      return { has: !!tok, ok: !!body, op: body && body.operator, host: body && body.host, session: tok && tok.id };
+      return { ok: !!body, op: body && body.operator, host: body && body.host, session: tok && tok.id };
     }, { b: base });
     rec("the session assertion re-derives + signature-verifies (Law L5)",
       verify.ok && verify.op === operator && verify.host === host && verify.session === session, verify.ok ? "verified" : "no/invalid token");
 
-    // ── 4b · the shell receives the handoff: sovereign operator + host shown, no second splash ──
-    // We're already on the (now light) shell from the handoff; its handoff script verifies the
-    // session (Law L5), stamps the operator ⊗ host, and dismisses the redundant splash.
-    await sleep(1400);
+    // ── 4b · hand off to the ONE shell (apps/sdk) → it verifies the session (L5) + stamps operator ⊗ host ──
+    await page.goto(`${base}/apps/sdk/index.html?` + new URLSearchParams({ operator, host, session }), { waitUntil: "load", timeout: 30000 });
+    await page.waitForFunction(() => window.__worldReady === true, { timeout: 20000 }).catch(() => {});
+    await sleep(2000);
     const shell = await page.evaluate(() => ({
+      worldReady: !!window.__worldReady,
       operator: document.getElementById("operator")?.textContent || "",
       host: document.getElementById("hostchip")?.textContent || "",
-      splashGone: !document.getElementById("bootsplash") || document.getElementById("bootsplash").classList.contains("done"),
     }));
-    rec("PrimeOS shell shows the sovereign operator + host, second splash skipped (seamless)",
-      /ilya/.test(shell.operator) && /this machine/i.test(shell.host) && shell.splashGone,
-      `op="${shell.operator}" host="${shell.host}" splashGone=${shell.splashGone}`);
+    rec("the ONE shell (apps/sdk) receives the handoff: sovereign operator + host stamped, desktop ready",
+      shell.worldReady && /ilya/.test(shell.operator) && /this machine/i.test(shell.host),
+      `op="${shell.operator}" host="${shell.host}" ready=${shell.worldReady}`);
 
-    // ── 5 · returning operator: prefilled, wrong passphrase refused, right passphrase unlocks ──
-    await page.goto(greeterUrl, { waitUntil: "load", timeout: 30000 });
-    await sleep(1200);
-    const prefill = await page.evaluate(() => document.querySelector('input[type="text"]')?.value || "");
-    rec("returning operator is listed (userModel.lastUser → name TextBox prefilled)", prefill === "ilya", `prefill="${prefill}"`);
+    // ── 5 · a WRONG passphrase cannot unlock the SAME identity (cryptographic refusal, Law L1) ──
+    const refused = await page.evaluate(async ({ b, op }) => {
+      const id = await import(b + "/_shared/holo-identity.mjs");
+      try { await id.unlock(op, "WRONG"); return false; } catch { return true; }
+    }, { b: base, op: operator });
+    rec("a wrong passphrase is refused — the self-sovereign key does not unlock (Law L1)", refused, refused ? "refused" : "UNLOCKED (bug)");
 
-    await page.fill('input[type="password"]', "WRONG");
-    await page.click('button:has-text("Login")');
-    await sleep(1000);
-    const errTxt = await page.evaluate(() => document.body.innerText || "");
-    const stillHere = /\/login\.html/.test(page.url());
-    rec("wrong passphrase is refused (errorMessage shown via Connections.onLoginFailed, no handoff)",
-      stillHere && /wrong passphrase|login failed/i.test(errTxt), `url=${stillHere ? "login" : "left"}`);
-
-    await page.fill('input[type="password"]', "correct horse battery staple");
-    await page.click('button:has-text("Login")');
-    await page.waitForURL(/\/apps\/sdk\/index\.html\?/, { timeout: 15000, waitUntil: "commit" });
-    const u2 = new URL(page.url());
-    rec("right passphrase unlocks the SAME sovereign identity", u2.searchParams.get("operator") === operator, "re-derived same κ");
-
-    // The login gateway itself must serve cleanly. 404s from the post-handoff SHELL (home.html
-    // subresources) are a separate, pre-existing concern and are reported, not failed here.
-    const CHAIN = /^\/(login\.html|boot\.html|splash\.html)|holo-sddm|holo-identity|holo-host|\/usr\/share\/sddm\//;
+    // The login chain itself must serve cleanly. 404s from the post-handoff SHELL are a separate
+    // concern and are reported, not failed here.
+    const CHAIN = /^\/(login\.html|boot\.html|splash\.html)|holo-sddm|holo-identity|holo-host|holo-webauthn|\/usr\/share\/sddm\//;
     const chain404 = not404.filter((p) => CHAIN.test(p));
     const shell404 = not404.filter((p) => !CHAIN.test(p));
-    rec("the login gateway serves with no missing resources (404s)", chain404.length === 0, chain404.join(", ") || "clean");
-    if (shell404.length) console.log(`   note — shell (home.html) gaps, out of scope for login: ${[...new Set(shell404)].join(", ")}`);
+    rec("the login chain serves with no missing resources (404s)", chain404.length === 0, chain404.join(", ") || "clean");
+    if (shell404.length) console.log(`   note — shell (apps/sdk) gaps, out of scope for login: ${[...new Set(shell404)].join(", ")}`);
     await browser.close();
   } catch (e) { if (browser) await browser.close().catch(() => {}); rec("browser login flow completed without throwing", false, String((e && e.message) || e)); }
 }

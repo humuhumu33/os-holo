@@ -15,6 +15,7 @@
 //   Holo Terms    window.HoloTerms      MyTerms — effective, default-deny capabilities (IEEE 7012)
 //   Holo Privacy  window.HoloPrivacy    minimal, purpose-bound selective disclosure (W3C VC/DPV)
 //   Holo Conform  window.HoloConscience the fail-closed constitutional conscience gate (ADR-033)
+//   Holo Product  window.HoloProduct    the balanced Holo UI ⊕ Holo UX foundation + method (ADR-0065)
 // plus the UOR primitive window.HoloObject (address/verify, Law L5) and the <holo-icon> element.
 //
 // Every function reads window.* LAZILY (on call, never at import), so module load order cannot race.
@@ -47,7 +48,7 @@ export async function ready({ onProgress } = {}) {
 export function info() {
   const ux = g.HoloUX && g.HoloUX.get ? g.HoloUX.get() : null;
   return { ui: !!g.HoloUI, ux: !!g.HoloUX, terms: !!g.HoloTerms, privacy: !!g.HoloPrivacy,
-    conform: sealed(), object: !!g.HoloObject, tier: ux ? ux.tier : null,
+    conform: sealed(), object: !!g.HoloObject, product: !!g.HoloProduct, tier: ux ? ux.tier : null,
     accent: (g.HoloUI && g.HoloUI.get) ? (g.HoloUI.get().theme || {}).accent || null : null };
 }
 
@@ -61,6 +62,27 @@ export function onThemeChange(fn) { return on("holo-ui-change", fn); }
 export function getTier() { return (g.HoloUX && g.HoloUX.get) ? g.HoloUX.get() : null; }
 export function refreshTier() { return (g.HoloUX && g.HoloUX.refresh) ? g.HoloUX.refresh() : null; }
 export function onTierChange(fn) { return on("holo-ux-change", fn); }
+
+// ── Holo Product — the canonical FOUNDATION (ADR-0065): the balanced bundle of Holo UI ⊕ Holo UX ──
+// + the hybrid delivery method, the foundation a native product is built ON. Lazy-loads the data
+// doctrine (holo-product.mjs self-registers window.HoloProduct) so an app or an AGENT can read, at
+// runtime, the faculties it inherits, the method it follows, and that the two hemispheres are
+// balanced — bind the foundation, don't re-decide the basics (Law L2).
+let _prodLoad = null;
+async function ensureProduct() {
+  if (g.HoloProduct) return g.HoloProduct;
+  if (!_prodLoad) _prodLoad = import("./holo-product.mjs").catch(() => {});   // path-served/dev; prod resolves via the import map
+  await _prodLoad;
+  return g.HoloProduct || null;
+}
+// product() → { faculties, method, frameworks, balance, balanced } — the foundation, read live.
+export async function product() {
+  const p = await ensureProduct();
+  if (!p) return null;
+  const ux = p.FACULTIES.filter((f) => f.hemisphere === "ux").length;
+  const ui = p.FACULTIES.filter((f) => f.hemisphere === "ui").length;
+  return { faculties: p.FACULTIES, method: p.METHOD, frameworks: p.FRAMEWORKS, balance: p.BALANCE, balanced: ux === ui };
+}
 
 // ── Holo Terms — effective, default-deny capabilities (already gated at mount) ────────────────────
 export function getCapabilities() { return (g.HoloTerms && g.HoloTerms.standing) ? g.HoloTerms.standing() : null; }

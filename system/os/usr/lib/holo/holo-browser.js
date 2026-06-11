@@ -62,7 +62,7 @@ export const isSecureScheme = (scheme) => !!(SCHEMES[scheme] && SCHEMES[scheme].
 
 // The default search engine for non-URL omnibox text. Content-addressed itself: a search
 // resolves into the federated dweb directory first (offline), then optionally a web engine.
-export const DEFAULT_SEARCH = { name: "Holo Search", url: "https://duckduckgo.com/?q=%s" };
+export const DEFAULT_SEARCH = { name: "Holo Search", url: "https://duckduckgo.com/html/?q=%s" };   // server-rendered (no-JS) endpoint → renders + its result links re-route through the loader
 const KAPPA_RE = /^[0-9a-f]{64}$/i;
 
 // ── classifyInput — the AutocompleteProvider's classifier (omnibox → a destination) ─

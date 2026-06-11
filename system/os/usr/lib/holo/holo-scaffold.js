@@ -31,6 +31,9 @@ export function scaffold(opts = {}) {
     entry: "index.html",
     icon: "icon.svg",
     applicationCategory: category,
+    // Built ON the Holo Product foundation (ADR-0065): it inherits the balanced Holo UI ⊕ Holo UX
+    // faculties (via the wired engines below) and follows the hybrid method (see DECISION.md).
+    builtOn: "holo-product",
     conforms: { specs: ["holo-sdk", "holo-terms", "holo-privacy", "holo-conform", "did-core", "json-ld", "sri", "wcag"] },
     capabilities: { storage: [identifier] },
     shared: ["holo-sdk.js"],
@@ -79,6 +82,7 @@ export function scaffold(opts = {}) {
       { "@id": "https://www.w3.org/TR/rdf-canon/" },
       { "@id": "https://www.w3.org/TR/WCAG22/" },
       { "@id": "https://github.com/Hologram-Technologies/holospaces" },
+      { "@id": "https://hologram.os/ns/product" },
     ],
   });
 
@@ -146,7 +150,7 @@ export function scaffold(opts = {}) {
       <div id="out" role="status" aria-live="polite"></div>
       <!-- build · run · share — the three native verbs, present in every holospace (ADR-0051). -->
       <section style="margin-top: var(--holo-size-m, 1.618rem)"><holo-app></holo-app></section>
-      <footer><span class="dot" id="seal"></span><span class="k" id="did">verifying…</span></footer>
+      <footer><span class="dot" id="seal"></span><span class="k" id="did">verifying…</span><span class="k" id="foundation" style="margin-left:auto"></span></footer>
     </main>
 
     <!-- The five OS core modules + the Holo SDK façade, auto-wired by the Holo SDK generator
@@ -154,7 +158,7 @@ export function scaffold(opts = {}) {
     ${scripts}
     <script type="module">
       // QVAC SDK format: flat, named, functional imports from one package + options-object args.
-      import { ready, info, setAccent, refreshTier, disclose, evaluate, sealed, address, verify, on } from "@hologram/sdk";
+      import { ready, info, setAccent, refreshTier, disclose, evaluate, sealed, address, verify, on, product } from "@hologram/sdk";
 
       const APP_NAME = ${JSON.stringify(name)};
       const ACCENT = ${JSON.stringify(accent)};
@@ -188,6 +192,10 @@ export function scaffold(opts = {}) {
       on("holo-ui-change", render);
       on("holo-ux-change", render);
 
+      // built ON the Holo Product foundation (ADR-0065) — read it live from the SDK (faculties +
+      // method + balance), so the app declares the foundation it inherits rather than re-deciding it.
+      try { const f = await product(); if (f) $("#foundation").textContent = "built on Holo Product" + (f.balanced ? " · UI⊕UX balanced" : ""); } catch (e) {}
+
       // self-verify live (Law L5): address a small object and re-derive it.
       try {
         const obj = { "@type": "schema:SoftwareApplication", "schema:name": APP_NAME };
@@ -215,8 +223,38 @@ export function scaffold(opts = {}) {
 </html>
 `;
 
+  // DECISION.md — the method scaffold (Holo Product, ADR-0065). A product is a recorded decision:
+  // this seeds the hybrid lifecycle so a new holospace starts with Discover · Define · Verify in place
+  // (the rest — Design · Build · Deliver — are inherited from the foundation + the build pipeline).
+  const decisionMd = `# Decision — ${name}
+
+> The decision record for this holospace, on the Holo Product foundation (ADR-0065). An ADR is the
+> **Define** phase, the value statement is **Discover**, the conformance gate is **Verify** — a
+> product is a recorded decision, designed to both doctrines, and proven before it ships.
+
+## Discover — the value
+${summary}
+
+_Who is it for, and what does it give them? Lead with why, then how, then what (the plain voice)._
+
+## Define — the decision
+- **Why:** _why this holospace exists._
+- **How:** built on Holo Product — it inherits Holo UI (the look) ⊕ Holo UX (the experience),
+  auto-wired to the five core modules; no UX/UI basics are re-decided here (Law L2).
+- **What:** _what it does._
+
+## Design — the faculties (inherited, balanced)
+- **UI:** visual design · colours · graphic design · layouts · typography → the \`--holo-*\` tokens.
+- **UX:** interaction · wireframes · information architecture · user research · scenarios → the Holo UX doctrine.
+
+## Build · Verify · Deliver
+- **Build:** a content-addressed κ-object — re-derivable, serverless (Law L5).
+- **Verify:** conforms to the gate's app rows (\`#app-ui-*\` · \`#app-ux-*\`) — done is proven, not asserted.
+- **Deliver & Iterate:** shared as \`holo://κ\`; evolve continuously without breaking the gate.
+`;
+
   return { id, identifier, name, summary, category, accent, minimal, manifest,
-    files: { "holospace.json": JSON.stringify(manifest, null, 2) + "\n", "index.html": indexHtml, "icon.svg": iconSvg } };
+    files: { "holospace.json": JSON.stringify(manifest, null, 2) + "\n", "index.html": indexHtml, "icon.svg": iconSvg, "DECISION.md": decisionMd } };
 }
 
 export default scaffold;

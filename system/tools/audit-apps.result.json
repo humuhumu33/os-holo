@@ -3,7 +3,7 @@
     {
       "id": "amp",
       "mounted": false,
-      "fromOS2": 9,
+      "fromOS2": 10,
       "fromApps": 3,
       "fallbacks": 0,
       "missing": 0,
@@ -14,22 +14,30 @@
     {
       "id": "atlas",
       "mounted": true,
-      "fromOS2": 41,
-      "fromApps": 72,
+      "fromOS2": 45,
+      "fromApps": 74,
       "fallbacks": 0,
-      "missing": 2,
-      "errs": 2,
+      "missing": 0,
+      "errs": 0,
       "fallbackList": [],
-      "missingList": [
-        "κ:0ba3ebd130",
-        "κ:d8b484fa9b"
-      ]
+      "missingList": []
     },
     {
       "id": "atlas96",
       "mounted": true,
-      "fromOS2": 16,
+      "fromOS2": 17,
       "fromApps": 11,
+      "fallbacks": 0,
+      "missing": 0,
+      "errs": 0,
+      "fallbackList": [],
+      "missingList": []
+    },
+    {
+      "id": "book",
+      "mounted": true,
+      "fromOS2": 27,
+      "fromApps": 7,
       "fallbacks": 0,
       "missing": 0,
       "errs": 0,
@@ -39,47 +47,40 @@
     {
       "id": "brcminer",
       "mounted": true,
-      "fromOS2": 23,
+      "fromOS2": 25,
       "fromApps": 10,
       "fallbacks": 0,
-      "missing": 1,
-      "errs": 1,
+      "missing": 0,
+      "errs": 0,
       "fallbackList": [],
-      "missingList": [
-        "κ:0ba3ebd130"
-      ]
+      "missingList": []
     },
     {
       "id": "browser",
       "mounted": true,
-      "fromOS2": 30,
+      "fromOS2": 37,
       "fromApps": 13,
       "fallbacks": 0,
-      "missing": 1,
-      "errs": 1,
+      "missing": 0,
+      "errs": 0,
       "fallbackList": [],
-      "missingList": [
-        "κ:156aa1ca38"
-      ]
+      "missingList": []
     },
     {
       "id": "btc",
       "mounted": true,
-      "fromOS2": 19,
+      "fromOS2": 24,
       "fromApps": 8,
       "fallbacks": 0,
-      "missing": 2,
-      "errs": 2,
+      "missing": 0,
+      "errs": 0,
       "fallbackList": [],
-      "missingList": [
-        "κ:0ba3ebd130",
-        "κ:156aa1ca38"
-      ]
+      "missingList": []
     },
     {
       "id": "capture",
       "mounted": false,
-      "fromOS2": 9,
+      "fromOS2": 10,
       "fromApps": 3,
       "fallbacks": 0,
       "missing": 0,
@@ -90,7 +91,7 @@
     {
       "id": "cloud",
       "mounted": true,
-      "fromOS2": 24,
+      "fromOS2": 25,
       "fromApps": 8,
       "fallbacks": 0,
       "missing": 0,
@@ -101,7 +102,7 @@
     {
       "id": "docs",
       "mounted": true,
-      "fromOS2": 23,
+      "fromOS2": 24,
       "fromApps": 8,
       "fallbacks": 0,
       "missing": 0,
@@ -112,34 +113,29 @@
     {
       "id": "etherscan",
       "mounted": true,
-      "fromOS2": 24,
+      "fromOS2": 29,
       "fromApps": 18,
       "fallbacks": 0,
-      "missing": 2,
-      "errs": 2,
+      "missing": 0,
+      "errs": 0,
       "fallbackList": [],
-      "missingList": [
-        "κ:0ba3ebd130",
-        "κ:156aa1ca38"
-      ]
+      "missingList": []
     },
     {
       "id": "evm",
       "mounted": true,
-      "fromOS2": 25,
+      "fromOS2": 27,
       "fromApps": 6,
       "fallbacks": 0,
-      "missing": 1,
-      "errs": 1,
+      "missing": 0,
+      "errs": 0,
       "fallbackList": [],
-      "missingList": [
-        "κ:0ba3ebd130"
-      ]
+      "missingList": []
     },
     {
       "id": "files",
       "mounted": true,
-      "fromOS2": 21,
+      "fromOS2": 22,
       "fromApps": 6,
       "fallbacks": 0,
       "missing": 0,
@@ -150,7 +146,7 @@
     {
       "id": "forge",
       "mounted": true,
-      "fromOS2": 28,
+      "fromOS2": 29,
       "fromApps": 11,
       "fallbacks": 0,
       "missing": 0,
@@ -161,7 +157,7 @@
     {
       "id": "git",
       "mounted": true,
-      "fromOS2": 25,
+      "fromOS2": 26,
       "fromApps": 8,
       "fallbacks": 0,
       "missing": 0,
@@ -172,7 +168,7 @@
     {
       "id": "ipfs",
       "mounted": true,
-      "fromOS2": 28,
+      "fromOS2": 29,
       "fromApps": 9,
       "fallbacks": 0,
       "missing": 0,
@@ -183,7 +179,7 @@
     {
       "id": "liberty",
       "mounted": false,
-      "fromOS2": 8,
+      "fromOS2": 9,
       "fromApps": 1,
       "fallbacks": 0,
       "missing": 0,
@@ -194,7 +190,7 @@
     {
       "id": "meet",
       "mounted": false,
-      "fromOS2": 9,
+      "fromOS2": 10,
       "fromApps": 3,
       "fallbacks": 0,
       "missing": 0,
@@ -205,7 +201,7 @@
     {
       "id": "music",
       "mounted": true,
-      "fromOS2": 27,
+      "fromOS2": 28,
       "fromApps": 10,
       "fallbacks": 0,
       "missing": 1,
@@ -218,7 +214,7 @@
     {
       "id": "notepad",
       "mounted": true,
-      "fromOS2": 27,
+      "fromOS2": 28,
       "fromApps": 8,
       "fallbacks": 0,
       "missing": 0,
@@ -229,7 +225,7 @@
     {
       "id": "os",
       "mounted": true,
-      "fromOS2": 31,
+      "fromOS2": 32,
       "fromApps": 10,
       "fallbacks": 0,
       "missing": 1,
@@ -242,7 +238,7 @@
     {
       "id": "plasma",
       "mounted": false,
-      "fromOS2": 9,
+      "fromOS2": 10,
       "fromApps": 3,
       "fallbacks": 0,
       "missing": 0,
@@ -253,8 +249,8 @@
     {
       "id": "player",
       "mounted": true,
-      "fromOS2": 24,
-      "fromApps": 9,
+      "fromOS2": 25,
+      "fromApps": 12,
       "fallbacks": 0,
       "missing": 0,
       "errs": 0,
@@ -264,20 +260,18 @@
     {
       "id": "privacy",
       "mounted": true,
-      "fromOS2": 25,
+      "fromOS2": 27,
       "fromApps": 4,
       "fallbacks": 0,
-      "missing": 1,
-      "errs": 1,
+      "missing": 0,
+      "errs": 0,
       "fallbackList": [],
-      "missingList": [
-        "κ:0ba3ebd130"
-      ]
+      "missingList": []
     },
     {
       "id": "q",
       "mounted": true,
-      "fromOS2": 17,
+      "fromOS2": 18,
       "fromApps": 11,
       "fallbacks": 0,
       "missing": 2,
@@ -291,7 +285,7 @@
     {
       "id": "qemu",
       "mounted": true,
-      "fromOS2": 31,
+      "fromOS2": 32,
       "fromApps": 7,
       "fallbacks": 0,
       "missing": 1,
@@ -304,7 +298,7 @@
     {
       "id": "sdk",
       "mounted": false,
-      "fromOS2": 9,
+      "fromOS2": 10,
       "fromApps": 3,
       "fallbacks": 0,
       "missing": 0,
@@ -315,7 +309,7 @@
     {
       "id": "search",
       "mounted": true,
-      "fromOS2": 33,
+      "fromOS2": 34,
       "fromApps": 7,
       "fallbacks": 0,
       "missing": 0,
@@ -326,7 +320,7 @@
     {
       "id": "stream",
       "mounted": false,
-      "fromOS2": 9,
+      "fromOS2": 10,
       "fromApps": 3,
       "fallbacks": 0,
       "missing": 0,
@@ -337,20 +331,18 @@
     {
       "id": "terms",
       "mounted": true,
-      "fromOS2": 25,
+      "fromOS2": 27,
       "fromApps": 4,
       "fallbacks": 0,
-      "missing": 1,
-      "errs": 1,
+      "missing": 0,
+      "errs": 0,
       "fallbackList": [],
-      "missingList": [
-        "κ:0ba3ebd130"
-      ]
+      "missingList": []
     },
     {
       "id": "video",
       "mounted": true,
-      "fromOS2": 28,
+      "fromOS2": 27,
       "fromApps": 22,
       "fallbacks": 0,
       "missing": 0,
@@ -361,20 +353,18 @@
     {
       "id": "wallet",
       "mounted": true,
-      "fromOS2": 45,
+      "fromOS2": 50,
       "fromApps": 5,
       "fallbacks": 0,
-      "missing": 1,
-      "errs": 1,
+      "missing": 0,
+      "errs": 0,
       "fallbackList": [],
-      "missingList": [
-        "κ:0ba3ebd130"
-      ]
+      "missingList": []
     },
     {
       "id": "workspace",
       "mounted": true,
-      "fromOS2": 27,
+      "fromOS2": 28,
       "fromApps": 13,
       "fallbacks": 0,
       "missing": 1,

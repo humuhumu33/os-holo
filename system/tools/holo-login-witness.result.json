@@ -1,0 +1,57 @@
+{
+  "ok": true,
+  "pass": 10,
+  "fail": 0,
+  "results": [
+    {
+      "n": "enrol → did:holo κ (content address) + did:key + Ed25519",
+      "ok": true,
+      "d": "did:key:z6MkszJ5yCFHi6ko…"
+    },
+    {
+      "n": "ONE seed → an omni-chain wallet (eth+btc+sol)",
+      "ok": true,
+      "d": "ethereum,base,arbitrum,optimism,polygon,bsc,bitcoin,solana"
+    },
+    {
+      "n": "12-word recovery phrase issued",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "session verifies via existing verifySession (Law L5, shell-compatible)",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "tampered session refused",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "returning unlock → same canonical identity + did:key",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "wrong secret refused (vault AEAD)",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "roster lists the operator (κ + did:key + cred)",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "recovery (phrase) → same canonical identity",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "recovery → same omni-chain wallet addresses",
+      "ok": true,
+      "d": ""
+    }
+  ]
+}

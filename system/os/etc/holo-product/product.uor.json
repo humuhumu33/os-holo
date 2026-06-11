@@ -1,0 +1,259 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/did/v1",
+    "https://w3id.org/security/data-integrity/v2",
+    {
+      "schema": "https://schema.org/",
+      "prov": "http://www.w3.org/ns/prov#",
+      "dcterms": "http://purl.org/dc/terms/",
+      "rel": "schema:additionalType",
+      "links": {
+        "@id": "schema:hasPart",
+        "@container": "@set"
+      }
+    },
+    {
+      "skos": "http://www.w3.org/2004/02/skos/core#",
+      "hosprod": "https://hologram.os/ns/product#",
+      "hosc": "https://hologram.os/ns/conformance#"
+    }
+  ],
+  "@type": [
+    "schema:CreativeWork",
+    "prov:Entity",
+    "skos:Collection"
+  ],
+  "schema:name": "Holo Product — the canonical foundation for beautiful, valuable, delightful Hologram-native products",
+  "schema:description": "Why: a product is whole only when how it looks and how it works are designed together and shipped with proof. How: this one self-verifying object bundles and balances the two already-wired faculties — Holo UI (the look) and Holo UX (the experience) — as ten capabilities (five per hemisphere), and binds a hybrid delivery method (discover · define · design · build · verify · deliver) drawn from the field's frameworks. What: every Hologram-native product is built on this foundation, binding the κ rather than re-deciding the basics — re-derive this did and each linked hemisphere to verify (Law L5).",
+  "schema:softwareVersion": "1.0",
+  "dcterms:conformsTo": "https://hologram.os/ns/product",
+  "dcterms:license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "hosprod:balance": "Left brain (UX faculties) and right brain (UI faculties) are equal partners: a beautiful product that does not work, and a working product that is not beautiful, both fail Holo Product. Combine and balance the two, every time.",
+  "hosprod:faculties": [
+    {
+      "@id": "hosprod:interaction-design",
+      "hemisphere": "ux",
+      "prefLabel": "Interaction Design",
+      "hosprod:realizedBy": "usr/lib/holo/holo-ux.js",
+      "hosprod:obligation": "Interaction adapts to the host (native-adaptive feel + data-holo-shortcut) and propagates from one source over the postMessage tree — bound, not re-implemented."
+    },
+    {
+      "@id": "hosprod:wireframes-prototypes",
+      "hemisphere": "ux",
+      "prefLabel": "Wireframes & Prototypes",
+      "hosprod:realizedBy": "usr/lib/holo/holo-phi.css",
+      "hosprod:obligation": "Structure is laid on the golden-ratio proportion system (holo-phi) and the zone/layout grid — a coherent skeleton before any skin."
+    },
+    {
+      "@id": "hosprod:information-architecture",
+      "hemisphere": "ux",
+      "prefLabel": "Information Architecture",
+      "hosprod:realizedBy": "usr/share/ns/fs.jsonld",
+      "hosprod:obligation": "Content is organized as the one self-verifying, content-addressed FHS/holospace graph — findable, navigable, addressable by κ."
+    },
+    {
+      "@id": "hosprod:user-research",
+      "hemisphere": "ux",
+      "prefLabel": "User Research",
+      "hosprod:realizedBy": "usr/lib/holo/holo-capability.mjs",
+      "hosprod:obligation": "The product meets the real user + device: the capability tier and operator context are resolved, not assumed (treat their resources as sacred)."
+    },
+    {
+      "@id": "hosprod:scenarios",
+      "hemisphere": "ux",
+      "prefLabel": "Scenarios",
+      "hosprod:realizedBy": "usr/lib/holo/holo-voice.mjs",
+      "hosprod:obligation": "Every flow is told in the plain voice (why → how → what), self-descriptive, revealing power on the user's curiosity — never a manual."
+    },
+    {
+      "@id": "hosprod:visual-design",
+      "hemisphere": "ui",
+      "prefLabel": "Visual Design",
+      "hosprod:realizedBy": "usr/lib/holo/holo-theme.js",
+      "hosprod:obligation": "The look is driven by the one Holo UI engine (palette · presentation · accent), inherited live — beautiful and coherent out of the box."
+    },
+    {
+      "@id": "hosprod:colors",
+      "hemisphere": "ui",
+      "prefLabel": "Colors",
+      "hosprod:realizedBy": "usr/lib/holo/holo-theme.css",
+      "hosprod:obligation": "Colour flows through the canonical --holo-* palette tokens; no attention-grabbing hardcodes bypass them (signal over noise)."
+    },
+    {
+      "@id": "hosprod:graphic-design",
+      "hemisphere": "ui",
+      "prefLabel": "Graphic Design",
+      "hosprod:realizedBy": "usr/lib/holo/holo-icons.js",
+      "hosprod:obligation": "Iconography is the κ-pinned Holo Icons library — every glyph a content-addressed, self-verifying object, not a one-off asset."
+    },
+    {
+      "@id": "hosprod:layouts",
+      "hemisphere": "ui",
+      "prefLabel": "Layouts",
+      "hosprod:realizedBy": "usr/lib/holo/holo-mobile.css",
+      "hosprod:obligation": "Layout adapts by container with safe-area, the 8px rhythm and the tap-target floor — one responsive system, mobile through desktop."
+    },
+    {
+      "@id": "hosprod:typography",
+      "hemisphere": "ui",
+      "prefLabel": "Typography",
+      "hosprod:realizedBy": "usr/lib/holo/holo-theme.css",
+      "hosprod:obligation": "Type is the canonical --holo-font-* tokens with the --holo-font-min readability floor; no token-rendered text falls below it."
+    }
+  ],
+  "hosprod:balanced": {
+    "ux": 5,
+    "ui": 5,
+    "balanced": true
+  },
+  "hosprod:method": [
+    {
+      "@id": "hosprod:discover",
+      "prefLabel": "Discover",
+      "hosprod:draws": [
+        "Lean",
+        "Agile"
+      ],
+      "hosprod:obligation": "Name the value and the user before building — the product's manifest states what it is for, in the plain voice (maximize value, minimize waste)."
+    },
+    {
+      "@id": "hosprod:define",
+      "prefLabel": "Define",
+      "hosprod:draws": [
+        "PRINCE2",
+        "Waterfall"
+      ],
+      "hosprod:obligation": "Every product is a recorded decision: an ADR captures why/what, and its structure is content-addressed (a controlled, documented stage)."
+    },
+    {
+      "@id": "hosprod:design",
+      "prefLabel": "Design",
+      "hosprod:draws": [
+        "Agile"
+      ],
+      "hosprod:obligation": "Design to BOTH doctrines at once — adhere to Holo UI (look) and Holo UX (experience); the two hemispheres are balanced, neither skipped."
+    },
+    {
+      "@id": "hosprod:build",
+      "prefLabel": "Build",
+      "hosprod:draws": [
+        "Scrum",
+        "Kanban",
+        "Lean"
+      ],
+      "hosprod:obligation": "Build iteratively as re-derivable κ-objects within the declared resource budget — continuous flow, work visualized, waste eliminated."
+    },
+    {
+      "@id": "hosprod:verify",
+      "prefLabel": "Verify",
+      "hosprod:draws": [
+        "Six Sigma"
+      ],
+      "hosprod:obligation": "Done is proven, not asserted: a witness re-derives the product to its content address (Law L5) and the fail-closed gate refuses anything unwitnessed."
+    },
+    {
+      "@id": "hosprod:deliver-iterate",
+      "prefLabel": "Deliver & Iterate",
+      "hosprod:draws": [
+        "Kanban",
+        "Agile"
+      ],
+      "hosprod:obligation": "Ship as a self-verifying holo://κ and keep flowing — a product evolves continuously without ever breaking the gate (no regression)."
+    }
+  ],
+  "hosprod:frameworks": [
+    "Agile",
+    "Scrum",
+    "Kanban",
+    "Waterfall",
+    "Lean",
+    "PRINCE2",
+    "Six Sigma",
+    "Hybrid"
+  ],
+  "hosc:authority": "ADR-0065 (Holo Product) · ADR-0030/0057 (Holo UI) · ADR-0062 (Holo UX) · project-management frameworks (Agile · Scrum · Kanban · Waterfall · Lean · PRINCE2 · Six Sigma · Hybrid, cited) · W3C OWL 2 / RDFS / SKOS · UOR-ADDR (κ = H(canonical_form)) · verify by re-derivation (Law L5)",
+  "hosc:witness": "tools/holo-product-witness.mjs",
+  "links": [
+    {
+      "id": "did:holo:sha256:2fdaef467ae2458722cc75682e91145988fecaeda1f17b27b55f391032d5992d",
+      "rel": "hosprod:source",
+      "@type": "schema:SoftwareSourceCode",
+      "leaf": true,
+      "digestSRI": "sha256-L9rvRnriRYcizHVoLpEUWYj+yu2h8XsntV85EDLVmS0=",
+      "digestMultibase": "uEiAv2u9GeuJFhyLMdWgukRRZiP7K7aHxeye1XzkQMtWZLQ"
+    },
+    {
+      "id": "did:holo:sha256:83085c235c97c60d7ae13f67f5009b3fa2e796fcd74d51241d1654b1810b13bd",
+      "rel": "hosprod:ontology",
+      "@type": "schema:DigitalDocument",
+      "leaf": true,
+      "digestSRI": "sha256-gwhcI1yXxg164T9n9QCbP6LnlvzXTVEkHRZUsYELE70=",
+      "digestMultibase": "uEiCDCFwjXJfGDXrhP2f1AJs_oueW_NdNUSQdFlSxgQsTvQ"
+    },
+    {
+      "id": "did:holo:sha256:a043aba05067b98c1f3ffc88ce55bf961bf67ef348590f1c8cc8e4face80ca86",
+      "rel": "hosprod:ux",
+      "@type": "schema:CreativeWork",
+      "leaf": true,
+      "digestSRI": "sha256-oEOroFBnuYwfP/yIzlW/lhv2fvNIWQ8cjMjk+s6AyoY=",
+      "digestMultibase": "uEiCgQ6ugUGe5jB8__IjOVb-WG_Z-80hZDxyMyOT6zoDKhg"
+    },
+    {
+      "id": "did:holo:sha256:4737581b2eebb76cd98100ed956b24badc40b1d49b21c828bc5625062c36d310",
+      "rel": "hosprod:ui-engine",
+      "@type": "schema:SoftwareSourceCode",
+      "leaf": true,
+      "digestSRI": "sha256-RzdYGy7rt2zZgQDtlWskutxAsdSbIcgovFYlBiw20xA=",
+      "digestMultibase": "uEiBHN1gbLuu3bNmBAO2VayS63ECx1JshyCi8ViUGLDbTEA"
+    },
+    {
+      "id": "did:holo:sha256:c8d90d02fd0310e62edf292d9a3fd4a4ace3365c09989e16cd838d928cd7c78f",
+      "rel": "hosprod:ui-kernel",
+      "@type": "schema:SoftwareSourceCode",
+      "leaf": true,
+      "digestSRI": "sha256-yNkNAv0DEOYu3yktmj/UpKzjNlwJmJ4WzYONkozXx48=",
+      "digestMultibase": "uEiDI2Q0C_QMQ5i7fKS2aP9SkrOM2XAmYnhbNg42SjNfHjw"
+    },
+    {
+      "id": "did:holo:sha256:15e309fde5073d129496a2dc5452b222e59f58ceb32c941373b6ea6bd2d0c929",
+      "rel": "hosprod:ui-color",
+      "@type": "schema:DigitalDocument",
+      "leaf": true,
+      "digestSRI": "sha256-FeMJ/eUHPRKUlqLcVFKyIuWfWM6zLJQTc7bqa9LQySk=",
+      "digestMultibase": "uEiAV4wn95Qc9EpSWotxUUrIi5Z9YzrMslBNztupr0tDJKQ"
+    },
+    {
+      "id": "did:holo:sha256:c37aa5fa5f5c6a0d9fb79fe5b986611d29c9a5cb2caf801767bb60c7410dc210",
+      "rel": "hosprod:ui-layout",
+      "@type": "schema:DigitalDocument",
+      "leaf": true,
+      "digestSRI": "sha256-w3ql+l9cag2ft5/luYZhHSnJpcssr4AXZ7tgx0ENwhA=",
+      "digestMultibase": "uEiDDeqX6X1xqDZ-3n-W5hmEdKcmlyyyvgBdnu2DHQQ3CEA"
+    },
+    {
+      "id": "did:holo:sha256:af0f2b5ff47f414281246d8e8e786edc6302bed6731174897f74f105dd2f93f3",
+      "rel": "hosprod:ui-proportion",
+      "@type": "schema:DigitalDocument",
+      "leaf": true,
+      "digestSRI": "sha256-rw8rX/R/QUKBJG2Ojnhu3GMCvtZzEXSJf3TxBd0vk/M=",
+      "digestMultibase": "uEiCvDytf9H9BQoEkbY6OeG7cYwK-1nMRdIl_dPEF3S-T8w"
+    },
+    {
+      "id": "did:holo:sha256:8989a69f032828564550e1c64ead7f91ca5c4de919805b6b8367cfa582995e27",
+      "rel": "hosprod:ui-zones",
+      "@type": "schema:SoftwareSourceCode",
+      "leaf": true,
+      "digestSRI": "sha256-iYmmnwMoKFZFUOHGTq1/kcpcTekZgFtrg2fPpYKZXic=",
+      "digestMultibase": "uEiCJiaafAygoVkVQ4cZOrX-RylxN6RmAW2uDZ8-lgpleJw"
+    },
+    {
+      "id": "did:holo:sha256:6e5f645bee89ca4ffd9a9ea22ee05de4fb6e422d9e4ae61872c37a8134b1ca8b",
+      "rel": "hosprod:ui-icons",
+      "@type": "schema:SoftwareSourceCode",
+      "leaf": true,
+      "digestSRI": "sha256-bl9kW+6Jyk/9mp6iLuBd5PtuQi2eSuYYcsN6gTSxyos=",
+      "digestMultibase": "uEiBuX2Rb7onKT_2anqIu4F3k-25CLZ5K5hhyw3qBNLHKiw"
+    }
+  ],
+  "id": "did:holo:sha256:14f31a138ecb71a931365f6765338fe7f915a6f9ab242a1dd0862aee6e1fde33"
+}

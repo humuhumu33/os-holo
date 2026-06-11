@@ -220,7 +220,25 @@
     panelEl.querySelector("#hm-reload").onclick = () => location.reload();
     panelEl.querySelector("#hm-reverify").onclick = refresh;
     panelEl.querySelector("#hm-copy").onclick = async () => { try { await navigator.clipboard.writeText(lastKappa || ""); toast("κ copied"); } catch { toast(lastKappa || ""); } };
-    panelEl.querySelector("#hm-share").onclick = () => { if (W.HoloTeleport && W.HoloTeleport.share) W.HoloTeleport.share({ title: appName() + " · on hologram" }); else { navigator.clipboard && navigator.clipboard.writeText(location.href); toast("link copied"); } };
+    panelEl.querySelector("#hm-share").onclick = async () => {
+      // Share-to-Run (ADR-064): hand off a link that lands the recipient in the chrome — the app runs
+      // INSTANTLY, fullscreen, verified, with Remix · Share · Save laid over it (a guest, no sign-in),
+      // consistent with the World shell's Share. Built from THIS app's served path (apps/<folder>/… —
+      // the id the frame resolves leniently) + this page's content hash (#k=). Non-app pages keep the
+      // teleport/page-link fallback.
+      // Build the link SYNCHRONOUSLY (no await before the clipboard write — that would drop the
+      // user-activation and the copy would be refused). lastKappa is already set while the panel is
+      // open (refresh()); fall back to the folder so #k= is always present (the chrome re-derives and
+      // shows the app's authoritative κ regardless of this value).
+      const folder = (location.pathname.match(/\/apps\/([^/]+)\//) || [])[1];
+      let link;
+      if (folder) {
+        link = location.origin + "/holospace.html?app=" + encodeURIComponent(folder) + "#k=" + encodeURIComponent(lastKappa || folder);
+      } else if (W.HoloTeleport && W.HoloTeleport.share) { W.HoloTeleport.share({ title: appName() + " · on hologram" }); return; }
+      else { link = location.href; }
+      try { await navigator.clipboard.writeText(link); toast("Link copied — opens & runs instantly, no sign-in ✦"); }
+      catch { W.prompt ? W.prompt("Share this Hologram link:", link) : toast(link); }
+    };
     panelEl.querySelector("#hm-all").onclick = openManager;
     const snap = panelEl.querySelector("#hm-snapshot"); if (snap) snap.onclick = () => toast("state persists in OPFS (the store is the memory · Law L3)");
     const cp = panelEl.querySelector("#hm-checkpoint"); if (cp) cp.onclick = async () => { try { await host.checkpoint(); toast("checkpointed (κ-snapshot)"); } catch (e) { toast("checkpoint: " + (e.message || e)); } };

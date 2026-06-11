@@ -163,9 +163,9 @@
         "schema:SoftwareApplication",
         "schema:WebApplication"
       ],
-      "schema:name": "Holo Winamp",
-      "schema:identifier": "org.hologram.HoloWinamp",
-      "hosfs:fhs": "/opt/winamp"
+      "schema:name": "Holo Amp",
+      "schema:identifier": "org.hologram.HoloAmp",
+      "hosfs:fhs": "/opt/amp"
     },
     {
       "@id": "did:holo:sha256:e8e6717757c65f23993a6fac4a12fb23a9792bbbdf9ae2edc61c31c669d5118a",
@@ -198,5 +198,5 @@
       "hosfs:fhs": "/opt/qemu"
     }
   ],
-  "id": "did:holo:sha256:176f2cce113ac50abfb14611eae4378f3ba30665d0f949cd044b51caaaf07efd"
+  "id": "did:holo:sha256:b6011aa7a09ef2d39e73c8c17a6387caeaa87abbfe17db4783219ca51e8c0a27"
 }

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 200" fill="currentColor">
+  <!-- Holo Guide — "Echo", the cyber-dolphin. Monochrome + tintable by the OS accent (the dock/catalog
+       mark; the glossy colour mascot lives in mascot-light.svg / mascot-dark.svg). -->
+  <g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round">
+    <path d="M31 84 Q19 95 31 107" />
+    <path d="M21 76 Q4 95 21 115" opacity="0.55" />
+  </g>
+  <path d="M97 55 C100 32 118 27 126 34 C122 46 112 54 101 58 Z" />
+  <path d="M147 103 C172 95 191 98 201 88 C195 107 187 117 181 123 C192 128 199 140 203 151 C183 146 166 139 151 130 Z" />
+  <path fill-rule="evenodd" d="M40 95 C41 68 60 50 88 50 C112 50 134 68 151 103 C157 116 158 125 154 133 C138 152 108 159 83 151 C64 145 49 129 43 110 C41 105 40 100 40 95 Z M76 92 a9 9 0 1 0 -18 0 a9 9 0 1 0 18 0 Z" />
+  <path d="M82 139 C74 158 67 171 75 177 C87 171 96 157 98 142 Z" />
+</svg>

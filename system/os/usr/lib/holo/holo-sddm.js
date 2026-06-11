@@ -12,7 +12,15 @@
 // The real theme bytes (data/themes/maldives/*, components/2.0/*) are installed verbatim and
 // content-addressed under /usr/share/sddm/ — this runtime renders that real theme.
 
-import { enroll, unlock, roster, openSession } from "./holo-identity.mjs";
+import { openSession, ephemeral } from "./holo-identity.mjs";
+// Holo Login: the operator's identity AND omni-chain wallet derive from ONE BIP-39 seed — the
+// canonical login identity is now the seed's did:key (the SAME key Holo Wallet/Privacy use), its
+// session κ the content address of that key (Law L1, verifySession-compatible). enroll/unlock/roster
+// come from here; openSession + guest (ephemeral, non-persistent) stay on holo-identity.
+import { enroll as enrollRoot, unlock, roster } from "./holo-login.mjs";
+// enroll() returns just the principal (the 12-word phrase stays inside the content-addressed vault,
+// retrievable later for backup); accepts the old `passphrase` param name as the unlock `secret`.
+const enroll = async (o = {}) => (await enrollRoot({ label: o.label, secret: o.passphrase ?? o.secret, cred: o.cred })).principal;
 import { measure, describe } from "./holo-host.mjs";
 import { teeAvailable, teeReason, teeName, teeEnroll, teeAssert, teeError } from "./holo-webauthn.mjs";
 
@@ -149,6 +157,28 @@ function passphrasePrompt(name, firstRun) {
   });
 }
 
+// pairOverlay({ svg, onCancel }) — the "Sign in with your phone" panel: a themed card holding the
+// scannable QR (a Holo QR SVG) and a live status line. Self-contained DOM (like passphrasePrompt),
+// so the QML stays minimal. Returns { close, status } so the transport step can update progress.
+function pairOverlay({ svg, onCancel }) {
+  const close = () => { try { document.body.removeChild(ov); } catch {} onCancel && onCancel(); };
+  const qr = el("div", { style: "width:300px;height:300px;background:#fff;border-radius:16px;padding:12px;box-sizing:border-box;" });
+  qr.innerHTML = svg;
+  const qsvg = qr.querySelector("svg");
+  if (qsvg) { qsvg.style.width = "100%"; qsvg.style.height = "100%"; qsvg.style.display = "block"; qsvg.style.imageRendering = "pixelated"; }
+  const statusEl = el("div", { style: "font-size:12px;opacity:.75;margin:14px 0;min-height:16px;" }, "Waiting for your phone…");
+  const card = el("div", { style: "background:#0d0a24;border:1px solid #2a2550;border-radius:16px;padding:24px;width:348px;color:#e7e9ff;font-family:inherit;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.55);" },
+    el("div", { style: "font-weight:700;font-size:17px;margin-bottom:6px;" }, "Sign in with your phone"),
+    el("div", { style: "opacity:.7;font-size:13px;margin-bottom:16px;line-height:1.45;" }, "Open your phone's camera and scan this code, then approve with your fingerprint or face."),
+    el("div", { style: "display:grid;place-items:center;" }, qr),
+    statusEl,
+    el("div", { style: "display:flex;justify-content:center;" }, Button({ text: "Cancel", width: 110, onClick: close })));
+  const ov = el("div", { style: "position:fixed;inset:0;background:rgba(7,4,26,.78);backdrop-filter:blur(5px);display:grid;place-items:center;z-index:99999;" }, card);
+  ov.addEventListener("mousedown", (e) => { if (e.target === ov) close(); });
+  document.body.appendChild(ov);
+  return { close, status: (t) => { statusEl.textContent = t; } };
+}
+
 // createGreeter(params) — wires the real SDDM API to the self-sovereign + hardware-bound backend.
 export async function createGreeter(params) {
   const NEXT = params.get("next") || "apps/sdk/index.html";
@@ -163,10 +193,11 @@ export async function createGreeter(params) {
   const emit = (sig, ...a) => handlers[sig].forEach((f) => { try { f(...a); } catch {} });
 
   // establish(): bind operator ⊗ host, sign the loginctl-style session, hand off to the shell.
-  async function establish(principal, session) {
-    const token = await openSession(principal, { session: session.id, next: session.loader, host: host ? host.hostKappa : "" });
+  async function establish(principal, session, { guest = false } = {}) {
+    const token = await openSession(principal, { session: session.id, next: session.loader, host: host ? host.hostKappa : "", guest: guest || undefined });
     try { sessionStorage.setItem("holo.session", JSON.stringify(token)); } catch {}
-    try {
+    // A guest is NON-PERSISTENT: skip the OPFS session mirror so nothing is written to the store.
+    if (!guest) try {
       if (navigator?.storage?.getDirectory) {
         const root = await navigator.storage.getDirectory();
         const v = await root.getDirectoryHandle("var", { create: true });
@@ -286,6 +317,60 @@ export async function createGreeter(params) {
         // fall back to the Name field so the operator can still sign in or enrol.
         if (/NotAllowed/i.test((e && e.name) || "")) { emit("informationMessage", teeError(e)); emit("loginFailed"); return; }
         emit("needName");
+      }
+    },
+    // sddm.pairWithPhone() — "scan QR to Access" (Holo Pair). This new device mints its OWN key +
+    // a single-use channel and shows a QR; the operator's phone (already signed in) scans it, and
+    // its biometric-unlocked key GRANTS this device a scoped, revocable capability (no key leaves the
+    // phone). Lazy-loads Holo Pair + Holo QR so the default login stays lean. The live phone→desktop
+    // transport (κ pub/sub over the content-blind relay) lands next; the QR + offer are ready now.
+    async pairWithPhone() {
+      const abort = new AbortController();
+      try {
+        const [pair, { toSVG }] = await Promise.all([import("./holo-pair.mjs"), import("./holo-qr.js")]);
+        const deviceName = (host && host.hostKappa ? "holo-" + host.hostKappa.split(":").pop().slice(0, 4) : "This device");
+        const { offer, secrets } = await pair.createPairOffer({ deviceName });
+        const url = pair.offerToUrl(offer, location.origin);
+        const svg = toSVG(url, { scale: 8, margin: 2, dark: "#0b071e", light: "#ffffff", opts: { ecc: "L" } });
+        const ui = pairOverlay({ svg, onCancel: () => { sddm.__pairing = null; abort.abort(); } });
+        sddm.__pairing = { offer, secrets, url, channel: offer.channel, ui };
+        // wait for the phone to drop the grant on the single-use channel, then verify + sign in
+        const blob = await pair.pollGrant(offer.channel, { signal: abort.signal });
+        if (!blob) { if (!abort.signal.aborted) ui.status("Timed out — Cancel and try again"); return; }
+        ui.status("Approved — signing you in…");
+        const got = await pair.acceptGrant(secrets, blob);              // decrypt + verify the grant (Law L5)
+        const session = SESSIONS[defaultSessionIndex] || SESSIONS[0];
+        // a DELEGATED session: the device acts for the operator, carrying the operator-signed grant as
+        // proof (only this device could decrypt it — E2E to its key). Device-signed session = a refinement.
+        const token = { "@type": "HoloDelegatedSession", delegated: true, operator: got.operator, label: got.label || "",
+          device: secrets.deviceKappa, grant: got.grant, can: got.can, session: session.id, next: session.loader,
+          host: host ? host.hostKappa : "", issuedAt: new Date().toISOString() };
+        try { sessionStorage.setItem("holo.session", JSON.stringify(token)); } catch {}
+        emit("loginSucceeded");
+        const sep = session.loader.includes("?") ? "&" : "?";
+        const u = `${session.loader}${sep}operator=${encodeURIComponent(got.operator)}&host=${encodeURIComponent(host ? host.hostKappa : "")}&session=${encodeURIComponent(got.grant.id)}&via=pair`;
+        sddm.__pendingUrl = u;
+        setTimeout(() => { location.href = u; }, 850);
+      } catch (e) {
+        const msg = "Phone sign-in failed: " + (e && e.message || e);
+        if (sddm.__pairing && sddm.__pairing.ui) sddm.__pairing.ui.status(msg); else emit("informationMessage", msg);
+      }
+    },
+    // sddm.guest() — non-persistent GUEST access: mint an ephemeral sovereign key (never stored), open
+    // a session, go. No name, no biometric, no passphrase. Seamless for a human (one tap) AND an agent
+    // (login.html?guest=1 calls this on load). Closing the session forgets the key entirely.
+    async guest() {
+      try {
+        const principal = await ephemeral({ label: "Guest" });
+        const session = SESSIONS[defaultSessionIndex] || SESSIONS[0];
+        emit("informationMessage", "Entering as guest…");
+        const { url } = await establish(principal, session, { guest: true });
+        sddm.__pendingUrl = url;
+        setTimeout(() => { location.href = url; }, 350);
+        return url;
+      } catch (e) {
+        emit("informationMessage", "Guest sign-in failed: " + (e && e.message || e));
+        emit("loginFailed");
       }
     },
     powerOff() { document.documentElement.innerHTML = '<div style="position:fixed;inset:0;background:#000"></div>'; },

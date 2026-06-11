@@ -26,6 +26,10 @@
      anything. window.HoloTerms is defined synchronously; gate() does its work lazily. -->
 <script>window.__holoTermsBadge = false;</script>
 <script src="_shared/holo-terms.js"></script>
+<!-- Share-to-Run chrome (ADR-064): the OS-level guest journey (run · remix · share · save), laid
+     OVER the app's sandboxed frame on a SHARED landing only. Loaded defer so window.HoloShareChrome
+     is defined before the projection finishes mounting; renders nothing unless asked. -->
+<script src="_shared/holo-share-chrome.js" defer></script>
 <script type="module">
 import { mount, parseLink } from "./holo-launch.mjs";
 import { sealConstitution } from "./_shared/holo-admit.mjs";
@@ -64,9 +68,18 @@ async function boot() {
   const index = await fetch("./apps/index.jsonld").then((r) => r.json()).catch(() => null);
   if (!index) return die("No app index yet — run <code>node tools/build-app.mjs</code>.");
   const apps = index["dcat:dataset"] || [];
-  const app = link ? apps.find((a) => a["@id"] === link.did)
-            : raw  ? apps.find((a) => a["schema:identifier"] === raw || a["@id"] === raw)
-            : null;
+  let app = link ? apps.find((a) => a["@id"] === link.did)
+          : raw  ? apps.find((a) => a["schema:identifier"] === raw || a["@id"] === raw)
+          : null;
+  // Lenient fallback for a bare app reference — e.g. a Share-to-Run link built from an app's served
+  // path (apps/<folder>/…) by an in-app surface that doesn't know the did (ADR-064). Match by the
+  // folder id, then by an identifier suffix. Additive: only runs when the strict match found nothing,
+  // so it never changes an existing resolution.
+  if (!app && raw && !link) {
+    const r = String(raw).toLowerCase();
+    app = apps.find((a) => String((a["dcat:landingPage"] || "").split("/")[1] || "").toLowerCase() === r)
+       || apps.find((a) => String(a["schema:identifier"] || "").toLowerCase().endsWith(r));
+  }
   if (!app) return die(`<b>Hologram OS</b> — pick a holospace:<div class="apps">` +
     apps.map((a) => `<a href="?app=${encodeURIComponent(a["@id"])}">${a["schema:name"]}</a>`).join(" · ") + `</div>`);
 
@@ -113,12 +126,20 @@ async function boot() {
   document.title = `${m.name} · holospace`;
   msg.remove();
   document.body.appendChild(f);
+  // Hand the share-to-run chrome (ADR-064) the verified identity of what we just mounted.
+  return { name: m.name, kappa: m.id, link: m.link, raw };
 }
 // Unified experience (everything is an object): by default a single link opens the app INSIDE the
-// World shell — a fully editable holospace object. ?bare=1 keeps the standalone fullscreen mount
-// (for embedding one app, or a minimal kiosk).
-if (params.get("bare") === "1") {
-  boot().catch((e) => die("Boot failed: <code>" + (e && e.message || e) + "</code>"));
+// World shell — a fully editable holospace object. But a SHARED link is someone handing a guest a
+// running app: it carries #k= provenance (the teleport convention), so it lands FULLSCREEN with the
+// share-to-run chrome (ADR-064) — run it, remix it, share it, save it. ?bare=1 keeps the standalone
+// fullscreen mount (embedding one app, or a minimal kiosk; no chrome unless ?chrome=1).
+const hashParams = new URLSearchParams((location.hash || "").replace(/^#/, ""));
+const shared = !!hashParams.get("k") || params.get("shared") === "1";
+const wantChrome = shared || params.get("chrome") === "1";
+if (params.get("bare") === "1" || shared) {
+  boot().then((ctx) => { if (wantChrome && ctx && window.HoloShareChrome) window.HoloShareChrome.mount(ctx); })
+        .catch((e) => die("Boot failed: <code>" + (e && e.message || e) + "</code>"));
 } else {
   const p = new URLSearchParams();
   if (raw) p.set("open", raw);

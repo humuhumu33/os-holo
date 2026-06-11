@@ -1,0 +1,67 @@
+{
+  "ok": true,
+  "pass": 12,
+  "fail": 0,
+  "results": [
+    {
+      "n": "2-of-3: every pair of shares reconstructs",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "2-of-3: all three shares also reconstruct",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "3-of-5: any three reconstruct",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "fewer than T shares refused",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "a lone share never equals the secret (no info from < T)",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "tampered share refused (hash commitment)",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "shares from different splits refused",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "duplicate share index refused",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "guardian shares recover the exact mnemonic",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "recovered mnemonic → SAME canonical identity (did:holo + did:key)",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "recovered mnemonic → SAME omni-chain wallet",
+      "ok": true,
+      "d": ""
+    },
+    {
+      "n": "a tampered guardian share fails recovery (BIP-39 + commitment)",
+      "ok": true,
+      "d": ""
+    }
+  ]
+}

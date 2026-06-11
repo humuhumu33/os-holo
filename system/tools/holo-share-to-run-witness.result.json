@@ -1,0 +1,78 @@
+{
+  "spec": "Hologram OS — a shared (#k=) link lands the guest fullscreen in the running app with the share-to-run chrome (run · remix · share · save); a bare kiosk link stays clean (ADR-064, Phase 0)",
+  "witnessed": true,
+  "covers": [
+    "share-to-run",
+    "guest-landing",
+    "remix",
+    "share",
+    "save"
+  ],
+  "results": [
+    {
+      "name": "frame document loads on a shared (#k=) link",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "the app mounts fullscreen on a shared link (no redirect to the World shell)",
+      "ok": true,
+      "detail": "http://127.0.0.1:53033/holospace.html?app=org.hologram.HoloSearch&sw=0#k=did%3Aholo%3Asha256%3Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "the share-to-run chrome renders over the app",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "chrome offers Remix · Share · Save",
+      "ok": true,
+      "detail": "Remix, Share, Save"
+    },
+    {
+      "name": "chrome shows the app's VERIFIED content address (κ chip)",
+      "ok": true,
+      "detail": " sha256:ef10cd5c…"
+    },
+    {
+      "name": "chrome carries the 'Made on Hologram' loop",
+      "ok": true,
+      "detail": "Made on Hologram"
+    },
+    {
+      "name": "the arrival moment fired (welcome banner)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "a bare kiosk link (no #k=) stays chrome-free",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the World shell Share emits the magic (#k=) link (modal · QR · Copy all carry it)",
+      "ok": true,
+      "detail": "http://127.0.0.1:53033/holospace.html?app=did%3Aholo%3Asha256%3Aef10cd5c8b4aa6afcacaeae18ef85b3bbc1bb734615758e13876eb00f7d6c4ff#k=did%3Aholo%3Asha256%3Aef10cd5c8b4aa6afcacaeae18ef85b3bbc1bb734615758e13876eb00f7d6c4ff"
+    },
+    {
+      "name": "that shared link lands the next guest in the chrome (the loop is closed)",
+      "ok": true,
+      "detail": "http://127.0.0.1:53033/holospace.html?app=did%3Aholo%3Asha256%3Aef10cd5c8b4aa6afcacaeae18ef85b3bbc1bb734615758e13876eb00f7d6c4ff&sw=0#k=did%3Aholo%3Asha256%3Aef10cd5c8b4aa6afcacaeae18ef85b3bbc1bb734615758e13876eb00f7d6c4ff"
+    },
+    {
+      "name": "a path-built link (?app=<folder>) resolves and lands in the chrome",
+      "ok": true,
+      "detail": "http://127.0.0.1:53033/holospace.html?app=search&sw=0#k=sha256%3Abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "name": "the in-app Manage panel Share emits the magic (#k=) link too (aligned)",
+      "ok": true,
+      "detail": "http://127.0.0.1:53033/holospace.html?app=terms#k=sha256%3A90fae6ae17e864affda494fccccfddfae9fa1418ada0d41a4532184f5308477c"
+    },
+    {
+      "name": "no fatal page errors",
+      "ok": true,
+      "detail": "clean"
+    }
+  ]
+}

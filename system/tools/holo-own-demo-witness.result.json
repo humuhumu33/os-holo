@@ -11,20 +11,20 @@
     "law-l5"
   ],
   "asset": "blake3:a4a8f7cf33cbd25d8ee2c9962587956f0007644b61a34b75439e81456205c299",
-  "seller": "sha256:e0c82c9d397cb27f8ca7217c1d8b516712372802ed21ebb0521e086ee452caef",
-  "buyer": "sha256:4abbf1ba2e90b7d0d8f9237b9789bd49cabe7bc7b3b357ea78458fb3d3dbabe8",
+  "seller": "sha256:efea7fbcfdb39e6d4115dc631da5a773011e70577dc055dabef1abc4736ecd20",
+  "buyer": "sha256:90590a2f5ed5d712ddda135fc74cf381e884b32fda33ef22232f0e87c1eeb63b",
   "salePrice": "500 NP",
   "voucher": {
     "@context": "https://hologram.os/ns/own#",
     "@type": "https://hologram.os/ns/own#Voucher",
-    "order": "blake3:1922a2db45d1432855f7b8e1f69f00ef1c809b7bf9dcf8d5230b7f085dbd2e79",
-    "subject": "blake3:49424af12c047be7481741f8a6e8c650c4c1fb68f305ac70bcba6f07c00b5ae2",
+    "order": "blake3:ffbf71cb7347c01e444f6583080791fbafa2b18ba9ca080e73eac21891da1ee5",
+    "subject": "blake3:ca290e5a356281322a394e5f087fe437f003e3ab5a80f2cc793a85005c60648e",
     "amount": {
       "value": 500,
       "currency": "NP"
     },
-    "payee": "sha256:e0c82c9d397cb27f8ca7217c1d8b516712372802ed21ebb0521e086ee452caef",
-    "@id": "blake3:4f3213804a86994b0a7df89d13ab6fbf031aae0682e91d493944c10489b177f4"
+    "payee": "sha256:efea7fbcfdb39e6d4115dc631da5a773011e70577dc055dabef1abc4736ecd20",
+    "@id": "blake3:788ceda752badf75dbd9dc1634191668e48cbedd5e9f026fa96cba3e7ce37821"
   },
   "checks": {
     "Maya owns the holospace, verified over MCP (own_verify → Maya)": true,

@@ -13,7 +13,7 @@
 export function fhsMap(rel) {
   rel = String(rel).replace(/^\/+/, "");
   let mm;
-  if (rel === "apps/index.jsonld") return null;                       // the frame needs landingPage → dev serves original
+  if (rel === "apps/index.jsonld") return "usr/share/holospaces/index.jsonld";   // the apps catalog, vendored into the image (the dev serve still prefers the live Apps-repo copy via readRel)
   // _shared and pkg are ALWAYS the OS runtime — wherever an app references them.
   if ((mm = rel.match(/^(?:apps\/[^/]+\/)?_shared\/(.+)$/))) return "usr/lib/holo/" + mm[1];
   if ((mm = rel.match(/^(?:apps\/[^/]+\/)?pkg\/(.+)$/))) return "usr/lib/pkg/" + mm[1];
@@ -26,12 +26,12 @@ export function fhsMap(rel) {
   if (rel === "apps-witness.result.json") return "srv/apps-witness.result.json";
   // The boot chain: rEFInd (boot.html at root) → Plymouth (splash.html) → SDDM (login.html)
   // → shell (home.html) → editor (workspace.html). All in /usr/share/frame.
-  if (["holospace.html", "home.html", "find.html", "splash.html", "login.html", "workspace.html"].includes(rel)) return "usr/share/frame/" + rel;
+  if (["holospace.html", "home.html", "find.html", "splash.html", "login.html", "workspace.html", "pair.html"].includes(rel)) return "usr/share/frame/" + rel;
   if (rel === "boot.html") return "boot/index.html";                  // the bootloader, served at the root
   // …the bootloader's OWN asset subdir is physically boot/boot/, so `boot/<x>` maps one level deeper.
   if (/^boot\/(refind\.conf|boot-manifest\.json|icons\/|themes\/|make-boot\.mjs)/.test(rel)) return "boot/boot/" + rel.slice(5);
   if (["holo-boot-sw.js", "coi-serviceworker.min.js"].includes(rel)) return "boot/" + rel;
-  if (["holo-sw.js", "holo-launch.mjs", "holo-boot-sw-register.mjs", "browser-sw.js"].includes(rel)) return "lib/" + rel;
+  if (["holo-sw.js", "holo-launch.mjs", "holo-omni.mjs", "holo-boot-sw-register.mjs", "browser-sw.js"].includes(rel)) return "lib/" + rel;
   if (["holo-resolver.mjs", "holo-sources.mjs", "holo-peers.mjs", "holo-uor.mjs", "holo-object.mjs", "holo-wire.mjs"].includes(rel)) return "sbin/" + rel;
   if (["manifest.webmanifest", "os-closure.json"].includes(rel)) return "etc/" + rel;
   if (["icon-192.png", "icon-512.png"].includes(rel)) return "usr/share/icons/" + rel;

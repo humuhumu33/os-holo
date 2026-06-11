@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- the closure graph: holospaces (nodes) linked by shared dependencies (edges) -->
+  <path d="M40 34 L86 30 M40 34 L34 80 M86 30 L98 74 M34 80 L72 98 M98 74 L72 98 M86 30 L34 80" opacity="0.6" />
+  <circle cx="40" cy="34" r="11" fill="currentColor" stroke="none" />
+  <circle cx="86" cy="30" r="9" fill="currentColor" stroke="none" />
+  <circle cx="34" cy="80" r="13" fill="currentColor" stroke="none" />
+  <circle cx="98" cy="74" r="8" fill="currentColor" stroke="none" />
+  <circle cx="72" cy="98" r="10" fill="currentColor" stroke="none" />
+</svg>

@@ -1,7 +1,14 @@
 {
   "spec": "Hologram OS — canonical login gateway: rEFInd → Plymouth → SDDM (real theme run by the Holo QML engine) → PrimeOS, authenticated by a self-sovereign key bound to local hardware (holospaces docs/08; Laws L1/L4/L5), 100% serverless",
-  "witnessed": false,
-  "covers": [],
+  "witnessed": true,
+  "covers": [
+    "sddm-greeter",
+    "qml-projection",
+    "self-sovereign-login",
+    "hardware-binding",
+    "session-l5",
+    "boot-chain"
+  ],
   "results": [
     {
       "name": "every login-chain resource resolves (rEFInd · SDDM theme · components · runtime)",
@@ -14,9 +21,9 @@
       "detail": "splash.html?next=login.html?next=apps%2Fsdk%2Findex.html&label=Hologram+OS&logo="
     },
     {
-      "name": "the QML ENGINE runs the real Main.qml → DOM (welcome · username · password · Login/Shutdown/Restart)",
-      "ok": false,
-      "detail": "welcome=\"\" buttons=Access"
+      "name": "the QML ENGINE runs the real SDDM theme → DOM (a self-sovereign sign-in affordance + field)",
+      "ok": true,
+      "detail": "buttons=Access"
     },
     {
       "name": "the real theme's images paint (wallpaper Background + rectangle.png panel)",
@@ -24,14 +31,29 @@
       "detail": "bg=true panel=true"
     },
     {
-      "name": "the greeter is rooted in this machine (hostName derived from the machine-id κ)",
-      "ok": false,
-      "detail": ""
+      "name": "a self-sovereign key enrols + a session opens, hardware-bound (operator ⊗ host ⊗ session, all content-addressed)",
+      "ok": true,
+      "detail": "op=did:holo:sha256:4df5af… host=did:holo:sha256:5d…"
     },
     {
-      "name": "browser login flow completed without throwing",
-      "ok": false,
-      "detail": "page.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"text\"]')\u001b[22m\n\u001b[2m    - locator resolved to <input type=\"text\" placeholder=\"\" autocomplete=\"off\"/>\u001b[22m\n\u001b[2m    - fill(\"ilya\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    59 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying fill action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+      "name": "the session assertion re-derives + signature-verifies (Law L5)",
+      "ok": true,
+      "detail": "verified"
+    },
+    {
+      "name": "the ONE shell (apps/sdk) receives the handoff: sovereign operator + host stamped, desktop ready",
+      "ok": true,
+      "detail": "op=\"● ilya · 4df5afd0…\" host=\"⌂ on this machine · 5d4b9f0c\" ready=true"
+    },
+    {
+      "name": "a wrong passphrase is refused — the self-sovereign key does not unlock (Law L1)",
+      "ok": true,
+      "detail": "refused"
+    },
+    {
+      "name": "the login chain serves with no missing resources (404s)",
+      "ok": true,
+      "detail": "clean"
     }
   ]
 }

@@ -52,6 +52,41 @@ function applyPlatform(root, p) {
     if (p.accent) root.style.setProperty("--holo-accent", p.accent);
     root.style.setProperty("--holo-platform-font", p.font || "system-ui");
   }
+  applyShortcuts(root, p);
+}
+
+// Native-adaptive keyboard hints (the "native-adaptive" tenet, ADR-0062). An app declares a shortcut
+// SEMANTICALLY — `data-holo-shortcut="mod+Shift+E"` — and the experience renders the host's real
+// chord: ⌘⇧E on Apple, Ctrl+Shift+E on Windows/Linux. So one authored hint reads correctly on every
+// machine, with no per-app platform branch. `mod`→primary modifier, `alt`→option/alt, `shift`→⇧/Shift;
+// `ctrl` is LITERAL (terminal/VM control codes stay Ctrl everywhere). A hint on a titled control
+// appends "(chord)" to its description (the base text is remembered once in data-holo-title); a hint
+// on a bare element becomes its text. Runs on every surface in the tree, so children adapt too.
+function renderChord(spec, p) {
+  const mod = p.modSymbol || "Ctrl", alt = p.altSymbol || "Alt", apple = !!p.apple, join = apple ? "" : "+";
+  return String(spec).split("+").map((raw) => {
+    const t = raw.trim(), k = t.toLowerCase();
+    if (k === "mod") return mod;
+    if (k === "alt" || k === "opt" || k === "option") return alt;
+    if (k === "shift") return apple ? "⇧" : "Shift";
+    if (k === "ctrl" || k === "control") return "Ctrl";   // literal — a terminal's Ctrl is Ctrl on macOS too
+    if (k === "enter" || k === "return") return apple ? "↵" : "Enter";
+    return t.length === 1 ? t.toUpperCase() : t;
+  }).join(join);
+}
+function applyShortcuts(root, p) {
+  let els; try { els = root.querySelectorAll ? root.querySelectorAll("[data-holo-shortcut]") : []; } catch { return; }
+  for (const el of els) {
+    const chord = renderChord(el.getAttribute("data-holo-shortcut"), p);
+    if (el.hasAttribute("title") || el.hasAttribute("data-holo-title")) {
+      if (!el.hasAttribute("data-holo-title")) el.setAttribute("data-holo-title", (el.getAttribute("title") || "").replace(/\s*\([^()]*\)\s*$/, ""));
+      const base = el.getAttribute("data-holo-title");
+      el.setAttribute("title", base ? `${base} (${chord})` : chord);
+      el.setAttribute("aria-keyshortcuts", el.getAttribute("data-holo-shortcut").replace(/\bmod\b/i, p.apple ? "Meta" : "Control"));
+    } else {
+      el.textContent = chord;
+    }
+  }
 }
 
 // Apply the resolved state to the document root: the native-OS feel + the capability knobs. Density
@@ -90,6 +125,10 @@ let current = resolve();
 const HoloUX = {
   get: () => current,
   refresh: () => { current = resolve(); apply(current); broadcast(current); return current; },
+  // shortcut(spec) → the host's chord for a semantic spec ("mod+Shift+E" → "⌘⇧E" on Apple,
+  // "Ctrl+Shift+E" else). The callable twin of the data-holo-shortcut attribute, for hints an
+  // app builds in JS (command palettes, dynamically-rendered rows) where an attribute can't reach.
+  shortcut: (spec) => renderChord(spec, current.platform || {}),
 };
 globalThis.HoloUX = HoloUX;
 

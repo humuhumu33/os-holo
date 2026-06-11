@@ -243,6 +243,45 @@ export function decodeString(dataHex) {
   } catch { return ""; }
 }
 
+// ── EIP-712 typed-structured-data hashing (sovereign, client-side — no provider, no server) ──
+// The standard "sign-in / permit / order" digest dapps ask for. Pure keccak + ABI word encoding;
+// the wallet signs hashTypedData(...) with the account key. Witnessed against the EIP-712 spec vector.
+const _u8 = (s) => new TextEncoder().encode(s);
+const pad32L = (bytes) => { const o = new Uint8Array(32); o.set(bytes.subarray(0, 32), 32 - Math.min(32, bytes.length)); return o; };
+const pad32R = (bytes) => { const o = new Uint8Array(32); o.set(bytes.subarray(0, 32)); return o; };
+const uint32be = (value) => { let v = BigInt(value); if (v < 0n) v += 1n << 256n; return hexToBytes("0x" + v.toString(16).padStart(64, "0")); };
+function eip712EncodeType(primaryType, types) {
+  const deps = new Set();
+  (function visit(t) { if (deps.has(t) || !types[t]) return; deps.add(t); for (const f of types[t]) { const base = f.type.replace(/\[\d*\]$/, ""); if (types[base]) visit(base); } })(primaryType);
+  deps.delete(primaryType);
+  return [primaryType, ...[...deps].sort()].map((t) => `${t}(${types[t].map((f) => `${f.type} ${f.name}`).join(",")})`).join("");
+}
+const eip712TypeHash = (primaryType, types) => keccak256(_u8(eip712EncodeType(primaryType, types)));
+function eip712Field(type, value, types) {
+  if (types[type]) return keccak256(eip712Data(type, value, types));                 // nested struct
+  if (type === "string") return keccak256(_u8(String(value)));
+  if (type === "bytes") return keccak256(hexToBytes(value));
+  if (type === "address") return pad32L(hexToBytes(value));
+  if (type === "bool") return pad32L(Uint8Array.of(value ? 1 : 0));
+  if (/^u?int\d*$/.test(type)) return uint32be(value);
+  if (/^bytes\d+$/.test(type)) return pad32R(hexToBytes(value));
+  const m = type.match(/^(.*)\[\d*\]$/);
+  if (m) return keccak256(concatBytes(...value.map((v) => eip712Field(m[1], v, types))));
+  throw new Error("EIP-712: unsupported type " + type);
+}
+function eip712Data(primaryType, data, types) {
+  return concatBytes(eip712TypeHash(primaryType, types), ...types[primaryType].map((f) => eip712Field(f.type, data[f.name], types)));
+}
+export const eip712HashStruct = (primaryType, data, types) => keccak256(eip712Data(primaryType, data, types));
+export function hashTypedData({ domain, types, primaryType, message }) {
+  const t = { ...types };
+  if (!t.EIP712Domain) {
+    const order = [["name", "string"], ["version", "string"], ["chainId", "uint256"], ["verifyingContract", "address"], ["salt", "bytes32"]];
+    t.EIP712Domain = order.filter(([k]) => domain[k] !== undefined).map(([name, type]) => ({ name, type }));
+  }
+  return keccak256(concatBytes(Uint8Array.of(0x19, 0x01), eip712HashStruct("EIP712Domain", domain, t), eip712HashStruct(primaryType, message, t)));
+}
+
 // ── ENS namehash (EIP-137) ───────────────────────────────────────────────────────────
 export function namehash(name) {
   let node = new Uint8Array(32);

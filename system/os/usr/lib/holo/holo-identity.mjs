@@ -107,6 +107,19 @@ export async function unlock(kappa, passphrase) {
   return principalFrom(rec, priv);
 }
 
+// ── ephemeral (GUEST): mint a self-sovereign key that is NEVER written to the store. Same κ model
+//    (identity is the content address of the pubkey, Law L1), but it lives only in memory — closing
+//    the session forgets it. Seamless one-call access for a human ("Continue as guest") or an agent.
+export async function ephemeral({ label = "Guest" } = {}) {
+  const a = await axis();
+  const kp = await SUB.generateKey(keyParams(a), true, ["sign", "verify"]);
+  const pubRaw = new Uint8Array(await SUB.exportKey("raw", kp.publicKey));
+  const kappa = await addressOf(pubRaw);
+  const pkcs8 = new Uint8Array(await SUB.exportKey("pkcs8", kp.privateKey));
+  const priv = await SUB.importKey("pkcs8", pkcs8, keyParams(a), false, ["sign"]);
+  return principalFrom({ kappa, label, alg: a, pub: b64(pubRaw), avatar: avatarFor(kappa), guest: true }, priv);
+}
+
 // ── the roster (SDDM userModel): the operators enrolled on this device.
 export async function roster() {
   return (await store.all()).map((r) => ({ kappa: r.kappa, label: r.label, alg: r.alg, cred: r.cred || null, avatar: r.avatar || avatarFor(r.kappa), createdAt: r.createdAt }));
@@ -115,9 +128,10 @@ export async function forget(kappa) { return store.del(kappa); }
 
 // ── a session assertion: a content-addressed, signed claim "this operator opened this
 //    session" — the handoff token the greeter writes and the shell verifies (Law L5).
-export async function openSession(principal, { session, next, host } = {}) {
+export async function openSession(principal, { session, next, host, guest } = {}) {
   const body = { "@type": "HoloSession", operator: principal.kappa, label: principal.label,
-    session: session || "primeos", next: next || "", host: host || "", issuedAt: new Date().toISOString(), nonce: hex(rand(8)) };
+    session: session || "primeos", next: next || "", host: host || "", issuedAt: new Date().toISOString(), nonce: hex(rand(8)),
+    ...(guest ? { guest: true } : {}) };
   const c = canon(body);
   const id = await addressOf(te.encode(c));
   return { id, ...body, alg: principal.alg, pub: principal.pub, sig: await principal.sign(c) };

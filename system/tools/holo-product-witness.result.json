@@ -1,0 +1,52 @@
+{
+  "spec": "Holo Product (ADR-0065) is the canonical, self-verifying foundation for Hologram-native products: it bundles + BALANCES Holo UI (look) and Holo UX (experience) as ten faculties (five per hemisphere, each wired + obligated) and binds a hybrid delivery method (discover · define · design · build · verify · deliver) drawn from the field's PM frameworks. Sealed as one UOR object that re-derives to its content address and whose linked hemispheres re-derive (Law L5); it rests on the proven Holo UI + Holo UX gate rows. Every product binds the κ rather than re-deciding the basics.",
+  "authority": "ADR-0065 (Holo Product) · ADR-0030/0057 (Holo UI) · ADR-0062 (Holo UX) · Agile · Scrum · Kanban · Waterfall · Lean · PRINCE2 · Six Sigma · Hybrid (cited) · W3C OWL 2 / RDFS / SKOS · UOR-ADDR (κ = H(canonical_form)) · verify by re-derivation (Law L5)",
+  "witnessed": true,
+  "covers": [
+    "holo-product",
+    "bundle-ui-ux",
+    "balanced-faculties",
+    "hybrid-method",
+    "operationalized",
+    "self-verifying",
+    "rests-on-proven",
+    "law-l5",
+    "foundation"
+  ],
+  "productKappa": "did:holo:sha256:14f31a138ecb71a931365f6765338fe7f915a6f9ab242a1dd0862aee6e1fde33",
+  "faculties": 10,
+  "method": 6,
+  "frameworks": [
+    "Lean",
+    "Agile",
+    "PRINCE2",
+    "Waterfall",
+    "Scrum",
+    "Kanban",
+    "Six Sigma"
+  ],
+  "checks": {
+    "product.uor.json exists + is a UOR object with a did": true,
+    "product.uor.json re-derives to its content address (Law L5 — tamper-refused)": true,
+    "all 10 hemisphere/source links re-derive against the on-disk files (Law L5)": true,
+    "the two hemispheres are balanced — 5 UX faculties + 5 UI faculties": true,
+    "every faculty has a checkable obligation + a hemisphere": true,
+    "every faculty is REALIZED by a present canonical artifact (already wired, not aspirational)": true,
+    "the sealed bundle embeds all 10 faculties + obligations": true,
+    "the bundle declares its balance is even (ux === ui)": true,
+    "the bundle links the Holo UX hemisphere (the sealed doctrine)": true,
+    "the bundle links the Holo UI hemisphere (engine + colour + layout + proportion + type + icons)": true,
+    "the Holo UX doctrine it rests on is itself self-verifying (re-derives, Law L5)": true,
+    "the delivery method has all 6 phases, each citing ≥1 framework + a checkable obligation": true,
+    "the method is a HYBRID — it draws on multiple named PM frameworks (≥4 of the field's)": true,
+    "the sealed bundle embeds the method phases + obligations": true,
+    "Holo Product rests on PROVEN foundations — the gate carries the Holo UI + Holo UX rows": true,
+    "ns/product.jsonld is byte-faithful to toOntology() (no drift — re-seal after editing the source)": true,
+    "the bundle practises the plain voice (no jargon in its faculties / method / descriptions)": true,
+    "Holo Product is OPERATIVE — the SDK exposes product() AND the scaffolder builds new products on the foundation (manifest builtOn + conformsTo + a DECISION.md method record)": true
+  },
+  "linkBad": [],
+  "facultyMissing": [],
+  "missingRows": [],
+  "jargonHits": []
+}

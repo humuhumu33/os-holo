@@ -10,7 +10,7 @@
     "semantic-web",
     "ai-navigable"
   ],
-  "root": "did:holo:sha256:c5203506862ff15c4bde8c9954c411eef0eb2f2fb7cc062bc323ee7621972450",
+  "root": "did:holo:sha256:dd65fd8d5874ff058d1216af2a5109ddade583215c5a9c9d34a24a6064c2dbc6",
   "nodes": 33,
   "dagDepth": 3,
   "fhsMissing": [],

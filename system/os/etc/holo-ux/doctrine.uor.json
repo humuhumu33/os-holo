@@ -335,12 +335,12 @@
       "digestMultibase": "uEiCJEkCoKjUsQ6CUzBOjoi071pjbpQ9Ay-95ZRy0rg8MXA"
     },
     {
-      "id": "did:holo:sha256:2d6977417f15c607e9495b06cc2ef0b8b8e1277f67e4facc349293ab6f5b4bc5",
+      "id": "did:holo:sha256:f06225898cce8ded3bddebb5abf6a4f2478e40b7eac828905d38290cebb820de",
       "rel": "hosux:runtime",
       "@type": "schema:SoftwareSourceCode",
       "leaf": true,
-      "digestSRI": "sha256-LWl3QX8VxgfpSVsGzC7wuLjhJ39n5PrMNJKTq29bS8U=",
-      "digestMultibase": "uEiAtaXdBfxXGB-lJWwbMLvC4uOEnf2fk-sw0kpOrb1tLxQ"
+      "digestSRI": "sha256-8GIliYzOje073eu1q/ak8keOQLfqyCiQXTgpDOu4IN4=",
+      "digestMultibase": "uEiDwYiWJjM6N7Tvd67Wr9qTyR45At-rIKJBdOCkM67gg3g"
     },
     {
       "id": "did:holo:sha256:2da3162efae729bb147fb855d23a2e3339ef40836a6c9f0d9a1f3dc1868a7110",
@@ -383,5 +383,5 @@
       "digestMultibase": "uEiAeIcMhMhMtvhob2RxWbSPhfI25vD0x8iB8_ze80UJwzA"
     }
   ],
-  "id": "did:holo:sha256:a7f14276182735066cf9a4cf25f5d18dcfd1dcaab24228225a520199da9f8d12"
+  "id": "did:holo:sha256:3216467f8b36f76889c53ab26860ecad0c67099cb2ba1e2b51c4f2adee0b5721"
 }

@@ -118,15 +118,15 @@
       "digestMultibase": "uEiA5FBp6Zghe-c-2e4UHfwgF65Dos-xb5AnLqpRji1qZoQ"
     },
     {
-      "id": "did:holo:sha256:176f2cce113ac50abfb14611eae4378f3ba30665d0f949cd044b51caaaf07efd",
+      "id": "did:holo:sha256:b6011aa7a09ef2d39e73c8c17a6387caeaa87abbfe17db4783219ca51e8c0a27",
       "rel": "schema:hasPart",
       "@type": [
         "hosfs:Directory",
         "dcat:Catalog",
         "prov:Collection"
       ],
-      "digestSRI": "sha256-EDLqjfoBbG4xAMigIzSA5sjCrUHp8bOczhe0mW8sIP0=",
-      "digestMultibase": "uEiAQMuqN-gFsbjEAyKAjNIDmyMKtQenxs5zOF7SZbywg_Q"
+      "digestSRI": "sha256-i7m49SdaA759yM0mQv+BYucbeMNft1u/qGLM2i26BfM=",
+      "digestMultibase": "uEiCLubj1J1oDvn3IzSZC_4Fi5xt4w1-3W7-oYszaLboF8w"
     },
     {
       "id": "did:holo:sha256:0a87f34a5ef2692105880b9f933dff9734a86cb1c0b0fd0259d19fd577ade95d",
@@ -239,5 +239,5 @@
       "digestMultibase": "uEiDMWg4cJ3z4tp0n5VCVss00gr-rCpHK6S-5spWvZdARzg"
     }
   ],
-  "id": "did:holo:sha256:c5203506862ff15c4bde8c9954c411eef0eb2f2fb7cc062bc323ee7621972450"
+  "id": "did:holo:sha256:dd65fd8d5874ff058d1216af2a5109ddade583215c5a9c9d34a24a6064c2dbc6"
 }
