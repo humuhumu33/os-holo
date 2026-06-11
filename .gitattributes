@@ -1,0 +1,33 @@
+# Hologram OS is a CONTENT-ADDRESSED substrate: a file's identity is the hash of its
+# bytes (Law L5). Line endings are bytes, so they must be identical on every machine or
+# the same source would derive a different κ. Normalize all text to LF in the repo AND in
+# the working tree (eol=lf overrides core.autocrlf) so a clone on Windows, macOS or Linux
+# hashes byte-for-byte the same — and matches the Pages/CI gate.
+* text=auto eol=lf
+
+# Binaries: never touch. Git auto-detects most, but pin the formats this repo ships so a
+# renormalize can never inject a CR or strip a byte. (.svg is XML — intentionally text.)
+*.wasm   binary
+*.wsz    binary
+*.gguf   binary
+*.exe    binary
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.webp   binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.otf    binary
+*.eot    binary
+*.wav    binary
+*.mp3    binary
+*.mp4    binary
+*.webm   binary
+*.ogg    binary
+*.pdf    binary
+*.zip    binary
+*.gz     binary
+*.jar    binary

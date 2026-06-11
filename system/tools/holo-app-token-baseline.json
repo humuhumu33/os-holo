@@ -1,6 +1,6 @@
 {
   "note": "Ratchet baseline for Holo UI COLOR + SHAPE token conformance (ADR-0057). 'ceilings' is the max hardcoded themeable bypasses (hex colors + px border-radius) allowed per app's authored index.html; the witness FAILS on any increase. Colors are IDENTITY (the adopt-vs-own model) so they are not force-rewritten — the ratchet just prevents NEW bypasses; radius exact-matches (8/12/16px) are safely tokenizable via burndown-app-radius.mjs. New apps default to 0.",
-  "total": 1833,
+  "total": 1713,
   "perApp": {
     "amp": {
       "hex": 25,
@@ -28,9 +28,9 @@
       "bypass": 43
     },
     "browser": {
-      "hex": 52,
-      "radius": 16,
-      "bypass": 68
+      "hex": 54,
+      "radius": 19,
+      "bypass": 73
     },
     "btc": {
       "hex": 33,
@@ -46,6 +46,11 @@
       "hex": 40,
       "radius": 8,
       "bypass": 48
+    },
+    "code": {
+      "hex": 1,
+      "radius": 3,
+      "bypass": 4
     },
     "docs": {
       "hex": 46,
@@ -113,9 +118,9 @@
       "bypass": 14
     },
     "player": {
-      "hex": 58,
-      "radius": 18,
-      "bypass": 76
+      "hex": 44,
+      "radius": 10,
+      "bypass": 54
     },
     "privacy": {
       "hex": 32,
@@ -123,9 +128,9 @@
       "bypass": 42
     },
     "q": {
-      "hex": 77,
-      "radius": 30,
-      "bypass": 107
+      "hex": 1,
+      "radius": 0,
+      "bypass": 1
     },
     "qemu": {
       "hex": 55,
@@ -133,9 +138,9 @@
       "bypass": 60
     },
     "sdk": {
-      "hex": 151,
-      "radius": 14,
-      "bypass": 165
+      "hex": 164,
+      "radius": 0,
+      "bypass": 164
     },
     "search": {
       "hex": 1,
@@ -174,10 +179,11 @@
     "atlas96": 20,
     "book": 2,
     "brcminer": 43,
-    "browser": 68,
+    "browser": 73,
     "btc": 40,
     "capture": 71,
     "cloud": 48,
+    "code": 4,
     "docs": 52,
     "etherscan": 147,
     "evm": 49,
@@ -191,11 +197,11 @@
     "notepad": 73,
     "os": 60,
     "plasma": 14,
-    "player": 76,
+    "player": 54,
     "privacy": 42,
-    "q": 107,
+    "q": 1,
     "qemu": 60,
-    "sdk": 165,
+    "sdk": 164,
     "search": 1,
     "stream": 14,
     "terms": 30,
