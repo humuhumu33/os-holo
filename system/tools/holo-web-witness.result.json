@@ -1,0 +1,22 @@
+{
+  "spec": "Hologram OS self-healing reaches the OPEN INTERNET — any object resolves from any HTTPS edge or IPFS, re-derived (Law L5); and every heal artifact is W3C mint-nothing linked data",
+  "authority": "W3C DID Core · W3C Subresource Integrity + multiformats CID/multihash · WHATWG Fetch · RFC 8615 · W3C JSON-LD 1.1 · W3C PROV-O · W3C RDF Schema / OWL 2 · IPFS Trustless Gateways · holospaces Laws L1/L2/L5",
+  "witnessed": true,
+  "covers": [
+    "open-web-recovery",
+    "import-any-object",
+    "kappa-cid-equivalence",
+    "w3c-mint-nothing",
+    "w3c-linked-data",
+    "law-l5"
+  ],
+  "checks": {
+    "webFollowsAnyEdge": true,
+    "webRefusesHostile": true,
+    "importByUrl": true,
+    "importByKappa": true,
+    "ipfsIsAnEdge": true,
+    "w3cMintNothing": true,
+    "w3cLinkedData": true
+  }
+}

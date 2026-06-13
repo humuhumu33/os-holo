@@ -1,0 +1,183 @@
+{
+  "@context": {
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "prov": "http://www.w3.org/ns/prov#",
+    "schema": "https://schema.org/",
+    "hosheal": "https://hologram.os/ns/heal#",
+    "label": "rdfs:label",
+    "comment": "rdfs:comment",
+    "domain": { "@id": "rdfs:domain", "@type": "@id" },
+    "range": { "@id": "rdfs:range", "@type": "@id" },
+    "subClassOf": { "@id": "rdfs:subClassOf", "@type": "@id" },
+    "closeMatch": { "@id": "skos:closeMatch", "@type": "@id" },
+    "isDefinedBy": { "@id": "rdfs:isDefinedBy", "@type": "@id" }
+  },
+  "@id": "https://hologram.os/ns/heal",
+  "@type": "owl:Ontology",
+  "label": "Hologram OS — Self-healing vocabulary (hosheal:)",
+  "comment": "The few terms Hologram OS mints to record AUTONOMOUS SELF-HEALING as self-verifying linked data (ADR-0067). A repair is a prov:Activity that recovered a content-addressed object from somewhere on the open-internet hypergraph and re-derived it (Law L5); a health attestation is a prov:Entity the OS seals to PROVE its own health rather than assert it. Mint-nothing discipline (ADR-024): every structural relation reuses W3C PROV-O / DCMI Terms / schema.org via skos:closeMatch; only the genuinely heal-specific terms (the σ-axis, the re-derivation verdict, the closure tallies) stand alone. The receipts and attestations that use these terms are themselves valid JSON-LD, content-addressed, and re-derivable.",
+  "dcterms:license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "@graph": [
+    {
+      "@id": "hosheal:Heal",
+      "@type": "rdfs:Class",
+      "label": "Heal (a repair activity)",
+      "comment": "One autonomous repair: a content-addressed object that drifted, was corrupted, or went missing was recovered from a non-origin source (the device's durable κ-store, the open web, IPFS, or a peer) and admitted ONLY after re-deriving to its address (Law L5). Sealed as its own did:holo, it is an append-only, verifiable record — a heal that cannot be witnessed did not happen.",
+      "subClassOf": "prov:Activity",
+      "closeMatch": "schema:UpdateAction",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:HealthAttestation",
+      "@type": "rdfs:Class",
+      "label": "Health attestation (a re-derivable self-report)",
+      "comment": "A sealed report of one scrub pass over the OS closure — how many objects re-derived, how many were healed, how many remain unresolved, and which the OS has learned are flaky. Its identity is its content (did:holo), so 'the OS is whole' is a re-derivable fact, not a claim. The sealed anchor (the constitution) is counted apart and never auto-healed.",
+      "subClassOf": "prov:Entity",
+      "closeMatch": "schema:DataFeed",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:target",
+      "@type": "rdf:Property",
+      "label": "target",
+      "comment": "The content address (did:holo κ) of the object this heal recovered. The node in the hypergraph the repair acted on.",
+      "domain": "hosheal:Heal",
+      "range": "rdfs:Resource",
+      "closeMatch": "prov:used",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:recoveredFrom",
+      "@type": "rdf:Property",
+      "label": "recovered from",
+      "comment": "Which source served the κ-verified copy — store · origin · web · ipfs · mesh. Provenance only: trust is in the re-derivation (Law L5), not the source, so this records WHERE a verified copy was found, not WHO is trusted.",
+      "domain": "hosheal:Heal",
+      "range": "xsd:string",
+      "closeMatch": "prov:wasDerivedFrom",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:axis",
+      "@type": "rdf:Property",
+      "label": "σ-axis",
+      "comment": "The hash axis the address was re-derived on — \"sha256\" (the open-web / IPFS-CID axis) or \"blake3\" (the substrate's native axis). The same canonical bytes address on both; a κ = sha-256 IS a CIDv1 sha2-256.",
+      "domain": "hosheal:Heal",
+      "range": "xsd:string",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:reDerived",
+      "@type": "rdf:Property",
+      "label": "re-derived",
+      "comment": "The Law-L5 verdict: true iff the recovered bytes hashed to exactly the κ they claim. Always true on a sealed heal — a copy that does not re-derive is never admitted, so the receipt only exists for verified content.",
+      "domain": "hosheal:Heal",
+      "range": "xsd:boolean",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:reason",
+      "@type": "rdf:Property",
+      "label": "reason",
+      "comment": "Why the heal ran — e.g. \"scrub\" (the proactive idle sweep) or \"verify-miss\" (a serve-time κ mismatch).",
+      "domain": "hosheal:Heal",
+      "range": "xsd:string",
+      "closeMatch": "dcterms:description",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:whole",
+      "@type": "rdf:Property",
+      "label": "whole",
+      "comment": "True iff every reachable non-anchor object in the closure re-derives after this pass (nothing unresolved, nothing deferred) — the OS attesting it is fully intact.",
+      "domain": "hosheal:HealthAttestation",
+      "range": "xsd:boolean",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:total",
+      "@type": "rdf:Property",
+      "label": "total",
+      "comment": "Count of objects in the closure this pass swept.",
+      "domain": "hosheal:HealthAttestation",
+      "range": "xsd:nonNegativeInteger",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:healthy",
+      "@type": "rdf:Property",
+      "label": "healthy",
+      "comment": "Count that already re-derived from the device's own durable copy — no recovery needed.",
+      "domain": "hosheal:HealthAttestation",
+      "range": "xsd:nonNegativeInteger",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:healed",
+      "@type": "rdf:Property",
+      "label": "healed",
+      "comment": "Count recovered from a non-origin source this pass and re-derived (Law L5).",
+      "domain": "hosheal:HealthAttestation",
+      "range": "xsd:nonNegativeInteger",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:unresolved",
+      "@type": "rdf:Property",
+      "label": "unresolved",
+      "comment": "Count no source could serve a κ-verified copy of — reported honestly, never silently passed.",
+      "domain": "hosheal:HealthAttestation",
+      "range": "xsd:nonNegativeInteger",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:deferred",
+      "@type": "rdf:Property",
+      "label": "deferred",
+      "comment": "Count deferred to a later tick because the per-pass heal budget was reached (flaky-first fairness).",
+      "domain": "hosheal:HealthAttestation",
+      "range": "xsd:nonNegativeInteger",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:anchors",
+      "@type": "rdf:Property",
+      "label": "anchors",
+      "comment": "Count of sealed-anchor objects (the constitution, the conscience-gate source, the closure root) — counted and SKIPPED, never auto-healed.",
+      "domain": "hosheal:HealthAttestation",
+      "range": "xsd:nonNegativeInteger",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:healthyAfter",
+      "@type": "rdf:Property",
+      "label": "healthy after",
+      "comment": "Healthy + healed: how many objects re-derive once this pass completed.",
+      "domain": "hosheal:HealthAttestation",
+      "range": "xsd:nonNegativeInteger",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:tracked",
+      "@type": "rdf:Property",
+      "label": "tracked",
+      "comment": "Count of distinct κ the supervisor is tracking in its learned per-object history (the EVOLVE leg).",
+      "domain": "hosheal:HealthAttestation",
+      "range": "xsd:nonNegativeInteger",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    },
+    {
+      "@id": "hosheal:flaky",
+      "@type": "rdf:Property",
+      "label": "flaky",
+      "comment": "Count of κ that have needed attention before and are re-swept first / more often. The learned signal that lets the OS prove it adapts.",
+      "domain": "hosheal:HealthAttestation",
+      "range": "xsd:nonNegativeInteger",
+      "isDefinedBy": "https://hologram.os/ns/heal"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "spec": "Hologram OS self-healing — autonomous, content-addressed recovery: detect (re-derive) → recover (origin-agnostic mesh) → re-verify (Law L5) → witness, with the sealed anchor never auto-healed; and EVOLVE — the supervisor learns per-κ flakiness and re-sweeps the historically-unstable first / more often",
+  "authority": "holospaces Laws L1/L3/L5 · ADR-026 Sovereign Delivery (cache → peers → origin) · W3C DID Core · W3C PROV-O · W3C Subresource Integrity · IETF RFC 8785 (JCS) · IPFS Trustless Gateways (κ = CIDv1 sha2-256)",
+  "witnessed": true,
+  "covers": [
+    "self-heal",
+    "self-improve",
+    "evolve",
+    "content-recovery",
+    "mesh-resolution",
+    "anchor-protected",
+    "heal-witness",
+    "law-l5"
+  ],
+  "scrub": {
+    "total": 4,
+    "healthy": 1,
+    "healed": 1,
+    "unresolved": 1,
+    "anchors": 1,
+    "deferred": 0,
+    "receipts": [
+      {
+        "@context": [
+          "https://www.w3.org/ns/did/v1",
+          "https://w3id.org/security/data-integrity/v2",
+          {
+            "schema": "https://schema.org/",
+            "prov": "http://www.w3.org/ns/prov#",
+            "dcterms": "http://purl.org/dc/terms/",
+            "rel": "schema:additionalType",
+            "links": {
+              "@id": "schema:hasPart",
+              "@container": "@set"
+            }
+          },
+          {
+            "hosheal": "https://hologram.os/ns/heal#"
+          }
+        ],
+        "@type": [
+          "prov:Activity",
+          "hosheal:Heal",
+          "schema:UpdateAction"
+        ],
+        "schema:name": "Self-heal — content recovered and re-derived (Law L5)",
+        "hosheal:target": "did:holo:sha256:c7a130dcd309fe0ce72a6e415d23b4e1b2e61de312eb324d9535a21bb5c1faf7",
+        "hosheal:recoveredFrom": "ipfs",
+        "hosheal:axis": "sha256",
+        "hosheal:reDerived": true,
+        "hosheal:reason": "scrub",
+        "prov:generatedAtTime": "2026-06-13T00:00:00Z",
+        "id": "did:holo:sha256:55a5db66e2204f5af10350d83f14b71e7fd5116eb7eabac38f308b113fdc4db3"
+      }
+    ]
+  },
+  "checks": {
+    "recoversFromMesh": true,
+    "onlyVerifiedAdmitted": true,
+    "receiptVerifies": true,
+    "seededServesLocal": true,
+    "refusesWhenAllCorrupt": true,
+    "anchorNeverHealed": true,
+    "scrubHealsAll": true,
+    "autonomousScrub": true,
+    "evolves": true,
+    "noStarveOnUnresolved": true
+  }
+}
