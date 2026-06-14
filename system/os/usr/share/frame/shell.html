@@ -1707,7 +1707,17 @@
       // ── multiplayer across tabs — SERVERLESS, same-origin, via BroadcastChannel ─────────
       const ME = Math.random().toString(36).slice(2, 8); const peers = new Map(); let synced = false;
       const bc = new BroadcastChannel("holo-world:scene");
-      desktop._publish = (delta) => bc.postMessage({ t: "delta", from: ME, delta });
+      desktop._publish = (delta) => { bc.postMessage({ t: "delta", from: ME, delta }); bcastDesk(); };   // also mirror the desktop tree to Holo Files (unification)
+      // ── desktop ⇄ explorer unification: broadcast the desktop world as a plain tree so Holo Files
+      //    surfaces the SAME folders/apps/objects as its "Desktop" location (one model, no duplicate). ──
+      const deskBC = new BroadcastChannel("holo-desk:tree");
+      const projDeskNode = (n) => ({ id: n.id, name: String(n.title || n.name || "untitled").split("  ·  ")[0].trim(),
+        kind: n.kind, did: n.appDid || n.kappa || n.contentRef || "", icon: n.icon || "", appRef: n.appRef || "", appId: n.appId || "",
+        items: (n.kind === "folder" && Array.isArray(n.items)) ? n.items.map(projDeskNode) : undefined });
+      const projDesk = () => { try { return (desktop.doc().world || []).map(projDeskNode); } catch (e) { return []; } };
+      const bcastDesk = () => { try { deskBC.postMessage({ t: "tree", tree: projDesk() }); } catch (e) {} };
+      deskBC.onmessage = (e) => { if (e.data && e.data.t === "req") bcastDesk(); };
+      setTimeout(bcastDesk, 0);   // initial publish for any explorer already open
       bc.onmessage = (e) => {
         const m = e.data; if (!m || m.from === ME) return;
         if (m.t === "delta") desktop.applyDelta(m.delta);
@@ -2086,6 +2096,9 @@
       // no app, no origin. CORS-clean (gateways + routing mandate CORS), so it needs no dev proxy. Only
       // an assembly miss (a DAG shape we don't walk) falls back to the Holo IPFS app.
       const _inlineBlobs = [];
+      // track an object-URL and bound the set: revoke the oldest beyond a cap so opened objects don't leak
+      // for the whole session (the freshest ~32 tabs keep working; only a very old object tab won't reload).
+      const pushBlob = (url) => { _inlineBlobs.push(url); while (_inlineBlobs.length > 32) { try { URL.revokeObjectURL(_inlineBlobs.shift()); } catch { } } return url; };
       const escHtml = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       const shortAddr = (a) => { a = String(a); return a.length > 42 ? a.slice(0, 22) + "…" + a.slice(-12) : a; };
       function sniffType(bytes, addr) {
@@ -2107,19 +2120,24 @@
       }
       // openContentAddress(input) → true if it located + rendered the object inline; false to fall back.
       async function openContentAddress(input) {
-        let kind; try { kind = parseRef(input).kind; } catch { return false; }
-        if (kind !== "kappa" && kind !== "cid") return false;            // web url / .eth / app name → not a content address
+        let pr; try { pr = parseRef(input); } catch { return false; }
+        if (pr.kind !== "kappa" && pr.kind !== "cid") return false;            // web url / .eth / app name → not a content address
+        if (pr.kind === "kappa" && pr.axis && pr.axis !== "sha256") { toast(`${pr.axis} objects resolve on the substrate · mesh, not the open web — not reachable here`); return true; }   // e.g. did:holo:blake3 → stop cleanly, don't fall into a confusing IPFS-app attempt
         toast("⌕ locating across the content-addressed space…");
-        let out; try { out = await resolveAny(input, { discover: true, assemble: true, timeoutMs: 15000 }); } catch { return false; }
-        if (!out || !out.ok) { toast("no source served a verified copy yet"); return false; }
+        let out; try { out = await resolveAny(input, { discover: true, assemble: true, timeoutMs: 15000 }); } catch { out = null; }
+        if (!out || !out.ok) {
+          if (pr.kind === "cid") { toast("located ✓ — opening in Holo IPFS to assemble"); return false; }   // a CID can still be tried by the IPFS app's gateways/assembly
+          toast(`couldn't locate this object on any source · ${shortAddr(input)}`); return true;              // a sha256 κ we genuinely can't find → clean stop, no opaque fallback
+        }
         const via = out.via === "ipfs:discovered" ? "Delegated Routing V1" : out.via === "ipfs" ? "trustless gateway" : out.via;
         const c = out.content;
         if (!c || c.type === "error") { toast("located ✓ — opening in Holo IPFS to assemble"); return false; }
         const label = shortAddr(input), tabAddr = out.cid ? "ipfs://" + out.cid : (out.kappa || input);
-        const blob = c.type === "directory"
-          ? new Blob([dirListingHtml(input, out, c.entries)], { type: "text/html" })
-          : new Blob([c.bytes], { type: sniffType(c.bytes, input) });
-        const url = URL.createObjectURL(blob); _inlineBlobs.push(url);
+        let doc, type;
+        if (c.type === "directory") { doc = dirListingHtml(input, out, c.entries); type = "text/html"; }
+        else { type = sniffType(c.bytes, input); doc = objectViewerDoc(c.bytes, label, (out.kappa || "").split(":").pop() || "", type); }   // readable solid-bg viewer for text/json/image; HTML renders as itself
+        const blob = doc != null ? new Blob([doc], { type: "text/html" }) : new Blob([c.bytes], { type });
+        const url = pushBlob(URL.createObjectURL(blob));
         if ((tabs[activeTab] && tabs[activeTab].home) || desktop.doc().world.length > 0) newTab("⬡ " + label);
         addNode({ kind: "app", title: "⬡  " + label, src: url, sandbox: "", allow: "", state: "max", webAddr: tabAddr });
         setActiveTabTitle("⬡ " + label); setActiveTabAddr(tabAddr);
@@ -2139,6 +2157,9 @@
       }
       async function omniGo(input) {
         const v = String(input || "").trim(); if (!v) return;
+        let pr; try { pr = parseRef(v); } catch { }
+        if (pr && pr.kind === "kappa" && pr.axis && pr.axis !== "sha256") { toast(`${pr.axis} objects resolve on the substrate · mesh, not the open web — not reachable here`); return; }   // e.g. did:holo:blake3 → a clean message, not a confusing search/app attempt
+        if (pr && (pr.kind === "kappa" || pr.kind === "cid")) { if (await openContentAddress(v)) return; }   // sha256 κ / CID → verified inline (handles its own clean "couldn't locate" message)
         const r = classify(v, catalog);
         if (r.kind === "web" || r.kind === "holo") { if (await openContentAddress(v)) return; return openWeb(r); }   // content address → inline verified render; else the web/app path
         const a = matches(v, catalog)[0];                                // else prefer a holospace app match
@@ -2193,6 +2214,19 @@
       }
       // openObjectByKappa — dereference a substrate object by its content hash via the canonical κ-route,
       // RE-DERIVE the bytes client-side (Law L5), and render it inline, verified — no app, no origin (L1).
+      // a clean, SOLID-background viewer for an opened κ-object — so JSON/code/text are readable (not
+      // bleeding over the desktop) and pretty, with a verified did:holo header. HTML renders as its own
+      // page; images are centered on a dark canvas; everything else is pretty-printed monospace.
+      const _b64 = (u8) => { let s = ""; const C = 0x8000; for (let i = 0; i < u8.length; i += C) s += String.fromCharCode.apply(null, u8.subarray(i, i + C)); return btoa(s); };
+      function objectViewerDoc(bytes, name, hex, type) {
+        if (type === "text/html") return null;                 // an HTML object renders as its own document
+        const head = `<div class="hd"><b>✓</b>&nbsp;${escHtml(name)} · ${bytes.length.toLocaleString()} B · verified did:holo:sha256:${escHtml(hex.slice(0, 18))}…</div>`;
+        const css = `<!doctype html><meta charset="utf-8"><meta name="color-scheme" content="dark light"><style>html,body{margin:0;min-height:100%;background:#0b0e14;color:#cdd7ea}body{font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.hd{position:sticky;top:0;background:#0b0e14;border-bottom:1px solid #1b2435;color:#7d8aa6;padding:13px 22px;font-size:12px}.hd b{color:#6ee7b7}.bd{padding:20px 22px}pre{margin:0;white-space:pre-wrap;word-break:break-word}img{max-width:100%;display:block;margin:0 auto;border-radius:8px}a{color:#8ab4f8}</style>`;
+        let inner;
+        if (type.startsWith("image/")) inner = `<img src="data:${type};base64,${_b64(bytes)}" alt="${escHtml(name)}">`;   // SVG too → rendered AS AN IMAGE (browser disables scripting), never inlined as live markup
+        else { let t = new TextDecoder().decode(bytes); if (/json/.test(type) || /\.json(ld)?$/i.test(name)) { try { t = JSON.stringify(JSON.parse(t), null, 2); } catch {} } inner = `<pre>${escHtml(t)}</pre>`; }
+        return `${css}${head}<div class="bd">${inner}</div>`;
+      }
       async function openObjectByKappa(o) {
         toast("⌕ resolving " + o.name + " by content address…");
         try {
@@ -2202,8 +2236,10 @@
           const dig = await crypto.subtle.digest("SHA-256", bytes);
           const got = [...new Uint8Array(dig)].map((b) => b.toString(16).padStart(2, "0")).join("");
           if (got !== o.hex) { toast("✗ refused — re-derivation mismatch (Law L5)"); return; }   // a tampered byte loses
-          const blob = new Blob([bytes], { type: sniffType(bytes, o.name) });
-          const url = URL.createObjectURL(blob); _inlineBlobs.push(url);
+          const type = sniffType(bytes, o.name);
+          const doc = objectViewerDoc(bytes, o.name, o.hex, type);
+          const blob = doc != null ? new Blob([doc], { type: "text/html" }) : new Blob([bytes], { type });
+          const url = pushBlob(URL.createObjectURL(blob));
           if ((tabs[activeTab] && tabs[activeTab].home) || desktop.doc().world.length > 0) newTab("◆ " + o.name);
           addNode({ kind: "app", title: "◆  " + o.name, src: url, sandbox: "", allow: "", state: "max", webAddr: "did:holo:sha256:" + o.hex });
           setActiveTabTitle("◆ " + o.name); setActiveTabAddr("did:holo:sha256:" + o.hex.slice(0, 16) + "…");

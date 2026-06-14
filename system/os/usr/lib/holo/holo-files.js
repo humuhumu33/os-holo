@@ -242,6 +242,7 @@ function sortNodes(list) {
 
 // ── the public VFS — list any node's children, read bytes, verify (Law L5) ──────────────────
 export const ROOTS = () => [
+  node({ name: "Desktop", path: "desktop:", kind: "location", source: "desktop", writable: true, role: "your holospace desktop — folders · apps · objects (the SAME model the shell shows)", glyph: "desktop" }),
   node({ name: "Home", path: "/home/user", kind: "location", source: "opfs", writable: true, role: "your writable space · OPFS", glyph: "home" }),
   node({ name: "This Hologram", path: "/", kind: "location", source: "fhs", role: "the OS as a content-addressed graph", glyph: "drive" }),
   node({ name: "Holospaces", path: "holospaces:", kind: "location", source: "holospaces", role: "every app, by κ", glyph: "apps" }),
@@ -249,8 +250,41 @@ export const ROOTS = () => [
   node({ name: "Holo Cloud", path: "cloud:", kind: "location", source: "cloud", writable: true, role: "your private, end-to-end-encrypted cloud · synced with Holo Cloud", glyph: "cloud", _cloudPath: "/" }),
 ];
 
+// ── DESKTOP unification — the explorer and the shell's desktop are ONE model ─────────────────
+// The shell holds the live desktop world (folders · app-icons · objects). It broadcasts a plain
+// projection over BroadcastChannel "holo-desk:tree" (and answers {t:"req"}); the explorer mirrors
+// it as the "Desktop" location. No second model — a live projection of the one desktop world.
+let _deskTree = null, _deskWaiters = [];
+if (typeof BroadcastChannel !== "undefined") {
+  try {
+    const dbc = new BroadcastChannel("holo-desk:tree");
+    dbc.onmessage = (e) => { const m = e.data; if (m && m.t === "tree") { _deskTree = m.tree || []; const w = _deskWaiters; _deskWaiters = []; w.forEach((r) => r(_deskTree)); } };
+    dbc.postMessage({ t: "req" });
+    W.__holoDeskBC = dbc;
+  } catch (e) {}
+}
+function deskTree(timeout = 700) {
+  if (_deskTree) return Promise.resolve(_deskTree);
+  return new Promise((res) => { _deskWaiters.push(res); try { W.__holoDeskBC && W.__holoDeskBC.postMessage({ t: "req" }); } catch (e) {}
+    setTimeout(() => { const i = _deskWaiters.indexOf(res); if (i >= 0) { _deskWaiters.splice(i, 1); res(_deskTree || []); } }, timeout); });
+}
+function deskToNode(d) {
+  const isFolder = d.kind === "folder", isApp = d.kind === "app" || !!d.appRef;
+  return node({ name: d.name || "untitled", path: "desktop:" + d.id, kind: isFolder ? "dir" : (isApp ? "app" : "file"),
+    source: "desktop", did: d.did || "", _appId: d.appId || (d.appRef ? appIdFromIdent(d.appRef) : ""), _deskId: d.id,
+    role: isFolder ? ((d.items || []).length + (((d.items || []).length === 1) ? " item" : " items")) : (isApp ? "Holospace" : "") });
+}
+function findDesk(arr, id) { for (const d of arr || []) { if (d.id === id) return d; if (d.items) { const r = findDesk(d.items, id); if (r) return r; } } return null; }
+async function listDesktop(path) {
+  const tree = await deskTree();
+  if (!path || path === "desktop:") return sortNodes(tree.map(deskToNode));
+  const f = findDesk(tree, path.slice("desktop:".length));
+  return f && f.items ? sortNodes(f.items.map(deskToNode)) : [];
+}
+
 export async function list(n) {
   switch (n.source) {
+    case "desktop": return listDesktop(n.path);
     case "opfs": return listHome(n.path === "/home/user" || n.kind === "location" ? "/home/user" : n.path);
     case "fhs": { const spec = fhsIndex.get(n.path) || FHS; return listFHS(spec); }
     case "fhs-member": return n.kind === "app" && n._appId ? listHolospaceFiles(n._appId) : [];
