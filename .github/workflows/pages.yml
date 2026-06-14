@@ -46,6 +46,14 @@ jobs:
           cp system/llms.txt _site/
           cp -r system/os _site/os
           cp -r system/os/.well-known _site/.well-known
+          # The gateway (index.html) is served RAW by the host — NOT through the Service Worker — so its own
+          # classic-script assets must sit at the dev-layout paths it references: the vendored Vanta
+          # cloudscape (immersive background) and the standalone Holo FX braille animator, plus the llms.txt
+          # discovery copy. Without these the gateway silently falls back to the CSS nebula and a static κ.
+          mkdir -p _site/system/vendor _site/system/os/usr/lib/holo
+          cp -r system/vendor/* _site/system/vendor/
+          cp system/os/usr/lib/holo/holo-fx.js _site/system/os/usr/lib/holo/holo-fx.js
+          cp system/llms.txt _site/system/llms.txt
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
