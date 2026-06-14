@@ -176,6 +176,40 @@ export async function copyHome(srcPath, destDirPath, asName) {
   await copyDirInto(h, sub);
 }
 
+// ── Recycle Bin — deletes MOVE into a hidden OPFS trash (Law L4: through the W3C OPFS substrate,
+// no parallel store) with a provenance manifest, so nothing is lost and identity (κ) is preserved
+// (Law L1). Restore returns an item to its origin; Empty drops it permanently. ──────────────────
+const TRASH = ".holo-trash";   // a top-level OPFS dir, OUTSIDE /home/user → hidden from Home listings
+async function trashDir() { return (await opfsRoot()).getDirectoryHandle(TRASH, { create: true }); }
+async function trashManifest() { try { const fh = await (await trashDir()).getFileHandle(".index.json"); return JSON.parse(await (await fh.getFile()).text()); } catch { return []; } }
+async function writeTrashManifest(m) { const fh = await (await trashDir()).getFileHandle(".index.json", { create: true }); const w = await fh.createWritable(); await w.write(JSON.stringify(m)); await w.close(); }
+export async function recycle(n) {                                  // move a Home (OPFS) node into the trash
+  if (n.source !== "opfs") throw new Error("only Home items recycle");
+  const parts = homeParts(n.path); const name = parts.pop(); const srcDir = await opfsResolve(parts); const td = await trashDir();
+  const key = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7) + "__" + name;
+  let h, isFile = true; try { h = await srcDir.getFileHandle(name); } catch { h = await srcDir.getDirectoryHandle(name); isFile = false; }
+  if (isFile) { const f = await h.getFile(); const nh = await td.getFileHandle(key, { create: true }); const w = await nh.createWritable(); await w.write(await f.arrayBuffer()); await w.close(); await srcDir.removeEntry(name); }
+  else { const sub = await td.getDirectoryHandle(key, { create: true }); await copyDirInto(h, sub); await srcDir.removeEntry(name, { recursive: true }); }
+  const m = await trashManifest(); m.push({ key, name, isFile, origDir: "/home/user" + (parts.length ? "/" + parts.join("/") : ""), deletedAt: Date.now(), mime: mimeOf(name) }); await writeTrashManifest(m);
+  return key;
+}
+async function listTrash() {
+  const m = await trashManifest(), td = await trashDir();
+  return sortNodes(await Promise.all(m.map(async (e) => { let bytes = null; if (e.isFile) { try { bytes = (await (await td.getFileHandle(e.key)).getFile()).size; } catch {} }
+    return node({ name: e.name, path: "trash:" + e.key, kind: e.isFile ? "file" : "dir", source: "trash", bytes, mime: e.mime || mimeOf(e.name), writable: false, role: "deleted · from " + e.origDir.replace("/home/user", "Home"), _trashKey: e.key, _origDir: e.origDir }); })));
+}
+export async function restoreTrash(n) {
+  const key = n._trashKey || String(n.path || "").slice("trash:".length); const m = await trashManifest(); const e = m.find((x) => x.key === key); if (!e) return null;
+  const td = await trashDir(); let dest = await opfsRoot(); for (const p of homeParts(e.origDir)) dest = await dest.getDirectoryHandle(p, { create: true });
+  let target = e.name; try { if (e.isFile) await dest.getFileHandle(e.name); else await dest.getDirectoryHandle(e.name); target = e.name.replace(/(\.[^.]+)?$/, " (restored)$1"); } catch {}
+  if (e.isFile) { const f = await (await td.getFileHandle(key)).getFile(); const nh = await dest.getFileHandle(target, { create: true }); const w = await nh.createWritable(); await w.write(await f.arrayBuffer()); await w.close(); await td.removeEntry(key); }
+  else { const src = await td.getDirectoryHandle(key); const sub = await dest.getDirectoryHandle(target, { create: true }); await copyDirInto(src, sub); await td.removeEntry(key, { recursive: true }); }
+  await writeTrashManifest(m.filter((x) => x.key !== key)); return e.origDir;
+}
+export async function removeTrash(n) { const key = n._trashKey || String(n.path).slice("trash:".length); const td = await trashDir(); const m = await trashManifest(); const e = m.find((x) => x.key === key); if (!e) return; try { await td.removeEntry(key, { recursive: !e.isFile }); } catch {} await writeTrashManifest(m.filter((x) => x.key !== key)); }
+export async function emptyTrash() { const td = await trashDir(); const m = await trashManifest(); for (const e of m) { try { await td.removeEntry(e.key, { recursive: !e.isFile }); } catch {} } await writeTrashManifest([]); }
+export async function trashCount() { try { return (await trashManifest()).length; } catch { return 0; } }
+
 // ── fetch helpers — every substrate read goes through paths that map to OS2/Apps (never the
 // legacy origin), so navigation stays gateway-free and self-contained. ──────────────────────
 async function getJSON(path) { const r = await fetch(path, noStore); if (!r.ok) throw new Error(path + " → " + r.status); return r.json(); }
@@ -250,6 +284,7 @@ export const ROOTS = () => [
   node({ name: "OS Runtime", path: "os:", kind: "location", source: "osruntime", role: "the OS-wide closure · path → κ", glyph: "chip" }),
   node({ name: "Holo Cloud", path: "cloud:", kind: "location", source: "cloud", writable: true, role: "your private, end-to-end-encrypted cloud · synced with Holo Cloud", glyph: "cloud", _cloudPath: "/" }),
   node({ name: "Desktop", path: "desktop:", kind: "location", source: "desktop", writable: true, role: "your holospace desktop — folders · apps · objects (the SAME model the shell shows)", glyph: "desktop" }),
+  node({ name: "Recycle Bin", path: "trash:", kind: "location", source: "trash", role: "deleted Home items — restore or empty (nothing leaves your device)", glyph: "trash" }),
 ];
 
 // ── DESKTOP unification — the explorer and the shell's desktop are ONE model ─────────────────
@@ -298,6 +333,7 @@ async function listDesktop(path) {
 export async function list(n) {
   switch (n.source) {
     case "desktop": return listDesktop(n.path);
+    case "trash": return listTrash();
     case "opfs": return listHome(n.path === "/home/user" || n.kind === "location" ? "/home/user" : n.path);
     case "fhs": { const spec = fhsIndex.get(n.path) || FHS; return listFHS(spec); }
     case "fhs-member": return n.kind === "app" && n._appId ? listHolospaceFiles(n._appId) : [];
@@ -328,6 +364,10 @@ export function realPath(n) {
 
 // read(node) → { bytes, text?, mime } — for preview. OPFS via handle; everything else by path.
 export async function read(n, max = 512 * 1024) {
+  if (n.source === "trash") {
+    const td = await trashDir(); const key = n._trashKey || String(n.path).slice("trash:".length);
+    const f = await (await td.getFileHandle(key)).getFile(); const bytes = new Uint8Array(await f.slice(0, max).arrayBuffer()); return { bytes, mime: n.mime || mimeOf(n.name), size: f.size };
+  }
   if (n.source === "opfs") {
     const parts = homeParts(n.path); const name = parts.pop(); const f = await readHome(parts, name);
     const bytes = new Uint8Array(await f.slice(0, max).arrayBuffer()); return { bytes, mime: n.mime || mimeOf(n.name), size: f.size };
@@ -520,6 +560,7 @@ export async function compressToZip(nodes, destDirPath = "/home/user", zipName =
 
 export const HoloFiles = { ROOTS, list, read, verify, realPath, platform, skinFor, mkdir, createFile, writeFile, rename, remove, moveHome, copyHome, fmtBytes, mimeOf, kindOf, extOf, FHS,
   sendToCloud, cloudShareLink, searchAll, resolveInput, materialize, webSearch, freeSpace, extractZip, compressToZip,
-  deskMkdir, deskRename, deskRemove, deskMove, deskUndo, deskRedo, onDesktopChange };
+  deskMkdir, deskRename, deskRemove, deskMove, deskUndo, deskRedo, onDesktopChange,
+  recycle, restoreTrash, removeTrash, emptyTrash, trashCount };
 if (typeof window !== "undefined") window.HoloFiles = HoloFiles;
 export default HoloFiles;

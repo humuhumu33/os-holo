@@ -16,8 +16,9 @@
 > 2. ~~**Undo / Redo** (Undo·Redo)~~ — **DONE** (κ-history: the shell keeps content-addressed world
 >    snapshots, restored only via the desktop CvRDT; Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y, in the shell AND in
 >    Holo Files on the Desktop location, covering create·rename·delete·move). Home-OPFS undo still pending (needs Recycle).
-> 3. **Recycle Bin + restore** (DeleteItem→recycle · RestoreRecycleBin · EmptyRecycleBin) — delete is
->    currently permanent; κ-adapt: a Recycle κ-folder.
+> 3. ~~**Recycle Bin + restore**~~ — **DONE** (Home deletes MOVE into a hidden OPFS trash — L4, through
+>    the W3C OPFS substrate — with a provenance manifest; identity/κ preserved (L1). Recycle Bin location
+>    with restore-on-open, per-item permanent delete, and Empty. Desktop deletes already covered by Undo (P0.2).)
 > 4. **Keyboard map** — PARTIAL: F2-rename, arrow-nav, Ctrl+A, Ctrl+F, Ctrl+R, Backspace/Enter/Space,
 >    and now Ctrl+Z/Shift+Z/Y already exist. Still missing: **Ctrl+C/X/V** (needs the clipboard, P0.1) and Ctrl+Shift+N.
 > 5. **Command palette** (OpenCommandPalette) — missing.
