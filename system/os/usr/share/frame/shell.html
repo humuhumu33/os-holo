@@ -217,8 +217,12 @@
          Every dimension derives from one base art unit and φ: the folder glyph is a golden rectangle
          (--art : --art/φ), the cell is a golden rectangle (--art·φ wide vibes), the gaps step by φ. */
       holo-window.as-icon { background: transparent !important; box-shadow: none !important; border: 0 !important; --phi: 1.618; --art: 76px; }
-      .folder-icon { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      .folder-icon { position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
         gap: calc(var(--art) / var(--phi) / 4); padding: calc(var(--art) / var(--phi) / 4); cursor: grab; user-select: none; -webkit-user-select: none; outline: none; }
+      .folder-icon .fi-resize { position: absolute; right: 1px; bottom: 1px; width: 16px; height: 16px; cursor: nwse-resize; opacity: 0; transition: opacity .12s; touch-action: none; }
+      .folder-icon:hover .fi-resize { opacity: .5; }
+      .folder-icon .fi-resize:hover { opacity: .95; }
+      .folder-icon .fi-resize::after { content: ""; position: absolute; right: 3px; bottom: 3px; width: 8px; height: 8px; border-right: 2px solid var(--holo-ink, #e6edf5); border-bottom: 2px solid var(--holo-ink, #e6edf5); border-bottom-right-radius: 2px; }
       .folder-icon:active { cursor: grabbing; }
       .folder-icon .fi-folder { position: relative; width: var(--art); height: calc(var(--art) / var(--phi)); border-radius: 13px; background:   /* golden rectangle */
           linear-gradient(160deg, color-mix(in srgb, var(--holo-accent, #2b6fd6) 78%, #fff 6%), color-mix(in srgb, var(--holo-accent, #2b6fd6) 55%, #06122b));
@@ -1136,8 +1140,12 @@
           const cnt = (n.items || []).length; if (cnt) { const b = document.createElement("span"); b.className = "fi-count"; b.textContent = cnt > 99 ? "99+" : cnt; box.appendChild(b); }
           wrap.appendChild(box); wrap.title = "Open " + (n.title || "folder");
         }
+        wrap.style.setProperty("--art", Math.max(40, Math.round((n.w || 96) * 0.72)) + "px");   // art scales with the resizable node
         const lbl = document.createElement("div"); lbl.className = "fi-label"; lbl.textContent = n.title || "Folder";
+        lbl.addEventListener("dblclick", (e) => { e.stopPropagation(); renameFolder(n.id); });   // double-click the NAME → inline rename
         wrap.appendChild(lbl);
+        const rz = document.createElement("div"); rz.className = "fi-resize"; rz.title = "Drag to resize"; wrap.appendChild(rz);
+        wireResize(rz, n);                                // drag the corner → resize the icon
         if (n.id === selIcon) wrap.classList.add("selected");
         wireIcon(wrap, n);                                // native: single-click selects · double-click opens · drag anywhere
         return wrap;
@@ -1152,7 +1160,7 @@
       function deselectIcons() { if (!selIcon) return; const el = mounted.get(selIcon); const w = el && el.querySelector(".folder-icon"); if (w) w.classList.remove("selected"); selIcon = null; }
       function wireIcon(wrap, n) {
         const id = n.id; let st = null, moved = false;
-        const open = () => { if (n.appRef) { const a = catalog.find((x) => x.id === n.appRef); if (a) launch(a); else toast("app not available offline"); } else openFolder(id); };
+        const open = () => { if (n.appRef) { const a = catalog.find((x) => x.id === n.appRef); if (a) launch(a); else toast("app not available offline"); } else openFilesAt(id, n.title || "Folder"); };   // double-click a folder → Holo Files window (Windows-like)
         wrap.addEventListener("pointerdown", (e) => {
           if (e.button) return; const el = mounted.get(id); if (!el) return; selectIcon(id); moved = false;
           st = { sx: e.clientX, sy: e.clientY, ox: +el.dataset.x || 0, oy: +el.dataset.y || 0 };
@@ -1169,6 +1177,25 @@
         wrap.addEventListener("pointerup", up); wrap.addEventListener("pointercancel", up);
         wrap.addEventListener("dblclick", (e) => { e.preventDefault(); if (!moved) open(); });
         wrap.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); open(); } else if (e.key === "F2") { e.preventDefault(); renameFolder(id); } else if (e.key === "Delete") { e.preventDefault(); removeNode(id); } });
+      }
+      function wireResize(rz, n) {   // drag the corner handle → resize the icon (aspect-locked to the golden cell)
+        const id = n.id;
+        rz.addEventListener("pointerdown", (e) => {
+          if (e.button) return; e.preventDefault(); e.stopPropagation();
+          const node = findNode(id) || n; const startW = node.w || 96, sx = e.clientX, sy = e.clientY; let w = startW, h = node.h || 156; const el = mounted.get(id);
+          try { rz.setPointerCapture(e.pointerId); } catch (x) {}
+          const mv = (ev) => { const d = Math.max(ev.clientX - sx, ev.clientY - sy); w = Math.max(64, Math.min(240, Math.round(startW + d))); h = Math.round(w * 1.625);
+            if (el) { el.style.width = w + "px"; el.style.height = h + "px"; const fi = el.querySelector(".folder-icon"); if (fi) fi.style.setProperty("--art", Math.max(40, Math.round(w * 0.72)) + "px"); } };
+          const up = () => { rz.removeEventListener("pointermove", mv); rz.removeEventListener("pointerup", up); rz.removeEventListener("pointercancel", up); resizeNode(id, { x: node.x, y: node.y, w, h, state: "normal" }); };
+          rz.addEventListener("pointermove", mv); rz.addEventListener("pointerup", up); rz.addEventListener("pointercancel", up);
+        });
+      }
+      // open Holo Files as a framed WINDOW on the current desktop, deep-linked to this folder (Windows feel)
+      async function openFilesAt(deskId, name) {
+        const app = catalog.find((a) => a.id === "org.hologram.HoloFiles"); if (!app) { toast("Holo Files not available offline"); return; }
+        let def = {}; try { def = await fetch(app.landing.replace(/[^/]+$/, "holospace.json")).then((r) => r.json()); } catch (e) {}
+        const { sandbox, allow } = capabilitiesToSandbox(await gateCaps(def));
+        addNode({ kind: "app", appId: app.id, appDid: app.did, title: "🗂 " + (name || "Files"), src: app.landing + "?go=desktop:" + deskId, sandbox, allow, state: "normal", frameless: false, w: 920, h: 600, x: 130, y: 90 });
       }
       function openFolder(id) { patch(id, (n) => { n.collapsed = false; n.frameless = false; n.state = "normal"; n.w = Math.max(360, n._ow || 0) || 360; n.h = Math.max(280, n._oh || 0) || 280; }); }
       function collapseFolder(id) { patch(id, (n) => { n._ow = n.w; n._oh = n.h; n.collapsed = true; n.frameless = true; n.state = "normal"; n.w = 96; n.h = 156; }); }
