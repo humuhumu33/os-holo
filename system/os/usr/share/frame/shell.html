@@ -2466,25 +2466,52 @@
       //    which postMessage `{type:"holo-files", op, …}` here and await `holo-files-result`. ───────────
       let _filesMod = null; const filesMod = async () => _filesMod || (_filesMod = await import("/_shared/holo-files.js"));
       const hexOfRef = (r) => { const m = /([0-9a-f]{64})/i.exec(String(r || "")); return m ? m[1].toLowerCase() : null; };
+      // identify the calling app (the holo-window iframe the message came from) for capability gating.
+      function appKeyFor(win) { try { for (const n of desktop.doc().world) { if (n.kind !== "app") continue; const el = mounted.get(n.id), f = el && el.querySelector("iframe"); if (f && f.contentWindow === win) return String(n.title || "").split("  ·  ")[0].trim() || n.appId || "an app"; } } catch (e) {} return "an app"; }
+      // ── capability gate (least authority) — κ-reads need NO grant (you already hold the hash, no ambient
+      //    authority); AMBIENT ops (save to the device, read a Home path) ask ONCE per app, remembered for
+      //    the session; pick is consent-by-action (the user chooses). ─────────────────────────────────────
+      const _fileGrants = new Map();
+      function fileConsent(appKey, what) { if (_fileGrants.get(appKey + "·" + what)) return true; let ok = false; try { ok = confirm("“" + appKey + "” wants to " + what + ".\n\nAllow for this session?"); } catch (e) { ok = false; } if (ok) _fileGrants.set(appKey + "·" + what, true); return ok; }
+      const _picks = new Map();   // a pending pickFile() request → resolve when the user chooses in Holo Files
+      async function openFilesPicker(reqId) {
+        const app = catalog.find((a) => a.id === "org.hologram.HoloFiles"); if (!app) return null;
+        let def = {}; try { def = await fetch(app.landing.replace(/[^/]+$/, "holospace.json")).then((r) => r.json()); } catch (e) {}
+        const { sandbox, allow } = capabilitiesToSandbox(await gateCaps(def));
+        return addNode({ kind: "app", appId: app.id, appDid: app.did, title: "🗂 Choose a file", src: app.landing + "?pick=" + encodeURIComponent(reqId), sandbox, allow, state: "normal", frameless: false, w: 880, h: 580, x: 150, y: 80 });
+      }
       window.addEventListener("message", async (e) => {
         const d = e.data; if (!d || d.type !== "holo-files" || !d.op) return;
         const reply = (ok, result, error) => { try { e.source && e.source.postMessage({ type: "holo-files-result", id: d.id, ok, result, error }, "*"); } catch (x) {} };
+        const appKey = appKeyFor(e.source);
         try {
           if (d.op === "save") {                                  // bytes → a content-addressed object (κ); the store is the memory
+            if (!fileConsent(appKey, "save files to this device")) return reply(false, null, "permission denied");
             const u8 = d.bytes instanceof Uint8Array ? d.bytes : (d.bytes ? new Uint8Array(d.bytes) : new TextEncoder().encode(String(d.text || "")));
             const k = await holoStore.put(u8); const hex = k.split(":").pop();
             reply(true, { kappa: "holo://" + hex, hex, size: u8.length, name: d.name || (hex.slice(0, 10) + ".bin") });
           } else if (d.op === "read") {                           // resolve by κ (store, else the source chain) or a Home path
             const hex = hexOfRef(d.ref);
-            if (hex) { let b = await holoStore.get("sha256:" + hex); if (!b) b = await _kSource(hex); if (!b) return reply(false, null, "not resolvable by κ (Law L5)"); reply(true, { bytes: b, kappa: "holo://" + hex, hex, size: b.length }); }
-            else if (String(d.ref || "").startsWith("/home/")) { const M = await filesMod(); const name = String(d.ref).split("/").pop(); const r = await M.read({ source: "opfs", path: d.ref, name, mime: M.mimeOf(name) }); reply(true, { bytes: r.bytes, mime: r.mime, size: r.size, name }); }
+            if (hex) { let b = await holoStore.get("sha256:" + hex); if (!b) b = await _kSource(hex); if (!b) return reply(false, null, "not resolvable by κ (Law L5)"); reply(true, { bytes: b, kappa: "holo://" + hex, hex, size: b.length }); }   // κ-read: no grant needed (capability IS the hash)
+            else if (String(d.ref || "").startsWith("/home/")) { if (!fileConsent(appKey, "read your Home files")) return reply(false, null, "permission denied — use pickFile() to let the user choose"); const M = await filesMod(); const name = String(d.ref).split("/").pop(); const r = await M.read({ source: "opfs", path: d.ref, name, mime: M.mimeOf(name) }); reply(true, { bytes: r.bytes, mime: r.mime, size: r.size, name }); }
             else reply(false, null, "unsupported ref — pass a holo://κ or a /home/ path");
           } else if (d.op === "reveal") {                         // surface it in the explorer / open the object
             const hex = hexOfRef(d.ref); if (hex) omniGo("holo://" + hex); else openFiles(); reply(true, {});
-          } else if (d.op === "pick") {                           // a governed picker UI is the next slice; reveal works today
-            openFiles(); reply(false, null, "picker UI is the next slice — opened Holo Files so you can copy a κ");
+          } else if (d.op === "pick") {                           // governed picker: open Holo Files modal, resolve on the user's choice
+            const nodeId = await openFilesPicker(d.id); if (!nodeId) return reply(false, null, "Holo Files not available");
+            _picks.set(d.id, { win: e.source, reqId: d.id, nodeId });
           } else reply(false, null, "unknown op: " + d.op);
         } catch (err) { reply(false, null, (err && err.message) || String(err)); }
+      });
+      // the picker's choice (or cancel) comes back from the Holo Files window → resolve the app's request, close the modal.
+      window.addEventListener("message", async (e) => {
+        const d = e.data; if (!d || d.type !== "holo-files-pick" || !d.reqId) return;
+        const p = _picks.get(d.reqId); if (!p) return; _picks.delete(d.reqId);
+        try { removeNode(p.nodeId); } catch (x) {}
+        const send = (ok, result, error) => { try { p.win && p.win.postMessage({ type: "holo-files-result", id: p.reqId, ok, result, error }, "*"); } catch (x) {} };
+        if (d.cancel || !d.bytes) return send(false, null, "cancelled");
+        try { const u8 = d.bytes instanceof Uint8Array ? d.bytes : new Uint8Array(d.bytes); const k = await holoStore.put(u8); const hex = k.split(":").pop();
+          send(true, { kappa: "holo://" + hex, hex, name: d.name, mime: d.mime, bytes: u8, size: u8.length }); } catch (err) { send(false, null, (err && err.message) || String(err)); }
       });
       q.addEventListener("input", () => renderResults(q.value));
       q.addEventListener("keydown", (e) => { if (e.key === "ArrowDown") { e.preventDefault(); selIdx = Math.min(selIdx + 1, spotList.length - 1); markSel(); } else if (e.key === "ArrowUp") { e.preventDefault(); selIdx = Math.max(selIdx - 1, 0); markSel(); } else if (e.key === "Enter") { e.preventDefault(); spotList[selIdx] && launch(spotList[selIdx]); } });

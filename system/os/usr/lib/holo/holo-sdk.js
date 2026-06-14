@@ -205,7 +205,8 @@ export function saveFile(bytes, opts = {}) { return _filesRPC("save", { bytes, n
 export function readFile(ref) { return _filesRPC("read", { ref }); }
 // revealFile(ref) → open the object / Holo Files so the user can see it.
 export function revealFile(ref) { return _filesRPC("reveal", { ref }); }
-// pickFile(options?) → the governed file picker (returns the chosen object). UI slice in progress.
+// pickFile(options?) → the governed file picker: opens Holo Files as a modal; resolves with the
+// chosen object { kappa, name, bytes, mime } (rejects "cancelled" if dismissed). Consent-by-action.
 export function pickFile(options = {}) { return _filesRPC("pick", options); }
 
 // ── Holo Route — typed semantic streams · the routing plane (ADR-0069): the DATAFLOW siblings of
