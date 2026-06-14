@@ -16,6 +16,27 @@ the About panel and keep this doc as the mapping. When a behavior is ambiguous, 
 - **⛔ N/A** — no meaning without a real OS/filesystem/privilege model (reason given).
 - **Slice** — S1 shell+views · S2 ops+undo+recycle · S3 tags/search/properties · S4 desktop unification · S5 advanced (archive/git/media/image).
 
+## Current state — audit of the EXISTING app (corrects the initial estimate)
+The shipped explorer lives in the **sibling Apps repo**: `../Hologram Apps/apps/files/index.html`
+(~984 lines), served at `/apps/files/` (the OS2 holospace dir only vendors `icon.svg`). It already
+covers **Slice 1 in full** and much of S2/S3 — verified live:
+- **Shell:** sidebar (locations from `ROOTS()`), breadcrumb, tabs, status — present.
+- **5 view modes:** Details · List · Tiles · Grid/Icons · Columns (the `vbtn` switcher; persisted to
+  `localStorage`; per-platform default via `skinFor`) — present and toggling.
+- **Already present beyond S1:** sort + grouping, search (local + web), a details/properties pane,
+  Verify (κ re-derivation), and command surface for tag, move, delete, copy, rename, compress/extract,
+  share, pin, new-folder, upload/download, trash, undo, paste.
+
+**Therefore the real remaining work is NOT "build the explorer" — it is:**
+1. **Gap audit** of the existing app vs. the 161-action table below → a punch-list of what's truly missing
+   or κ-adapted incompletely (e.g. dual-pane, recycle round-trip, full undo/redo, tag index as κ).
+2. **Unification (was S4, now the headline):** the shell's desktop folders/app-icons
+   (`kind:"folder"` nodes in `shell.html`) are a SEPARATE model from `holo-files.js` VFS. Make them ONE:
+   the desktop = the explorer rooted at the desktop folder; a folder icon opens into the same app.
+
+Revised slices: **A** gap audit + dual-pane/recycle/undo completion · **B** tags/favorites/recents as κ
+objects · **C** desktop⇄explorer unification · **D** advanced (archive/git/media/image). (Old S1 = done.)
+
 ## The κ grounding (applies throughout)
 - A **file** = a content-addressed object (bytes → κ, Law L5). Identity = hash.
 - A **folder** = an object whose content is an ordered manifest `{name, κ, kind, meta}`. Editing derives a **new** folder κ → immutable history → **Undo/Redo and "recycle" are free**.
