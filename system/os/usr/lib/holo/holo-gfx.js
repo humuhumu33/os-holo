@@ -28,7 +28,10 @@ export async function gpuInfo() {
 export const gpuLabel = (i) => `${i.backend}${i.dpr > 1 ? " · " + i.dpr + "×" : ""}`;
 
 export function createSurface(canvas) {
-  const ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
+  // NOT desynchronized: low-latency mode bypasses the compositor's double-buffer, so any surface that
+  // clears+repaints a full frame tears/flickers (esp. on Windows). These are visual surfaces, not
+  // input-latency-critical, so synchronized present is the right trade.
+  const ctx = canvas.getContext("2d", { alpha: true });
   let dpr = Math.min(3, (typeof devicePixelRatio !== "undefined" ? devicePixelRatio : 1) || 1), W = 1, H = 1;
   function resize() {
     const r = canvas.getBoundingClientRect();

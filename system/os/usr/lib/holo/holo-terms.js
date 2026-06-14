@@ -226,24 +226,23 @@
     const s = document.createElement("style"); s.textContent = CSS; document.head.appendChild(s);
   }
   async function renderBadge() {
-    if (!isBrowser || W.__holoTermsBadge === false) return;
-    ensureCss();
-    let btn = document.getElementById("holo-terms-btn");
-    if (!btn) {
-      btn = document.createElement("button"); btn.id = "holo-terms-btn"; btn.type = "button";
-      btn.title = "Holo Terms — your agreement with this app"; btn.innerHTML = SHIELD + '<span class="ht-code"></span>';
-      btn.onclick = togglePanel; document.body.appendChild(btn);
-    }
-    let code = standingCode(); if (!code) { try { code = (await roster()).default; } catch { code = "SD-BASE"; } }
-    btn.querySelector(".ht-code").textContent = code;
+    // The standing-terms shield is removed from the shell chrome — terms still apply by default and
+    // are managed via the Terms app / the per-app panel (togglePanel). Clear any badge already mounted.
+    if (!isBrowser) return;
+    const ex = document.getElementById("holo-terms-btn"); if (ex) ex.remove();
   }
+  // The HOST (holo-gov.js) sets the focused app so this shield reflects what THAT app was granted, not
+  // the shell. Null in a bare app frame ⇒ fall back to the page's own identity (the standalone badge).
+  let _activeApp = null;
+  function setActiveApp(a) { _activeApp = a || null; renderBadge(); }
   let _panel = null;
   async function togglePanel() {
     if (_panel) { _panel.remove(); _panel = null; return; }
     ensureCss();
     const r = await roster().catch(() => null);
     const term = (r && (codeOf(r, standingCode()) || codeOf(r, r.default))) || null;
-    const appId = idOf({ id: (document.querySelector('meta[name="holo-app-id"]') || {}).content, name: document.title });
+    const appId = _activeApp ? idOf(_activeApp)
+      : idOf({ id: (document.querySelector('meta[name="holo-app-id"]') || {}).content, name: document.title });
     const rec = loadRecords()[appId];
     const grants = rec ? rec.credentialSubject.grants : [];
     const grantText = grants.length ? grants.map((g) => refLabel(g)).map(esc).join(", ") : "its own storage only";
@@ -304,7 +303,7 @@
 
   // ── public API ────────────────────────────────────────────────────────────────────────────────
   W.HoloTerms = {
-    gate, effective, classify, capRefs,
+    gate, effective, classify, capRefs, setActiveApp,
     roster, standingTerm: standingCode, setStandingTerm, standingAgreement,
     agreementFor, records: loadRecords, revoke, firstParty: async () => (await signer()).did,
     makeRecord, verifyRecord, openControlCenter: () => { try { (W.top || W).location.href = TERMS_APP_URL; } catch { location.href = TERMS_APP_URL; } },

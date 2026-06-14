@@ -1,0 +1,32 @@
+Holo native folder icons — vendored set
+========================================
+
+Source:   Material Icon Theme (vscode-material-icon-theme)
+Upstream: https://github.com/PKief/vscode-material-icon-theme
+Path:     icons/folder-*.svg
+License:  MIT (see ./LICENSE) — Copyright (c) Material Extensions
+Format:   self-contained SVG, viewBox 0 0 16 16, no external references
+
+What this is
+------------
+A curated subset of the Material Icon Theme's folder icons, used as the visual
+art for Holo native desktop folders (system/os/usr/share/frame/shell.html →
+buildFolderIcon). Each file is a colored folder with a category emblem; the
+filename category (folder-<category>.svg) maps to a Holo folder's `icon` field.
+
+Curation
+--------
+folder-base is the default. The remaining categories were selected for a desktop
+file-manager vocabulary (audio, video, images, docs, download, app, api, src,
+config, tools, database, keys, public, server, temp, test, project, resource,
+home, desktop, git, dist, log, font, theme, plugin, pdf, scripts, secure,
+markdown, import, export, content, client, global, components, archive).
+
+To add more, copy the matching icons/folder-<name>.svg from the upstream repo
+(same MIT license) into this directory — no transformation needed.
+
+Provenance note
+---------------
+These bytes are served by the Holo FHS gateway and content-addressed (Law L5)
+like any other object: a folder that references folder-<category>.svg resolves
+it by path and it re-derives to a stable κ. Replacing a byte changes the κ.

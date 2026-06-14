@@ -14,7 +14,7 @@
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Hologram OS — Build · Run · Share" />
+<meta name="twitter:title" content="Hologram OS — Create · Play · Share" />
 <meta name="twitter:description" content="Serverless apps you share with a link. Open one and it runs instantly — no install, no sign-in." />
 <meta name="twitter:image" content="os/usr/share/icons/og-card.png" />
 <link rel="manifest" href="os/etc/manifest.webmanifest" />
@@ -70,7 +70,7 @@
 }
 </script>
 <!-- apply the saved appearance mode (light · dark · immersive) before first paint — no flash -->
-<script>try{var d=document.documentElement;var m=localStorage.getItem("holo.gateway.mode")||"immersive";d.setAttribute("data-theme",m==="light"?"light":"dark");d.setAttribute("data-immersive",m==="immersive"?"full":"off");}catch(e){var x=document.documentElement;x.setAttribute("data-theme","dark");x.setAttribute("data-immersive","full");}</script>
+<script>var d=document.documentElement;d.setAttribute("data-theme","dark");d.setAttribute("data-immersive","full");</script>
 <style>
   /* ─────────────────────────────────────────────────────────────────────────────────────────
      The gateway face — the LibreChat landing UX (top bar · star pill · giant headline · sub-line ·
@@ -109,7 +109,7 @@
     --u-phi2: calc(var(--u) * 2.618);                          /* φ²  */
     --u-phi3: calc(var(--u) * 4.236);                          /* φ³  */
     --u-phi4: calc(var(--u) * 6.854);                          /* φ⁴  */
-    --display: clamp(34px, min(14.4vmin, 12vw), 240px);        /* the headline register — vw term keeps long single words (Supercomputer) inside the narrowest phone */
+    --display: clamp(34px, min(13.7vmin, 12vw), 232px);        /* the headline register — matched to the reference; vw term keeps long single words (Supercomputer) inside the narrowest phone */
     --sub: clamp(15px, calc(var(--display) / var(--phi) / var(--phi) / var(--phi)), 34px); /* headline ÷ φ³ */
     color-scheme:dark;
   }
@@ -174,6 +174,17 @@
       radial-gradient(1px 1px at 30% 90%, #e9d5ff, transparent),
       radial-gradient(1.2px 1.2px at 78% 88%, #fff, transparent),
       radial-gradient(1px 1px at 8% 64%, #cbd5ff, transparent); }
+  /* the clouds layer — the genuine Vanta CLOUDS2 effect (vendored under system/vendor/vanta/), drawn only in
+     Immersive mode. It is opaque when it runs, so it becomes the immersive sky; if WebGL/the libraries
+     are unavailable it stays transparent and the CSS nebula/aurora/stars below show through as a
+     graceful fallback. */
+  .bg-gl{ position:absolute; inset:0; width:100%; height:100%; display:block; opacity:0; transition:opacity .7s ease; }
+  :root[data-immersive="full"] .bg-gl{ opacity:1; }
+  /* the cloudscape is bright toward the clouds, where the hero text sits — give the text a soft dark
+     halo (only in immersive) so it stays readable WITHOUT veiling the sky itself. */
+  :root[data-immersive="full"] h1{ text-shadow:0 0.035em 0.5em rgba(0,0,0,.55), 0 0.01em 0.1em rgba(0,0,0,.55); }
+  :root[data-immersive="full"] .sub{ color:#fff; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,.92), 0 0 6px rgba(0,0,0,.55); }
+  :root[data-immersive="full"] .pill-star,:root[data-immersive="full"] .sig span{ text-shadow:0 0.05em 0.4em rgba(0,0,0,.5); }
   .bg-scrim{ inset:0; background:radial-gradient(95% 75% at 50% 44%, transparent 42%, rgba(0,0,0,.42) 100%); }
   :root[data-theme="light"] .bg-neb{ opacity:.85;
     background:
@@ -194,14 +205,14 @@
     font-size:var(--u-phi); letter-spacing:-.01em; }                          /* u·φ */
   .brand .mk{ width:1.2em; height:1.2em; display:block; color:var(--fg); }
   .links{ display:flex; align-items:center; gap:var(--u-phi); margin-left:var(--u-phi); }
-  .links a{ color:var(--muted); font-size:var(--u); font-weight:450; transition:color .15s; } /* u */
+  .links a{ color:var(--muted); font-size:calc(var(--u) * 1.08); font-weight:450; transition:color .15s; } /* ≈ reference 22px */
   .links a:hover{ color:var(--fg); }
   .grow{ flex:1; }
   .right{ display:flex; align-items:center; gap:calc(var(--u) * .65); }
 
   .search{ position:relative; display:flex; align-items:center; gap:.6em;
-    background:var(--panel); border:1px solid var(--line); border-radius:calc(var(--u) * .62);
-    height:calc(var(--u) * 2.618); padding:0 .8em; color:var(--muted-2); cursor:text;   /* h = u·φ² */
+    background:var(--panel); border:1px solid var(--line); border-radius:calc(var(--u) * .73);
+    height:calc(var(--u) * 2.72); padding:0 .8em; color:var(--muted-2); cursor:text;   /* matched to reference */
     width:clamp(190px, 19vw, 380px); font-size:var(--u); transition:border-color .15s; }
   .search:hover{ border-color:var(--line-strong); }
   .search:focus-within{ border-color:var(--line-strong); }
@@ -257,12 +268,12 @@
      rhythm is golden: section gap = u·φ², bottom inset = u·φ², top guard = u·φ³. */
   .hero{ position:fixed; inset:0; z-index:2;
     display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
-    text-align:center; gap:var(--u-phi2);
-    padding:var(--u-phi3) 5vw var(--u-phi2); }
+    text-align:center; gap:calc(var(--u) * 2.3);
+    padding:var(--u-phi3) 5vw calc(var(--u) * 5.6); }   /* bottom-weighted, lifted a little higher */
 
   .pill-star{ display:inline-flex; align-items:center; gap:.7em;
     background:var(--panel); border:1px solid var(--line); border-radius:999px;
-    padding:.62em 1em; font-size:var(--u); color:var(--fg-soft);                /* inline pad = block · φ */
+    padding:.52em 1em; font-size:var(--u); color:var(--fg-soft);                /* matched to reference */
     transition:border-color .15s, background .15s; }
   .pill-star:hover{ border-color:var(--line-strong); background:var(--panel-hover); }
   .pill-star svg{ width:1.15em; height:1.15em; }
@@ -279,11 +290,19 @@
   .btn{ -webkit-appearance:none; appearance:none; cursor:pointer;
     display:inline-flex; align-items:center; gap:.55em; border:1px solid transparent;
     border-radius:999px; font:600 var(--u)/1 inherit;
-    padding:1.03em 1.667em; transition:background .15s, border-color .15s, transform .12s; }  /* inline = block · φ */
+    padding:1.12em 2.3em; transition:background .15s, border-color .15s, transform .12s; }  /* matched to reference pill width */
   .btn:active{ transform:translateY(1px); }
   .btn-primary{ background:var(--btn-p-bg); color:var(--btn-p-fg); }
   .btn-primary:hover{ background:var(--btn-p-hover); }
-  .btn-primary svg{ width:1.1em; height:1.1em; }
+  /* power-button glyph: a crisp IEC power symbol, sized to the label's cap height and optically centred */
+  .btn-primary .pwr{ width:1.16em; height:1.16em; flex:none; margin-top:-0.04em; }
+  .btn-primary span{ line-height:1; }
+  /* in Immersive the hero sits on the bright cloudscape — a solid black pill reads best there, lifted
+     off the clouds with a soft shadow and a hairline edge so it feels like a real power button */
+  :root[data-immersive="full"] .btn-primary{ background:#0a0a0f; color:#fff; border-color:rgba(255,255,255,.16);
+    box-shadow:0 .35em 1.5em rgba(0,0,0,.42), inset 0 0 0 .5px rgba(255,255,255,.04); }
+  :root[data-immersive="full"] .btn-primary:hover{ background:#17171f; border-color:rgba(255,255,255,.3);
+    box-shadow:0 .45em 1.8em rgba(0,0,0,.5); }
   .btn-ghost{ background:var(--panel); color:var(--fg); border-color:var(--line); }
   .btn-ghost:hover{ background:var(--panel-hover); border-color:var(--line-strong); }
 
@@ -297,15 +316,25 @@
   /* the self-address signature: this gateway IS a content-addressed object; it re-derives its own
      κ and shows it — a quiet proof you are already inside the substrate, not on a normal website. */
   .sig{ position:fixed; left:0; right:0; bottom:calc(var(--u) * .9); z-index:4; text-align:center;
-    padding:0 6vw; pointer-events:none; }
-  .sig span{ font-size:calc(var(--u) * .72); letter-spacing:.02em; color:var(--muted-2);
-    display:inline-flex; align-items:center; gap:.5em; }
-  .sig .dot{ width:.5em; height:.5em; border-radius:50%; background:#2dd4bf; box-shadow:0 0 .6em #2dd4bf; }
-  body.leaving .sig{ opacity:0; transition:opacity .24s ease; }
+    padding:0 6vw; pointer-events:none; line-height:1.55; }
+  .sig #kappa{ font-size:calc(var(--u) * 1.18); font-weight:600; letter-spacing:.01em; color:var(--fg); opacity:1; }
+  .sig .dot{ display:inline-block; width:.55em; height:.55em; border-radius:50%; background:var(--fg);
+    vertical-align:middle; margin-right:.55em; position:relative; top:-0.06em; }
+  .sig .kx{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.95em; opacity:1; margin-left:.5em; white-space:nowrap;
+    pointer-events:auto; --holo-accent:currentColor; }   /* interactive (the .sig wrapper is pointer-events:none); braille in the same ink as the text */
+  .sig .khint{ display:none; font-size:.78em; opacity:.5; letter-spacing:.02em; margin-left:.45em; white-space:nowrap; }
+  .sig #kx[data-holo-k-upgraded] ~ .khint{ display:inline; }   /* the hint appears only once the live braille κ is mounted */
+  .sig .uor{ color:var(--fg); text-decoration:none; pointer-events:auto; border-bottom:1px solid currentColor; }
+  .sig .uor:hover{ border-bottom-color:currentColor; }
+  body.leaving .sig{ opacity:0; transition:opacity .16s ease; }
 
-  /* boot handoff: dissolve the gateway chrome into the splash. The black bg is shared, so the page
-     never flashes — only the bar + hero fade as the splash animation takes over. */
-  body.leaving .bar, body.leaving .hero{ opacity:0; transition:opacity .24s ease; pointer-events:none; }
+  /* boot handoff — ONE continuous power-on, no intermediate beat: a solid #000 veil rises FAST (no
+     separate chrome/sky fade competing with it). The gateway and the enclosed splash share the exact
+     same black (#000), so the splash's reveal seams straight out of this veil — the only motion the
+     user sees is darken → boot animation, with nothing flashing in between. */
+  body.leaving .bar, body.leaving .hero, body.leaving #vanta{ pointer-events:none; }
+  body.leaving::after{ content:""; position:fixed; inset:0; background:#000; z-index:60; pointer-events:none; animation:bootToBlack .16s linear forwards; }
+  @keyframes bootToBlack{ from{ opacity:0; } to{ opacity:1; } }
 
   /* ── RESPONSIVE: the golden tokens already fluidly resize everything; these only collapse the
      secondary bar items on small widths and re-center / gently shrink the unit on tight heights so
@@ -345,6 +374,7 @@
   <div class="bg-neb"></div>
   <div class="bg-aurora"></div>
   <div class="bg-stars"></div>
+  <div class="bg-gl" id="vanta"></div>
   <div class="bg-scrim"></div>
 </div>
 
@@ -363,20 +393,20 @@
   <div class="right">
     <div class="search" role="search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input id="q" type="text" placeholder="Search apps" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"
-             role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="results" aria-label="Search Hologram apps" />
+      <input id="q" type="text" placeholder="Search holo apps" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"
+             role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="results" aria-label="Search holo apps" />
       <span class="kbd"><kbd>Ctrl</kbd><kbd>K</kbd></span>
       <div id="results" class="results" role="listbox" aria-label="Hologram apps" hidden></div>
     </div>
     <div class="toggle" role="group" aria-label="Appearance">
-      <button type="button" data-mode="light" aria-label="Light theme" aria-pressed="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <button type="button" data-mode="immersive" aria-label="Immersive theme" aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.4l1.62 5.34 5.34 1.62-5.34 1.62L12 16.32l-1.62-5.34L5.04 9.36l5.34-1.62z"/><path d="M18.8 3l.66 1.94 1.94.66-1.94.66-.66 1.94-.66-1.94-1.94-.66 1.94-.66z"/><path d="M5.2 15.4l.56 1.64 1.64.56-1.64.56-.56 1.64-.56-1.64L3.04 17.6l1.64-.56z"/></svg>
       </button>
       <button type="button" data-mode="dark" aria-label="Dark theme" aria-pressed="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       </button>
-      <button type="button" data-mode="immersive" aria-label="Immersive theme" aria-pressed="true">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.4l1.62 5.34 5.34 1.62-5.34 1.62L12 16.32l-1.62-5.34L5.04 9.36l5.34-1.62z"/><path d="M18.8 3l.66 1.94 1.94.66-1.94.66-.66 1.94-.66-1.94-1.94-.66 1.94-.66z"/><path d="M5.2 15.4l.56 1.64 1.64.56-1.64.56-.56 1.64-.56-1.64L3.04 17.6l1.64-.56z"/></svg>
+      <button type="button" data-mode="light" aria-label="Light theme" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
       </button>
     </div>
     <a class="ghlink" href="https://github.com/Hologram-Technologies/hologram-os" aria-label="GitHub">
@@ -399,21 +429,29 @@
   <p class="sub">Hologram brings every object on the internet into one unified, self-verifying computer</p>
 
   <div class="cta">
-    <button class="btn btn-primary" id="enter" type="button" aria-label="Get started — boot Hologram OS">
-      Get Started
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    <button class="btn btn-primary" id="enter" type="button" aria-label="Power up — boot Hologram OS">
+      <svg class="pwr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v8"/><path d="M6.4 7.9a8 8 0 1 0 11.2 0"/></svg>
+      <span>Power up</span>
     </button>
-    <button class="btn btn-ghost" id="trydemo" type="button">Try Demo</button>
   </div>
 
   <div class="status" id="status" role="status" aria-live="polite"></div>
 </main>
 
 <!-- the gateway's own content address — proof this page is one self-verifying UOR object (Law L5) -->
-<div class="sig"><span><i class="dot"></i><span id="kappa">did:holo — content-addressed</span></span></div>
+<div class="sig"><i class="dot"></i><span id="kappa">This page is its own fingerprint — a self-verifying <a class="uor" href="https://uor.foundation/" target="_blank" rel="noopener noreferrer">UOR</a> object <span id="kx" class="kx">computing…</span><span class="khint">hover to read · click to copy</span></span></div>
 
 <!-- AI agents: the full machine map is in the JSON-LD + /.well-known links in <head>; AGENTS.md is the human door. -->
 
+<!-- Vanta CLOUDS2 effect — vendored locally (Vanta.js + three.js r134, both MIT), served same-origin (no
+     runtime CDN). These classic scripts run before the module below, so window.THREE + window.VANTA are
+     ready. The effect is the genuine vantajs.com clouds2 — we only tune its pixel ratio + frame rate. -->
+<script src="system/vendor/vanta/three.min.js"></script>
+<script src="system/vendor/vanta/vanta.clouds2.min.js"></script>
+<!-- Holo FX (the OS's faithful unicode-animations adoption): renders every κ as a streaming braille
+     projection of its own bytes (hover/focus reveals the hash) and auto-upgrades any did:holo digest
+     in the page. Classic script → window.HoloFX is ready before the module below. -->
+<script src="system/os/usr/lib/holo/holo-fx.js"></script>
 <script type="module">
   const $ = (id) => document.getElementById(id);
 
@@ -465,18 +503,85 @@
     if (meta) meta.setAttribute("content", m === "light" ? "#ffffff" : "#000000");
     try { localStorage.setItem(MODE_KEY, m); } catch {}
   }
-  let savedMode = "immersive"; try { savedMode = localStorage.getItem(MODE_KEY) || "immersive"; } catch {}
-  setMode(savedMode);
+  setMode("immersive");   // ALWAYS start in Immersive (the gateway's signature look), regardless of any saved choice
   modeBtns.forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+  // ── Immersive background — the genuine Vanta CLOUDS2 effect (Vanta.js + three.js r134), VENDORED
+  // locally under system/vendor/vanta/ and served same-origin (no runtime CDN). The effect itself is verbatim
+  // from vantajs.com. Mounted ONLY in Immersive mode and destroyed when you leave it / hide the tab;
+  // under reduced-motion it runs at speed 0 (a still sky). If the libraries didn't load, the CSS nebula
+  // below remains as a graceful fallback.
+  //
+  // IDENTICAL ON EVERY SCREEN: Vanta composes its clouds relative to the canvas's LOGICAL size, so on a
+  // bigger window the horizon drifts and the framing changes. We pin it: Vanta renders into a fixed
+  // REFW×REFH stage (its logical size never changes ⇒ the exact same cloudscape every time), and we
+  // COVER-scale that stage to fill the viewport — centred, cropping the overflow, exactly like
+  // background-size:cover. Phone, laptop or 8K panel show the same clouds in the same place; only how much
+  // of the edges is visible differs. Backing pixels track the on-screen size, so it stays razor sharp
+  // (native, true 8K), and a live frame-rate probe lightens it (fewer pixels) only if a GPU can't keep up.
+  (function () {
+    const el = document.getElementById("vanta");
+    if (!el || !window.VANTA || !window.VANTA.CLOUDS2) return;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const REFW = 1920, REFH = 1320;                       // the fixed design frame the clouds are composed in
+    el.style.overflow = "hidden";
+    const stage = document.createElement("div");
+    stage.style.cssText = "position:absolute;top:50%;left:50%;width:" + REFW + "px;height:" + REFH + "px;transform-origin:center center;will-change:transform;";
+    el.appendChild(stage);
+
+    const STEPS = [1, 1.5, 2, 3];                         // adaptive load: 1 = sharp (backing = on-screen pixels) → higher = lighter
+    let si = 0, inst = null, fpsRAF = 0, cover = 1;
+    const coverOf = () => Math.max(window.innerWidth / REFW, window.innerHeight / REFH);
+    const scaleNow = () => STEPS[si] / cover;             // pixelRatio = dpr/scale ⇒ backing ≈ displayed px (sharp); logical stays REFW×REFH
+    const on = () => document.documentElement.getAttribute("data-immersive") === "full" && !document.hidden;
+    function place() { cover = coverOf(); stage.style.transform = "translate(-50%,-50%) scale(" + cover + ")"; }
+    function apply() { if (!inst) return; const ns = scaleNow(); try { inst.setOptions({ scale: ns, scaleMobile: ns }); inst.scale = ns; inst.resize(); } catch {} }
+    function fit() { place(); apply(); }
+    function start() {
+      if (inst) return;
+      place();
+      try {
+        inst = window.VANTA.CLOUDS2({
+          el: stage, THREE: window.THREE,
+          mouseControls: false, touchControls: false, gyroControls: false,
+          scale: scaleNow(), scaleMobile: scaleNow(),
+          texturePath: "system/vendor/vanta/noise.png",
+          speed: reduce ? 0.0 : 1.0,
+        });
+        if (!reduce) watchFps();
+      } catch (e) { inst = null; }
+    }
+    function lighten() { if (!inst || si >= STEPS.length - 1) return; si++; apply(); }   // fewer pixels, LIVE (no destroy → no flicker)
+    function watchFps() {
+      cancelAnimationFrame(fpsRAF);
+      let frames = 0, t0 = 0;
+      const tick = (now) => {
+        if (!inst) return;
+        if (!t0) { t0 = now; frames = 0; fpsRAF = requestAnimationFrame(tick); return; }
+        frames++;
+        if (now - t0 < 1400) { fpsRAF = requestAnimationFrame(tick); return; }
+        if ((frames * 1000) / (now - t0) < 45) lighten();   // too heavy → fewer pixels; keep measuring (monotonic)
+        t0 = 0; fpsRAF = requestAnimationFrame(tick);
+      };
+      // warm up first so one-off texture-load hitches don't trigger a needless downscale
+      setTimeout(() => { if (inst && on()) fpsRAF = requestAnimationFrame(tick); }, 800);
+    }
+    function stop() { cancelAnimationFrame(fpsRAF); if (inst) { try { inst.destroy(); } catch {} inst = null; } }
+    function sync() { if (on()) start(); else stop(); }
+    new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ["data-immersive"] });
+    document.addEventListener("visibilitychange", sync);
+    addEventListener("resize", () => { if (inst) fit(); else place(); }, { passive: true });
+    sync();
+  })();
 
   // Live self-address: the gateway resolves ITS OWN bytes to a κ — booting is resolve-by-content (Law L5).
   (async () => {
     try {
       const buf = await (await fetch(location.href, { cache: "no-store" })).arrayBuffer();
       const hex = [...new Uint8Array(await crypto.subtle.digest("SHA-256", buf))].map((b) => b.toString(16).padStart(2, "0")).join("");
-      const short = hex.slice(0, 8) + "…" + hex.slice(-6);   // a tidy one-line κ — readable, not a tiny 64-char wrap
-      const k = $("kappa"); if (k) k.textContent = "this holospace · did:holo:sha256:" + short;
-    } catch { const k = $("kappa"); if (k) k.textContent = "did:holo — content-addressed"; }
+      const kx = $("kx"); if (kx) { const k = "did:holo:sha256:" + hex; kx.textContent = k;   // the canonical hash of THIS page's exact bytes
+        try { window.HoloFX && window.HoloFX.kappa(kx, k, { width: 10 }); } catch {} }   // …shown as a short streaming-braille window DERIVED from those bytes (hover reveals the full hash)
+    } catch { const kx = $("kx"); if (kx) kx.textContent = "(hash needs http — serve this page over http to verify)"; }
   })();
 
   // Boot: bring up the κ / FHS Service Worker (the substrate gateway — maps the flat URL space onto
@@ -493,7 +598,6 @@
       $("status").innerHTML = 'Hologram OS boots over <b>http</b>. From this folder run<br><code>cd system &amp;&amp; node tools/serve-pages.mjs</code><br>then open <b>http://127.0.0.1:8080/</b>';
       return;
     }
-    $("status").textContent = "resolving Hologram OS…";
     // Find where the OS image is served — its real repo path (system/os/), or a remapped root (os/)
     // if the host aliases it. So the gateway boots whether the repo is served literally by ANY static
     // host or through the remapping dev server. (HEAD-probe the SW; first hit wins.)
@@ -505,7 +609,6 @@
     // the fail-closed, self-verifying conscience gate and re-derive the eight principles against
     // their pinned κ (Law L5). Sealed ⇒ boot. Tampered or absent ⇒ FAIL CLOSED — refuse to boot.
     const CONSTITUTION_K = "did:holo:sha256:3ff288d0c06a0fd22da898301cb6c8c11fc62e3b2b7ab58a53c7cb0cb385f00c";
-    $("status").textContent = "verifying the Constitution…";
     let constitutionSealed = false;
     try {
       const C = await import(new URL(root + "usr/lib/holo/holo-conscience.js", location.href).href);
@@ -516,37 +619,44 @@
       holoBootRefused("CONSTITUTION.md");
       return;
     }
-    $("status").innerHTML = '✓ Constitution sealed (ADR-033) — booting a governed computer…';
+    // Sealed ⇒ commit to boot. NO status text under the button (it would shift the layout) — instead,
+    // immediately fade the whole gateway to black (a clean power-on) and do the rest behind the veil.
+    document.body.classList.add("leaving");
+    const faded = Date.now();
+    try {
+      const TK = "holo.theme.v1", s = JSON.parse(localStorage.getItem(TK) || "{}");
+      s.palette = "dark"; localStorage.setItem(TK, JSON.stringify(s));       // pin the OS palette DARK so the boot screens match the black gateway
+    } catch {}
 
+    // Bring up the κ / FHS Service Worker behind the black veil, so every byte the boot chain loads is
+    // resolved + re-derived to its κ (Law L5).
     try {
       if ("serviceWorker" in navigator) {
         const reg = await navigator.serviceWorker.register(root + "holo-fhs-sw.js", { type: "module", scope: root }).catch(() => null);
         if (reg && !navigator.serviceWorker.controller) {
           await new Promise((res) => { if (reg.active) return res(); const w = reg.installing || reg.waiting; if (!w) return res(); w.addEventListener("statechange", function () { if (this.state === "activated") res(); }); setTimeout(res, 4000); });
-          // wait until the worker actually CONTROLS this client (clients.claim propagated) so the
-          // streamlined redirect resolves every byte through the κ route — no race, no unmapped 404.
           if (!navigator.serviceWorker.controller) await Promise.race([new Promise((r) => navigator.serviceWorker.addEventListener("controllerchange", r, { once: true })), new Promise((r) => setTimeout(r, 2000))]);
         }
       }
     } catch {}
-    // Frictionless by DEFAULT (the viral path): straight into the ONE desktop shell (apps/sdk —
-    // ENCLOSED in the image, so it boots standalone), which signs in as a non-persistent GUEST so a
-    // shared holospace link (?app=… / ?open=…) runs INSTANTLY, zero context needed. Sign-in (device
-    // biometric) is one tap IN the shell. Opt-in: ?signin → the full SDDM greeter; the rEFInd boot
-    // MENU stays reachable (boot.html). Every byte is still κ-verified by the worker (L5).
-    try {
-      const TK = "holo.theme.v1", s = JSON.parse(localStorage.getItem(TK) || "{}");
-      s.palette = "dark"; localStorage.setItem(TK, JSON.stringify(s));       // pin the OS palette DARK so the desktop matches the black gateway
-    } catch {}
-    document.body.classList.add("leaving");   // dissolve the gateway content; the shared black bg crossfades into the shell
-    const params = new URLSearchParams(location.search);
-    const dest = params.has("signin")
-      ? root + "login.html?" + new URLSearchParams({ next: "apps/sdk/index.html", label: "Hologram OS", logo: "boot/icons/os_hologram.svg" })
-      : root + "apps/sdk/index.html" + location.search + location.hash;
-    setTimeout(() => location.replace(dest), 240);
+
+    // Power on like a real computer: Plymouth boot-splash animation (usr/share/frame/splash.html, served
+    // flat as splash.html by the κ worker) → the LOGIN screen (the SDDM greeter) → and only AFTER sign-in,
+    // the desktop. The user always passes login; we never drop them straight onto the desktop. The rEFInd
+    // boot MENU stays one keypress away (F2) during the splash, like real firmware.
+    const loginURL = new URL(root + "login.html", location.href).href + "?" + new URLSearchParams({
+      next: "apps/sdk/index.html", label: "Hologram OS", logo: "boot/icons/os_hologram.svg",
+    }).toString();
+    const splash = root + "splash.html?" + new URLSearchParams({
+      next: loginURL,
+      menu: new URL(root + "boot/index.html", location.href).href,
+      label: "Hologram OS", logo: "boot/icons/os_hologram.svg", theme: "holo-pulse", duration: "5",
+    }).toString();
+    // navigate the instant the black veil has settled (≈160ms), regardless of how long the SW took — the
+    // splash's first paint is the same #000, so this hands off with no flash and no extra animation beat
+    setTimeout(() => location.replace(splash), Math.max(0, 200 - (Date.now() - faded)));
   }
-  $("enter").addEventListener("click", boot);
-  $("trydemo")?.addEventListener("click", boot);   // "Try Demo" enters the same guest shell
+  $("enter").addEventListener("click", boot);   // "Power up" → the Plymouth boot splash → the OS
   // No auto-boot — the gateway stays a STATIC splash until the user acts. Boot is an explicit
   // choice: click a button or press Enter. (A sovereign computer powers on by will, not a timer.)
   // Enter boots ONLY when not typing in the search box (which has its own Enter → launch app).

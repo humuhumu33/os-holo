@@ -184,10 +184,10 @@ function defineHoloAppElement() {
       .o{margin-top:10px;font:11.5px/1.6 ui-monospace,monospace;color:var(--holo-ink-dim,#9aa3b2);word-break:break-all;white-space:pre-wrap;min-height:1.4em}
       .k{color:var(--holo-accent,#ff6b3d)}
     </style>
-    <div class="w"><div class="h">build · run · share<span class="k">— one κ, serverless, self-verifying</span></div>
+    <div class="w"><div class="h">create · play · share<span class="k">— one κ, serverless, self-verifying</span></div>
       <textarea spellcheck="false">${sample.replace(/</g, "&lt;")}</textarea>
-      <div class="b"><button class="p" id="b">Build</button><button id="r">Run</button><button id="s">Share</button></div>
-      <div class="o" id="o">edit, then Build → a content address (κ)</div></div>`;
+      <div class="b"><button class="p" id="b">Create</button><button id="r">Play</button><button id="s">Share</button></div>
+      <div class="o" id="o">edit, then Create → a content address (κ)</div></div>`;
     const $ = (s) => sh.getElementById(s);
     const ta = sh.querySelector("textarea");
     const out = (m, cls = "") => { $("o").innerHTML = cls ? `<span class="${cls}">${m}</span>` : m; };

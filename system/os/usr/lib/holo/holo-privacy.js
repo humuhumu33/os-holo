@@ -307,10 +307,16 @@
 
   // ── the per-frame badge (how much an agent here was shown, in plain words) ────────────────────
   const SHIELD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><circle cx="12" cy="11" r="2.4" stroke="#7ee7c7"/><path d="M12 13.4V16" stroke="#7ee7c7"/></svg>';
-  const STANCE_SHORT = { MINIMAL: "Minimal", "MINIMAL-VERIFY": "Minimal · proof" };
+  const STANCE_SHORT = { MINIMAL: "Privacy", "MINIMAL-VERIFY": "Privacy · proof" };
   let _cssAdded = false;
   function ensureCss() { if (_cssAdded || !isBrowser) return; _cssAdded = true; const s = document.createElement("style"); s.textContent = CSS; document.head.appendChild(s); }
-  const appIdOf = () => ((document.querySelector('meta[name="holo-app-id"]') || {}).content) || (document.title || "this app");
+  // The HOST surfaces ONE shield per focused app (holo-gov.js): when it sets the active app, the badge
+  // + panel reflect THAT app's disclosures — not the shell's. In a bare app frame this stays null and
+  // we fall back to the page's own identity (meta / title), so the per-frame badge still works alone.
+  let _activeApp = null;
+  function setActiveApp(a) { _activeApp = a || null; renderBadge(); }
+  const appIdOf = () => (_activeApp && (_activeApp.did || _activeApp.id || _activeApp.name))
+    || ((document.querySelector('meta[name="holo-app-id"]') || {}).content) || (document.title || "this app");
   async function renderBadge() {
     if (!isBrowser || W.__holoPrivacyBadge === false) return;
     ensureCss();
@@ -351,9 +357,9 @@
   const CSS = `
   #holo-privacy-btn{position:fixed;right:10px;bottom:10px;z-index:2147482300;display:inline-flex;align-items:center;gap:6px;
     height:30px;padding:0 10px 0 8px;border-radius:999px;border:1px solid #233040;background:#0d1117e6;color:#9fb0bd;
-    cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.4);font:600 var(--holo-text-sm, 1rem) ui-monospace,monospace}
+    cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.4);font:600 11px ui-monospace,monospace}
   #holo-privacy-btn:hover{color:#e6edf3;border-color:#3a4452}
-  #holo-privacy-btn svg{width:16px;height:16px;flex:0 0 auto}
+  #holo-privacy-btn svg{width:14px;height:14px;flex:0 0 auto}
   #holo-privacy-btn .hp-code{letter-spacing:.02em}
   .holo-privacy-panel{position:fixed;right:10px;bottom:48px;z-index:2147482301;width:min(330px,92vw);
     background:#0d1117;color:#e6edf3;border:1px solid #28323d;border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.55);
@@ -423,9 +429,23 @@
     };
   }
 
+  // ── host client: an app frame routes disclosure UP to the HOST's privacy gate (full enforcement) ──
+  // Symmetric to Holo Terms: just as the host clamps an app's capabilities at mount, the host is the
+  // ONE place a disclosure can be minted — it owns the wallet/keys; the app frame holds nothing. An app
+  // (or the SDK) calls hostClient().gate(request); the host (holo-gov.js) re-stamps the recipient from
+  // what it actually mounted (un-forgeable) and gates under the USER's standing stance (default-deny).
+  // No-op when not framed (top === self) — then the in-frame gate above is already the authority.
+  function hostClient() {
+    const top = W.top; if (!top || top === W) return null;
+    let seq = 0; const pending = new Map();
+    W.addEventListener("message", (e) => { const d = e.data; if (!d || d.type !== "holo-privacy:res") return; const p = pending.get(d.id); if (!p) return; pending.delete(d.id); d.error ? p.rej(new Error(d.error)) : p.res(d.result); });
+    const call = (method, args) => new Promise((res, rej) => { const id = ++seq; pending.set(id, { res, rej }); top.postMessage({ type: "holo-privacy:rpc", id, method, args }, "*"); setTimeout(() => { if (pending.has(id)) { pending.delete(id); res(null); } }, 8000); });
+    return { gate: (request) => call("gate", request), status: () => call("status") };
+  }
+
   // ── public API ────────────────────────────────────────────────────────────────────────────────
   W.HoloPrivacy = {
-    brokerClient,
+    brokerClient, hostClient, setActiveApp,
     gate, disclose, verifyDisclosure, presentationBindingOk, classify, commitPersonalData, levelOf,
     roster, standing: standingCode, setStanding, standingPolicy, activeOverlayCodes, setOverlay, activeOverlays,
     status, commitment, walletStored, unlock, lock, setPassphrase, ledger: loadLedger, revoke,
