@@ -273,6 +273,8 @@ export const deskMkdir = (locOrParent, name) => deskPost({ t: "op", op: "mkdir",
 export const deskRename = (n, name) => deskPost({ t: "op", op: "rename", id: deskIdOf(n), name });
 export const deskRemove = (n) => deskPost({ t: "op", op: "delete", id: deskIdOf(n) });
 export const deskMove = (n, destLoc) => deskPost({ t: "op", op: "move", id: deskIdOf(n), parentId: deskIdOf(destLoc) });
+export const deskUndo = () => deskPost({ t: "op", op: "undo" });   // content-addressed history lives in the shell (one model)
+export const deskRedo = () => deskPost({ t: "op", op: "redo" });
 export function onDesktopChange(cb) { _deskListeners.push(cb); return () => { const i = _deskListeners.indexOf(cb); if (i >= 0) _deskListeners.splice(i, 1); }; }
 function deskTree(timeout = 700) {
   if (_deskTree) return Promise.resolve(_deskTree);
@@ -518,6 +520,6 @@ export async function compressToZip(nodes, destDirPath = "/home/user", zipName =
 
 export const HoloFiles = { ROOTS, list, read, verify, realPath, platform, skinFor, mkdir, createFile, writeFile, rename, remove, moveHome, copyHome, fmtBytes, mimeOf, kindOf, extOf, FHS,
   sendToCloud, cloudShareLink, searchAll, resolveInput, materialize, webSearch, freeSpace, extractZip, compressToZip,
-  deskMkdir, deskRename, deskRemove, deskMove, onDesktopChange };
+  deskMkdir, deskRename, deskRemove, deskMove, deskUndo, deskRedo, onDesktopChange };
 if (typeof window !== "undefined") window.HoloFiles = HoloFiles;
 export default HoloFiles;

@@ -13,12 +13,13 @@
 > **P0 — core parity, high value**
 > 1. **Cut / Copy / Paste file clipboard** (CopyItem·CutItem·PasteItem·PasteItemToSelection) — today only
 >    drag-move + "copy κ link" exist; no copy/cut/paste of items between folders.
-> 2. **Undo / Redo** (Undo·Redo) — none today (delete says "cannot be undone"). *Cheap win:* every edit
->    already derives a new κ, so undo = previous κ.
+> 2. ~~**Undo / Redo** (Undo·Redo)~~ — **DONE** (κ-history: the shell keeps content-addressed world
+>    snapshots, restored only via the desktop CvRDT; Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y, in the shell AND in
+>    Holo Files on the Desktop location, covering create·rename·delete·move). Home-OPFS undo still pending (needs Recycle).
 > 3. **Recycle Bin + restore** (DeleteItem→recycle · RestoreRecycleBin · EmptyRecycleBin) — delete is
 >    currently permanent; κ-adapt: a Recycle κ-folder.
-> 4. **Full keyboard map** (Rename=F2 · Ctrl+C/X/V · Ctrl+A select-all · Ctrl+Shift+N · arrow-key grid
->    navigation) — only Backspace/Enter/Space exist now.
+> 4. **Keyboard map** — PARTIAL: F2-rename, arrow-nav, Ctrl+A, Ctrl+F, Ctrl+R, Backspace/Enter/Space,
+>    and now Ctrl+Z/Shift+Z/Y already exist. Still missing: **Ctrl+C/X/V** (needs the clipboard, P0.1) and Ctrl+Shift+N.
 > 5. **Command palette** (OpenCommandPalette) — missing.
 >
 > **P1 — familiar / expected**

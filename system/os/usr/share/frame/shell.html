@@ -1070,12 +1070,21 @@
         return addNode(copy);   // same content → same κ object, a second first-class instance
       }
       // hide / restore / undo — any object can be hidden (kept in the scene) and brought back; ⌘Z undoes
-      const undoStack = []; const pushUndo = (fn) => { undoStack.push(fn); if (undoStack.length > 60) undoStack.shift(); };
-      const undo = () => { const fn = undoStack.pop(); if (fn) { try { fn(); } catch {} toast("undone"); } else toast("nothing to undo"); };
+      // ── Undo / Redo — content-addressed history (Law L1/L2: each entry is a canonical world snapshot;
+      //    Law L4: restored only THROUGH the desktop CvRDT, never a parallel store). Covers desktop
+      //    structural ops (create · rename · delete · move) from the shell AND from Holo Files. ──
+      let _wundo = [], _wredo = [];
+      const snapWorldH = () => cloneWorld(desktop.doc().world);
+      const recordUndo = () => { _wundo.push(snapWorldH()); if (_wundo.length > 80) _wundo.shift(); _wredo.length = 0; };
+      function restoreWorldH(world) { desktop.change((d) => { d.world.splice(0, d.world.length); for (const n of cloneWorld(world)) d.world.push(n); }); try { bcastDesk(); } catch (e) {} }
+      const undoStack = []; const pushUndo = (fn) => { undoStack.push(fn); _wredo.length = 0; if (undoStack.length > 60) undoStack.shift(); };
+      const undo = () => { if (_wundo.length) { _wredo.push(snapWorldH()); restoreWorldH(_wundo.pop()); toast("undone"); return; } const fn = undoStack.pop(); if (fn) { try { fn(); } catch {} toast("undone"); } else toast("nothing to undo"); };
+      const redo = () => { if (!_wredo.length) { toast("nothing to redo"); return; } _wundo.push(snapWorldH()); restoreWorldH(_wredo.pop()); toast("redone"); };
       const hideNode = (id) => { pushUndo(() => setState(id, "normal")); setState(id, "hidden"); toast("hidden · ⌘Z to undo · or the tray (bottom-left)"); };
       const hiddenCount = () => desktop.doc().world.filter((w) => w.state === "hidden").length;
       const showHidden = () => { desktop.change((d) => d.world.forEach((w) => { if (w.state === "hidden") w.state = "normal"; })); toast("restored hidden objects"); };
-      addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && (e.key === "z" || e.key === "Z") && !e.shiftKey) { const t = e.target; if (/^(INPUT|TEXTAREA)$/.test(t.tagName) || t.isContentEditable) return; e.preventDefault(); undo(); } });
+      addEventListener("keydown", (e) => { if (!(e.metaKey || e.ctrlKey)) return; const k = (e.key || "").toLowerCase(); const t = e.target; if (/^(INPUT|TEXTAREA)$/.test(t.tagName) || t.isContentEditable) return;
+        if (k === "z" && !e.shiftKey) { e.preventDefault(); undo(); } else if ((k === "z" && e.shiftKey) || k === "y") { e.preventDefault(); redo(); } });
 
       // ── folders (bundle / unbundle) — drag one object ONTO another to fuse them into a folder; a
       //    folder is a content-addressed bundle you open, drag items out of, or right-click → Unbundle. ──
@@ -1613,7 +1622,7 @@
             items.push({ label: "Assign to app…", ic: "◆", act: () => pickFolderApp(id, e.clientX, e.clientY) });
             if (!n.appRef) items.push({ label: "Change icon…", ic: "🎨", act: () => pickFolderIcon(id, e.clientX, e.clientY) }, { label: "Change cover…", ic: "🖼", act: () => setFolderCover(id) }, { label: "Unbundle all", ic: "📂", act: () => unbundleAll(id) });
             items.push({ sep: true }, { label: "Hide", ic: "◌", act: () => hideNode(id) });
-            items.push({ label: n.appRef ? "Delete icon" : "Delete folder", ic: "🗑", danger: true, act: () => { const snap = JSON.parse(JSON.stringify(n)); pushUndo(() => desktop.change((d) => { if (!d.world.find((w) => w.id === snap.id)) d.world.push(snap); })); removeNode(id); focusedId = null; } });
+            items.push({ label: n.appRef ? "Delete icon" : "Delete folder", ic: "🗑", danger: true, act: () => { recordUndo(); removeNode(id); focusedId = null; } });
             showCtx(e.clientX, e.clientY, items); return;
           }
           showCtx(e.clientX, e.clientY, [
@@ -1621,7 +1630,7 @@
             { label: n.state === "max" ? "Restore" : "Maximize", ic: "▢", act: () => toggleMax(id) },   // Move: drag the title bar; Maximize/Restore arranges
             { label: "Pop out to tab", ic: "⬒", act: () => popToTab(id) },   // window → its own holospace tab
             { label: "Hide", ic: "◌", act: () => hideNode(id) },
-            { label: "Delete", ic: "🗑", danger: true, sc: "Del", act: () => { const snap = JSON.parse(JSON.stringify(n)); pushUndo(() => desktop.change((d) => { if (!d.world.find((w) => w.id === snap.id)) d.world.push(snap); })); removeNode(id); focusedId = null; } },
+            { label: "Delete", ic: "🗑", danger: true, sc: "Del", act: () => { recordUndo(); removeNode(id); focusedId = null; } },
             { sep: true },
             { label: "Share link", ic: "❤️", act: () => shareNode(n) },
             { label: n.contentRef ? "Fuse source ← κ" : "Split → κ object", ic: "⧈", act: async () => { try { if (n.contentRef) { const ref = n.contentRef; await fuseNode(repo, desktop, id, holoStore); toast("fused ← " + linkFor(ref)); } else { const r = splitNode(repo, desktop, id); toast("split → " + linkFor(r)); } } catch (err) { alert(err.message); } } },
@@ -1635,7 +1644,7 @@
             { label: "Open holospace", ic: "⌕", sc: P.shortcuts.spotlight, act: openSpot },
             { label: "Component library", ic: "⊞", act: openLib },
             { label: "New component", ic: "✎", act: () => $("#author").click() },
-            { label: "New folder", ic: "📁", act: newFolder },
+            { label: "New folder", ic: "📁", act: () => { recordUndo(); newFolder(); } },
             { sep: true },
             { label: "Change wallpaper…", ic: "🖼", act: openWallpapers },
             ...(hiddenCount() ? [{ sep: true }, { label: "Show hidden (" + hiddenCount() + ")", ic: "◌", act: showHidden }] : []),
@@ -1733,6 +1742,9 @@
       }
       function applyDeskOp(m) {
         try {
+          if (m.op === "undo") { undo(); return; }
+          if (m.op === "redo") { redo(); return; }
+          recordUndo();   // snapshot the canonical world BEFORE the structural change (L1/L2)
           if (m.op === "mkdir") {
             if (m.parentId) deskApply((w) => { const f = plainFind(w, m.parentId); if (f && f.kind === "folder") { f.items = f.items || []; f.items.push({ id: nid(), kind: "folder", title: m.name || "untitled folder", items: [], collapsed: true }); } });
             else { const id = newFolder(); if (m.name) patch(id, (n) => { n.title = m.name; }); }
