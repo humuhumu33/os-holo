@@ -486,6 +486,7 @@
       import * as HoloOwn from "/_shared/holo-own-ui.js";
       import * as HoloProv from "/_shared/holo-prov-ui.js";   // Holo Prov (ADR-0082): provenance hypergraph, binding on every holospace
       import * as HoloMind from "/_shared/holo-mind-ui.js";   // Holo Mind (ADR-0081): the live, gate-enforced ambient loop, exposed OS-wide as window.HoloMind
+      import "/_shared/q/holo-q-trinity-ui.js";               // Holo Trinity (ADR-0087): the OS-wide create·exist·perceive loop, installed as window.HoloTrinity (invisible, self-improving)
       import { roster as identRoster, unlock as identUnlock } from "/_shared/holo-identity.mjs";
       import HoloRender from "/_shared/holo-render.js";          // the ONE canonical κ→render path (lean, no compiler)
       import { resolveByKappa } from "/holo-resolver.mjs";       // the substrate's single resolve authority (Law L5)
@@ -1751,6 +1752,7 @@
           } else if (m.op === "rename") { deskApply((w) => { const n = plainFind(w, m.id); if (n) { n.title = m.name; n.name = m.name; } }); }
           else if (m.op === "delete") { deskApply((w) => { plainPull(w, m.id); }); }
           else if (m.op === "move" && m.id !== m.parentId) { deskApply((w) => { const nd = plainPull(w, m.id); if (nd) { if (!plainDrop(w, nd, m.parentId || "")) plainDrop(w, nd, ""); } }); }
+          else if (m.op === "copy" && m.id) { deskApply((w) => { const src = plainFind(w, m.id); if (src) { const c = JSON.parse(JSON.stringify(src)); (function reid(x) { x.id = nid(); if (x.items) x.items.forEach(reid); })(c); if (!plainDrop(w, c, m.parentId || "")) plainDrop(w, c, ""); } }); }
           bcastDesk();
         } catch (e) { try { console.warn("desk op:", e); } catch (x) {} }
       }

@@ -11,16 +11,17 @@
 > basic keyboard nav (Backspace/Enter/Space) · multi-select + shift-range · **desktop unification**.
 >
 > **P0 — core parity, high value**
-> 1. **Cut / Copy / Paste file clipboard** (CopyItem·CutItem·PasteItem·PasteItemToSelection) — today only
->    drag-move + "copy κ link" exist; no copy/cut/paste of items between folders.
+> 1. ~~**Cut / Copy / Paste file clipboard**~~ — **DONE** (Ctrl+C/X/V in Holo Files: Home via OPFS
+>    copy/move with collision-safe "(copy)" naming; Desktop via the κ bridge — copy clones with fresh
+>    node ids but identical bytes keep their κ (L1), cut = move, both undoable. Cross-source paste pending.)
 > 2. ~~**Undo / Redo** (Undo·Redo)~~ — **DONE** (κ-history: the shell keeps content-addressed world
 >    snapshots, restored only via the desktop CvRDT; Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y, in the shell AND in
 >    Holo Files on the Desktop location, covering create·rename·delete·move). Home-OPFS undo still pending (needs Recycle).
 > 3. ~~**Recycle Bin + restore**~~ — **DONE** (Home deletes MOVE into a hidden OPFS trash — L4, through
 >    the W3C OPFS substrate — with a provenance manifest; identity/κ preserved (L1). Recycle Bin location
 >    with restore-on-open, per-item permanent delete, and Empty. Desktop deletes already covered by Undo (P0.2).)
-> 4. **Keyboard map** — PARTIAL: F2-rename, arrow-nav, Ctrl+A, Ctrl+F, Ctrl+R, Backspace/Enter/Space,
->    and now Ctrl+Z/Shift+Z/Y already exist. Still missing: **Ctrl+C/X/V** (needs the clipboard, P0.1) and Ctrl+Shift+N.
+> 4. **Keyboard map** — largely DONE: F2-rename, arrow-nav, Ctrl+A/F/R, Ctrl+Z/Shift+Z/Y, **Ctrl+C/X/V**,
+>    Backspace/Enter/Space, Ctrl+Tab. Remaining: Ctrl+Shift+N (new folder).
 > 5. **Command palette** (OpenCommandPalette) — missing.
 >
 > **P1 — familiar / expected**
