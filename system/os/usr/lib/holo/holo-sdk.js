@@ -177,6 +177,37 @@ export async function run(ref, opts) { const a = await ensureApp(); if (!a) thro
 // share is pure: the κ IS the share (holo://κ) — no dependency, resolvable anywhere by content.
 export function share(kappa, { base = "" } = {}) { const hex = String(kappa).split(":").pop(); return { kappa, holo: "holo://" + hex, url: (base || "") + "#k=" + encodeURIComponent(kappa) }; }
 
+// ── Holo Files — the OS file service, available to EVERY holospace (ADR-0061). The shell BROKERS file
+// access (Law L4: an app never touches raw storage); bytes round-trip as content-addressed objects
+// (Law L1/L2 · L3 the κ store is the memory). These helpers postMessage the request to the host shell
+// and resolve when it replies. Outside the shell (standalone) they fall back to window.HoloFiles.
+let _ffid = 0; const _ffpending = new Map();
+if (typeof window !== "undefined") window.addEventListener("message", (e) => {
+  const d = e.data; if (!d || d.type !== "holo-files-result" || !_ffpending.has(d.id)) return;
+  const p = _ffpending.get(d.id); _ffpending.delete(d.id); d.ok ? p.resolve(d.result) : p.reject(new Error(d.error || "files error"));
+});
+function _filesRPC(op, payload) {
+  const host = (typeof window !== "undefined") && window.parent && window.parent !== window ? window.parent : null;
+  if (!host) {   // standalone (not embedded in the shell) → use the local model if present
+    const F = g.HoloFiles; if (!F) return Promise.reject(new Error("Holo Files service unavailable (open inside the shell)"));
+    if (op === "save") return F.deriveSave ? F.deriveSave(payload) : Promise.reject(new Error("save needs the shell"));
+    return Promise.reject(new Error("op needs the shell host"));
+  }
+  return new Promise((resolve, reject) => {
+    const id = "f" + (++_ffid) + "-" + Math.random().toString(36).slice(2, 6); _ffpending.set(id, { resolve, reject });
+    try { host.postMessage({ type: "holo-files", id, op, ...payload }, "*"); } catch (e) { _ffpending.delete(id); reject(e); }
+    setTimeout(() => { if (_ffpending.has(id)) { _ffpending.delete(id); reject(new Error("Holo Files: request timed out")); } }, 120000);
+  });
+}
+// saveFile(bytes, { name }) → { kappa, hex, size } — persist bytes as a content-addressed object.
+export function saveFile(bytes, opts = {}) { return _filesRPC("save", { bytes, name: opts.name, text: opts.text }); }
+// readFile(ref) → { bytes, kappa, size } — ref is a holo://κ (resolves anywhere) or a /home/ path.
+export function readFile(ref) { return _filesRPC("read", { ref }); }
+// revealFile(ref) → open the object / Holo Files so the user can see it.
+export function revealFile(ref) { return _filesRPC("reveal", { ref }); }
+// pickFile(options?) → the governed file picker (returns the chosen object). UI slice in progress.
+export function pickFile(options = {}) { return _filesRPC("pick", options); }
+
 // ── Holo Route — typed semantic streams · the routing plane (ADR-0069): the DATAFLOW siblings of
 // build/run/share. A pipeline is a content-addressed graph of deterministic κ-transforms whose seams are
 // type-checked by re-derivation BEFORE a byte flows; the whole run seals as one self-verifying PROV-O κ.

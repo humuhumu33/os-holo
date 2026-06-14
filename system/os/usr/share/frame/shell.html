@@ -170,10 +170,8 @@
         display: flex; align-items: baseline; gap: 8px; user-select: none; white-space: nowrap;
         font: 600 11px/1 var(--win-font, ui-sans-serif, system-ui); text-transform: uppercase; }
       #holo-credit .pw { color: var(--holo-ink-dim, #8b949e); opacity: .62; letter-spacing: .22em; }
-      #holo-credit .hg { font-weight: 800; letter-spacing: .26em;
-        background: linear-gradient(90deg, #ff3b6b, #ff9e2c, #ffe24a, #46e08a, #2bd4ff, #5b8cff, #c77bff);
-        -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
-        filter: drop-shadow(0 1px 6px rgba(91, 140, 255, .25)); }
+      #holo-credit .hg { font-weight: 800; letter-spacing: .26em; color: #fff;
+        filter: drop-shadow(0 1px 6px rgba(0, 0, 0, .35)); }
       @media (prefers-reduced-transparency: reduce) { #holo-credit .hg { filter: none; } }
       /* Privacy shield shows ONLY on the bare desktop — hidden inside a maximized app and in Create mode
          (those surfaces carry their own context; the floating shield would overlap them). */
@@ -343,7 +341,7 @@
       .libcard .kk { font: var(--holo-text-sm, 1rem) ui-monospace, monospace; color: #3fb950; margin-top: 8px; }
 
       /* wallpaper gallery — every wallpaper is a content-addressed object (did:holo) */
-      .sheet.wall-sheet { width: min(56rem, 94vw); top: 9%; max-height: 82vh; overflow: auto; }
+      .sheet.wall-sheet { width: min(56rem, 94vw); top: 9%; max-height: 82vh; overflow: hidden; }   /* only the grid scrolls — no redundant outer scrollbar */
       .wall-srch { display: flex; gap: 8px; align-items: center; padding: 2px 0 10px; position: sticky; top: 0; }
       .wall-srch input { flex: 1; background: #010409; border: 1px solid #21262d; border-radius: 999rem; padding: 9px 14px; color: #c9d1d9; font: inherit; outline: none; }
       .wall-srch input:focus { border-color: var(--accent, #1f6feb); }
@@ -872,19 +870,12 @@
       //    and drops you on the address bar — exactly the browser new-tab gesture. ──
       $("#newtab").onclick = () => { newTab(); recordNav(); $("#omni-addr").focus(); };   // "+" → fresh empty desktop holotab (its empty desktop IS this tab's origin)
       renderTabs(); recordNav();   // seed the Home tab's origin (its current desktop)
-      // The "new tab" desktop landing, painted into the empty canvas (shown whenever a tab has no
-      // windows — Home or a fresh tab): the Hologram mark + quick ways in. Built once; render() toggles it.
+      // The empty canvas (Home or a fresh tab) is intentionally clean — just the wallpaper. The
+      // "New holospace" hero (mark + heading + subtitle + Create/Apps/Search) was removed; those
+      // actions live in the toolbar (Create) and the omnibox (apps · search). render() still toggles
+      // #empty — it just has no content now.
       (function buildNewTabPage() {
-        const e = $("#empty"); if (!e || e.dataset.built) return; e.dataset.built = "1";
-        const mk = document.querySelector("#omni .holomark");
-        const wrap = document.createElement("div"); wrap.className = "nt";
-        wrap.innerHTML = (mk ? '<div class="mark">' + mk.outerHTML + "</div>" : "") +
-          "<h1>New holospace</h1><p>Search anything, build something, or open an app.</p>" +
-          '<div class="acts"><button id="nt-create">✦ Create</button><button id="nt-apps">⊞ Apps</button><button id="nt-search">⌕ Search</button></div>';
-        e.appendChild(wrap);
-        wrap.querySelector("#nt-create").onclick = () => openCreate();
-        wrap.querySelector("#nt-apps").onclick = () => { try { openSpot(); } catch (x) { $("#omni-addr").focus(); } };
-        wrap.querySelector("#nt-search").onclick = () => $("#omni-addr").focus();
+        const e = $("#empty"); if (e) e.dataset.built = "1";   // mark built so render() leaves it empty
       })();
       // ── full-screen toggle (browser-grade), to the right of Sign in ──
       (function wireFullscreen() {
@@ -1190,14 +1181,15 @@
           rz.addEventListener("pointermove", mv); rz.addEventListener("pointerup", up); rz.addEventListener("pointercancel", up);
         });
       }
-      // open Holo Files as a framed WINDOW on the current desktop, deep-linked to this folder (Windows feel)
+      // open Holo Files as a WINDOW on the current desktop, deep-linked to this folder. Frameless by
+      // default — a bare object that uses the whole window for content; nav chrome appears on hover.
       async function openFilesAt(deskId, name) {
         const app = catalog.find((a) => a.id === "org.hologram.HoloFiles"); if (!app) { toast("Holo Files not available offline"); return; }
         let def = {}; try { def = await fetch(app.landing.replace(/[^/]+$/, "holospace.json")).then((r) => r.json()); } catch (e) {}
         const { sandbox, allow } = capabilitiesToSandbox(await gateCaps(def));
-        addNode({ kind: "app", appId: app.id, appDid: app.did, title: "🗂 " + (name || "Files"), src: app.landing + "?go=desktop:" + deskId, sandbox, allow, state: "normal", frameless: false, w: 920, h: 600, x: 130, y: 90 });
+        addNode({ kind: "app", appId: app.id, appDid: app.did, title: "🗂 " + (name || "Files"), src: app.landing + "?go=desktop:" + deskId, sandbox, allow, state: "normal", frameless: true, w: 920, h: 600, x: 130, y: 90 });
       }
-      function openFolder(id) { patch(id, (n) => { n.collapsed = false; n.frameless = false; n.state = "normal"; n.w = Math.max(360, n._ow || 0) || 360; n.h = Math.max(280, n._oh || 0) || 280; }); }
+      function openFolder(id) { patch(id, (n) => { n.collapsed = false; n.frameless = true; n.state = "normal"; n.w = Math.max(360, n._ow || 0) || 360; n.h = Math.max(280, n._oh || 0) || 280; }); }
       function collapseFolder(id) { patch(id, (n) => { n._ow = n.w; n._oh = n.h; n.collapsed = true; n.frameless = true; n.state = "normal"; n.w = 96; n.h = 156; }); }
       function renameFolder(id) {
         const el = mounted.get(id), lbl = el && el.querySelector(".fi-label"); if (!lbl) return;
@@ -1280,7 +1272,7 @@
       //   Right-click the desktop → Change wallpaper… reopens the same gallery, so previously-added
       //   wallpapers persist (the "previous gallery"). Bump SEED_V to refresh the bundled defaults
       //   without dropping the user's own additions.
-      const WALL_KEY = "holo:wallpapers", WALL_SEED = "/usr/share/wallpapers/uor-8k.jpg", WALL_DEPTH = "/usr/share/wallpapers/uor-depth.png", WALL_DIR = "/usr/share/wallpapers/", SEED_V = 7;
+      const WALL_KEY = "holo:wallpapers", WALL_SEED = "/usr/share/wallpapers/uor-8k.jpg", WALL_DEPTH = "/usr/share/wallpapers/uor-depth.png", WALL_DIR = "/usr/share/wallpapers/", SEED_V = 8;
       // curated default collection — bundled photos sealed to κ at first boot (via Unsplash, attributed)
       const CURATED = [
         { file: "earth-nasa.jpg",    name: "Crescent Earth", by: "NASA",             byLink: "https://unsplash.com/@nasa" },
@@ -1293,7 +1285,7 @@
       const _wallURL = new Map();   // κ → objectURL (revoke-free for the session)
       const wallRead = () => { try { const s = JSON.parse(localStorage.getItem(WALL_KEY)); if (s && Array.isArray(s.items) && s.items.length) return s; } catch {} return null; };
       const wallWrite = (s) => { try { localStorage.setItem(WALL_KEY, JSON.stringify(s)); } catch {} };
-      const liveOn = () => { try { return localStorage.getItem("holo:wall-live") !== "0"; } catch { return true; } };   // gallery toggle: live depth + motion (default on)
+      const liveOn = () => { try { return localStorage.getItem("holo:wall-live") === "1"; } catch { return false; } };   // gallery toggle: live depth + motion (default OFF — opt in)
       const putWall = (b) => holoStore.put(b instanceof Uint8Array ? b : new TextEncoder().encode(b));   // → "sha256:<hex>"
       // self-healing fetch: prefer the durable κ store; if its bytes are absent (fresh device, evicted
       // store, or a κ recorded without its bytes) re-fetch the bundled source and re-seal it (Law L5 —
@@ -1321,7 +1313,8 @@
         }
         return items;
       }
-      async function seedWall() { const items = await seedItems(); const s = { seedV: SEED_V, current: (items[1] || items[0]).k, items }; wallWrite(s); return s; }
+      const defaultWallK = (items) => (items.find((i) => i.seed && i.name === "UOR") || items[1] || items[0]).k;   // UOR (the blue-Earth κ) is the canonical home wallpaper
+      async function seedWall() { const items = await seedItems(); const s = { seedV: SEED_V, current: defaultWallK(items), items }; wallWrite(s); return s; }
       async function ensureWall() {
         const cur = wallRead(); if (!cur) return await seedWall();
         if (cur.seedV === SEED_V) return cur;
@@ -1331,7 +1324,9 @@
         const seen = new Set(fresh.map((i) => i.k));   // dedup: a now-bundled photo the user imported earlier collapses to the seed
         const userItems = cur.seedV ? (cur.items || []).filter((i) => !i.seed && !seen.has(i.k)) : [];
         const items = [...fresh, ...userItems];
-        const current = (cur.seedV && items.some((i) => i.k === cur.current)) ? cur.current : (fresh[1] || fresh[0]).k;
+        // keep the user's OWN imported pick across a defaults refresh; a bundled (seed) pick resets to the new default (UOR)
+        const keptOwnPick = cur.seedV && cur.current && (cur.items || []).some((i) => i.k === cur.current && !i.seed) && items.some((i) => i.k === cur.current);
+        const current = keptOwnPick ? cur.current : defaultWallK(items);
         const s = { seedV: SEED_V, current, items }; wallWrite(s); return s;
       }
       // ── LIVING wallpaper — a GPU-composited scene rendered at the display's TRUE device-pixel grid
@@ -1619,7 +1614,7 @@
             const nm = document.createElement("span"); nm.className = "wall-name"; nm.textContent = item.name;
             const kk = document.createElement("span"); kk.className = "wall-k"; kk.title = "content address (Law L5)"; kk.textContent = "holo://" + item.k.split(":").pop().slice(0, 12) + "…";
             meta.append(nm, kk); tile.append(prev, meta);
-            tile.onclick = async () => { await setWall(item, s); [...grid.querySelectorAll(".wall-tile.sel")].forEach((t) => t.classList.remove("sel")); tile.classList.add("sel"); toast("Wallpaper set · " + item.name); };
+            tile.onclick = async () => { await setWall(item, s); toast("Wallpaper set · " + item.name); done(); };   // select for THIS holospace + close the picker
             grid.appendChild(tile);
           }
           const add = document.createElement("button"); add.type = "button"; add.className = "wall-tile";
@@ -1964,15 +1959,15 @@
           .cs-preview{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;
             opacity:0;transition:opacity .4s ease .06s}
           #create-studio.on .cs-preview{opacity:1}
-          .cs-chrome{display:flex;align-items:center;gap:10px;padding:9px 12px}
-          .cs-seg{display:flex;background:#161619;border:1px solid #232327;border-radius:9px;padding:2px}
-          .cs-seg button{border:0;background:transparent;color:#9a9aa2;font:600 12.5px var(--win-font,system-ui);
-            padding:5px 12px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:5px}
+          .cs-chrome{display:flex;align-items:center;gap:9px;padding:5px 11px}
+          .cs-seg{display:flex;background:#161619;border:1px solid #232327;border-radius:8px;padding:2px}
+          .cs-seg button{border:0;background:transparent;color:#9a9aa2;font:600 12px var(--win-font,system-ui);
+            padding:3px 11px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:5px}
           .cs-seg button.on{background:#26262c;color:#eaf2ff}
           .cs-iconbtn{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#9a9aa2;cursor:pointer;font-size:15px}
           .cs-iconbtn:hover{background:#1c1c20;color:#e7e7ea}
-          .cs-addr{display:flex;align-items:center;gap:9px;background:#161619;border:1px solid #232327;border-radius:9px;
-            padding:5px 11px;color:#9a9aa2;font-size:12.5px;flex:0 1 380px;margin:0 auto;min-width:0}
+          .cs-addr{display:flex;align-items:center;gap:9px;background:#161619;border:1px solid #232327;border-radius:8px;
+            padding:3px 11px;color:#9a9aa2;font-size:12px;flex:0 1 360px;margin:0 auto;min-width:0}
           .cs-addr .dot{width:7px;height:7px;border-radius:50%;background:#3fb950;flex:0 0 auto;transition:transform .2s}
           .cs-addr .dot.beat{animation:csBeat .5s ease}
           @keyframes csBeat{0%{transform:scale(1)}45%{transform:scale(1.9);box-shadow:0 0 9px #3fb950}100%{transform:scale(1)}}
@@ -1981,9 +1976,9 @@
           .cs-addr .ai{cursor:pointer;color:#8a8a92}.cs-addr .ai:hover{color:#e7e7ea}
           .cs-cact{margin-left:auto;display:flex;align-items:center;gap:9px}
           .cs-avatar{width:27px;height:27px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);flex:0 0 auto}
-          .cs-pub{color:#a78bfa;font-size:16px;cursor:pointer}
-          .cs-done{display:flex;align-items:center;gap:6px;background:#2563eb;color:#fff;border:0;border-radius:9px;
-            padding:6px 13px;font:600 12.5px var(--win-font,system-ui);cursor:pointer}
+          .cs-pub{color:#a78bfa;font-size:15px;line-height:1;cursor:pointer}
+          .cs-done{display:flex;align-items:center;gap:6px;background:#2563eb;color:#fff;border:0;border-radius:8px;
+            height:28px;padding:0 12px;line-height:1;font:600 12px var(--win-font,system-ui);cursor:pointer;box-sizing:border-box}
           .cs-done:hover{background:#1d5fe0}
           .cs-stagewrap{position:relative;flex:1;min-height:0;margin:0 12px 12px;border-radius:13px;overflow:hidden;
             background:#05070c;border:1px solid #1d1d21}
@@ -2044,19 +2039,17 @@
               '<small>Previewing live</small></div><div class="ic"><span title="History">⟲</span><span title="Panel">▥</span></div></div>' +
             '<div class="cs-thread" id="cs-thread"><div class="cs-msg assistant">' + welcome + '</div>' +
               '<div class="cs-acts"><span title="Undo">↺</span><span title="Good">👍</span><span title="Bad">👎</span><span title="Copy" id="cs-copy">⧉</span><span title="More">⋯</span></div></div>' +
-            '<div class="cs-suggest" id="cs-suggest"><div class="gp"><span>⌕</span><span>Review your holospace</span><span title="info">ⓘ</span></div>' +
+            '<div class="cs-suggest" id="cs-suggest" style="display:none"><div class="gp"><span>⌕</span><span>Review your holospace</span><span title="info">ⓘ</span></div>' +
               '<span class="pill" id="cs-sug-go">Review</span><span class="x" id="cs-sug-x">✕</span></div>' +
             '<div class="cs-composer"><textarea id="cs-ask" rows="1" placeholder="Ask Holo to build…" spellcheck="false"></textarea>' +
               '<div class="cs-crow"><span class="rnd" title="Add">＋</span><span class="cs-build" id="cs-mode">Build <span style="opacity:.6">⌄</span></span>' +
               '<span class="cs-mic" title="Voice">🎙</span><button class="cs-send" id="cs-send" title="Send">↑</button></div></div>' +
           '</div>' +
           '<div class="cs-preview">' +
-            '<div class="cs-chrome"><div class="cs-seg"><button class="on" id="cs-tab-pv">🌐 Preview</button><button id="cs-tab-code">⟨⟩ Code</button></div>' +
-              '<div class="cs-iconbtn" title="More">⋯</div>' +
+            '<div class="cs-chrome"><div class="cs-seg"><button class="on" id="cs-tab-pv">Preview</button><button id="cs-tab-code">Code</button></div>' +
               '<div class="cs-addr"><span class="dot" id="cs-dot"></span><span class="u" id="cs-url">' + csEsc(addr) + '</span>' +
                 '<span class="ai" id="cs-ext" title="Open in new tab">↗</span><span class="ai" id="cs-refresh" title="Refresh">⟳</span></div>' +
-              '<div class="cs-cact"><div class="cs-avatar"></div><div class="cs-iconbtn" title="New">＋</div>' +
-                '<span class="cs-pub" id="cs-pub" title="Publish">⚡</span><button class="cs-done" id="cs-done">Done ✓</button></div></div>' +
+              '<div class="cs-cact"><span class="cs-pub" id="cs-pub" title="Publish">⚡</span><button class="cs-done" id="cs-done">Done ✓</button></div></div>' +
             '<div class="cs-stagewrap">' +
               '<div class="cs-stage" id="cs-stage"><iframe id="cs-fa" sandbox="allow-scripts allow-same-origin"></iframe>' +
                 '<iframe id="cs-fb" sandbox="allow-scripts allow-same-origin"></iframe></div>' +
@@ -2112,9 +2105,87 @@
         tabPv.onclick = function () { view("pv"); }; tabCode.onclick = function () { view("code"); };
         // ── chat: post messages; markup is rendered live (a real, local build) ──
         function addMsg(role, html) { const m = document.createElement("div"); m.className = "cs-msg " + role; m.innerHTML = html; thread.appendChild(m); thread.scrollTop = thread.scrollHeight; return m; }
+        // ── Build: a natural-language prompt → the OS-wide trinity GENERATES a holospace (ADR-0087),
+        //    κ-memoized (O(1) on a repeat prompt), rendered through the studio's content-addressed
+        //    double-buffered preview (instant, serverless, anchored in κ). A deterministic local builder
+        //    stands in for the on-device generative specialist (the same provider seam it plugs into). ──
+        function csTitle(p) { return (String(p).replace(/[^a-z0-9 ]/gi, " ").trim().split(/\s+/).slice(0, 6).map(function (w) { return w[0].toUpperCase() + w.slice(1); }).join(" ") || "Holospace"); }
+        function csAccent(p) { const k = { blue: "#5b8cff", green: "#34d399", teal: "#2dd4bf", purple: "#7c5cff", pink: "#f472b6", gold: "#fbbf24", red: "#f87171" }; const m = Object.keys(k).find(function (x) { return String(p).toLowerCase().includes(x); }); if (m) return k[m]; const C = Object.values(k); let h = 0; for (const c of String(p)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return C[h % C.length]; }
+        function buildHolospaceHTML(p) {
+          const t = csTitle(p), a = csAccent(p), parts = t.split(" "), head = parts.slice(0, -1).join(" ") || t, tail = parts.length > 1 ? parts.slice(-1)[0] : "";
+          return '<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><style>'
+            + '*{box-sizing:border-box}html,body{height:100%;margin:0}'
+            + 'body{font:16px/1.6 ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:#e8eef9;background:radial-gradient(120% 120% at 30% 0%,#16203a,#0a0e17 60%,#05070c);display:grid;place-items:center;padding:6vw}'
+            + '.wrap{max-width:760px;text-align:center}.tag{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:' + a + ';font-weight:700}'
+            + 'h1{font-size:clamp(34px,7vw,72px);line-height:1.05;margin:14px 0 10px;font-weight:800}h1 .k{background:linear-gradient(90deg,' + a + ',#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent}'
+            + 'p.lead{font-size:clamp(16px,2.4vw,20px);color:#9fb0c8;margin:0 auto 28px;max-width:560px}.cta{display:inline-flex;gap:12px}.btn{padding:13px 22px;border-radius:12px;font-weight:600;text-decoration:none;cursor:pointer}'
+            + '.btn.p{background:' + a + ';color:#08101e}.btn.s{border:1px solid #2a3550;color:#cdd7ea}.row{display:flex;gap:14px;justify-content:center;margin-top:40px;flex-wrap:wrap}'
+            + '.card{background:#0e1626;border:1px solid #1c2740;border-radius:16px;padding:18px 20px;min-width:170px;text-align:left}.card b{color:#fff}.card span{color:#7f90ad;font-size:14px}</style>'
+            + '<div class=wrap><div class=tag>Holospace · on-device</div><h1>' + csEsc(head) + (tail ? ' <span class=k>' + csEsc(tail) + '</span>' : '') + '</h1>'
+            + '<p class=lead>' + csEsc(p) + '</p><div class=cta><a class="btn p">Get started</a><a class="btn s">Learn more</a></div>'
+            + '<div class=row><div class=card><b>Instant</b><br><span>Renders the moment you ask.</span></div>'
+            + '<div class=card><b>Private</b><br><span>Runs on your device, content-addressed.</span></div>'
+            + '<div class=card><b>Yours</b><br><span>One κ — share it, no sign-in.</span></div></div></div>';
+        }
+        const _csBuilder = { id: "holo-html-builder", embed: function (p) { return buildHolospaceHTML(p); } };
+        // perceive a built doc on the trinity (code+visual faces, coherent) — the EXIST + PERCEIVE legs.
+        function csPerceive(prompt, source) {
+          const T = (typeof window !== "undefined") ? window.HoloTrinity : null; if (!T) return;
+          const sid = "create:" + ((node && node.id) || "app");
+          T.fabric.compute({ provider: { id: "holo-codegen", embed: function () { return source; } }, task: "create", input: prompt + "@" + (source.length) }).then(function (f) {
+            T.scene.observeCode(sid, f.kappa, { source: "create-studio", kind: "build" });
+            T.scene.observeVisual(sid, studio.lastSavedK || f.kappa, { from: f.kappa });
+          }).catch(function () {});
+        }
+        // the HYBRID generative seam (ADR-0087): lazily bind boost (frontier·opt-in) + the on-device
+        // model (Qwen2.5 via Holo Voice LLM). Created cheaply; the heavy model load happens on first gen.
+        let _cg = null, _cgReady = false, _cgLoading = false, _deviceDead = false;
+        const _csTplMsg = function (p) { return 'Built <b style="font-style:normal">' + csEsc(p) + '</b> — <span class="k">' + urlEl.textContent + '</span> · <span style="color:#7f90ad">template</span> ✦'; };
+        async function ensureCodegen(onProgress) {
+          if (_cgReady) return _cg; if (_cgLoading) return null; _cgLoading = true;
+          try {
+            const mod = await import("/_shared/q/holo-q-codegen.js");
+            let device = null; try { device = await mod.bindVoiceModel({ onProgress: onProgress }); } catch (e) { device = null; }
+            const boost = (typeof window !== "undefined" && typeof window.HoloBoost === "function") ? function (m, o) { return window.HoloBoost(m, o); } : null;
+            _cg = mod.createCodegen({ device: device, boost: boost }); _cgReady = true;
+          } catch (e) { _cg = null; } finally { _cgLoading = false; }
+          return _cg;
+        }
+        // holoBuild(prompt, m) — INSTANT template floor, then ENHANCE with a real model when available;
+        // a refine prompt EDITS the existing doc (create-then-edit). m is the assistant message to update.
+        async function holoBuild(prompt, m) {
+          const floor = buildHolospaceHTML(prompt);
+          (studio.applyLive ? studio.applyLive(floor) : render(floor)); studio.curSrc = floor;   // CREATE (floor) → render
+          csPerceive(prompt, floor);
+          if (m) m.innerHTML = _csTplMsg(prompt);
+          { const _sg = $$("cs-suggest"); if (_sg) _sg.style.display = "flex"; }   // surface "Review your holospace" only as a follow-up, once something is built
+          const wantBoost = !!(typeof window !== "undefined" && window.HoloBoost && studio.boost !== false);   // a frontier boost, once installed (HoloBoostInstall), is the preferred tier unless explicitly disabled
+          if (_deviceDead && !wantBoost) return;                          // a prior model load failed → stay on the instant template floor
+          const cg = await ensureCodegen(function (p) { if (m && p && p.total) m.innerHTML = 'Loading on-device AI… ' + Math.round((p.loaded / p.total) * 100) + '%'; });
+          if (!cg || (!cg.has("device") && !wantBoost)) return;          // no real model → keep the polished template
+          try {
+            const editing = (studio.iterations || 0) > 0; let started = false, lastT = 0;
+            const onTok = function (src) { if (!started) { started = true; if (m) m.innerHTML = 'Generating with <span style="color:#7c5cff">' + (wantBoost ? 'boosted model' : 'on-device AI') + '</span>…'; }
+              const t = Date.now(); if (t - lastT > 250 && /<\/(section|main|body|html)>/i.test(src)) { lastT = t; (studio.applyLive ? studio.applyLive(src) : render(src)); } };
+            // bound the wait: on-device generation is real but can be slow — the polished template stands meanwhile.
+            const TIMEOUT = wantBoost ? 60000 : 18000;
+            const r = await Promise.race([ cg.generate({ prompt: prompt, current: editing ? studio.curSrc : null, boost: wantBoost, signal: studio.genSignal, onToken: onTok }),
+              new Promise(function (res) { setTimeout(function () { res({ __slow: true }); }, TIMEOUT); }) ]);
+            if (r && r.__slow) { _deviceDead = true; if (m) m.innerHTML = _csTplMsg(prompt) + ' <span style="color:#7f90ad">· on-device AI is slow on this device — set a boost model for instant frontier results</span>'; return; }
+            if (r && r.source) {
+              (studio.applyLive ? studio.applyLive(r.source) : render(r.source)); studio.curSrc = r.source; studio.iterations = (studio.iterations || 0) + 1; csPerceive(prompt, r.source);
+              if (m) m.innerHTML = (editing ? 'Refined' : 'Built') + ' <b style="font-style:normal">' + csEsc(prompt) + '</b> — <span class="k">' + urlEl.textContent + '</span> · <span style="color:#34d399">' + (r.mode === "boost" ? "boosted model" : "on-device Qwen2.5") + '</span> · ' + r.ms + 'ms ✦';
+            }
+          } catch (e) { _deviceDead = true; if (m) m.innerHTML = _csTplMsg(prompt); }   // model unavailable → the polished template stands (never a blank screen)
+        }
         function send() {
           const v = ask.value.trim(); if (!v) return; ask.value = ""; ask.style.height = "auto"; addMsg("user", csEsc(v));
           if (studio.editable && /<\/?[a-z!][\s\S]*>/i.test(v)) { studio.applyLive(v); view("pv"); setTimeout(function () { addMsg("assistant", 'Rendered your changes ✓ — <span class="k">' + urlEl.textContent + "</span>"); }, 60); }
+          else if (studio.editable && mode !== "Chat") {   // a natural-language prompt in Build mode → build/refine a holospace in real time
+            view("pv");
+            const m = addMsg("assistant", 'Building <b style="font-style:normal">' + csEsc(v) + '</b>…');
+            holoBuild(v, m).catch(function (e) { m.innerHTML = 'Build error: ' + csEsc(String((e && e.message) || e)); });
+          }
           else if (studio.editable) setTimeout(function () { addMsg("assistant", 'I render any HTML/CSS/JS you send instantly — paste a snippet and watch it go live, or open <b style="font-style:normal">Code</b> to edit. Each change is content-addressed.'); }, 120);
           else setTimeout(function () { addMsg("assistant", "This page is mirrored from an external source — there's nothing to edit locally. Open it with ↗, or create a fresh holospace from Home."); }, 120);
         }
@@ -2387,6 +2458,33 @@
         const want = String(d.id); const tail = want.split(/[:/]/).pop();
         const app = catalog.find((a) => a.id === want || a.did === want || a.id.toLowerCase().endsWith(tail.toLowerCase()) || (a.landing || "").includes("/" + tail + "/"));
         if (app) launch(app);
+      });
+      // ── Holo Files SERVICE — a CORE OS capability every holo-native app can call. The shell BROKERS
+      //    file access so apps never touch raw storage (Law L4: everything through the substrate); bytes
+      //    round-trip as content-addressed objects (Law L1/L2: identity re-derived from bytes · L3: the κ
+      //    store IS the memory). Apps use the SDK helpers (saveFile · readFile · revealFile · pickFile),
+      //    which postMessage `{type:"holo-files", op, …}` here and await `holo-files-result`. ───────────
+      let _filesMod = null; const filesMod = async () => _filesMod || (_filesMod = await import("/_shared/holo-files.js"));
+      const hexOfRef = (r) => { const m = /([0-9a-f]{64})/i.exec(String(r || "")); return m ? m[1].toLowerCase() : null; };
+      window.addEventListener("message", async (e) => {
+        const d = e.data; if (!d || d.type !== "holo-files" || !d.op) return;
+        const reply = (ok, result, error) => { try { e.source && e.source.postMessage({ type: "holo-files-result", id: d.id, ok, result, error }, "*"); } catch (x) {} };
+        try {
+          if (d.op === "save") {                                  // bytes → a content-addressed object (κ); the store is the memory
+            const u8 = d.bytes instanceof Uint8Array ? d.bytes : (d.bytes ? new Uint8Array(d.bytes) : new TextEncoder().encode(String(d.text || "")));
+            const k = await holoStore.put(u8); const hex = k.split(":").pop();
+            reply(true, { kappa: "holo://" + hex, hex, size: u8.length, name: d.name || (hex.slice(0, 10) + ".bin") });
+          } else if (d.op === "read") {                           // resolve by κ (store, else the source chain) or a Home path
+            const hex = hexOfRef(d.ref);
+            if (hex) { let b = await holoStore.get("sha256:" + hex); if (!b) b = await _kSource(hex); if (!b) return reply(false, null, "not resolvable by κ (Law L5)"); reply(true, { bytes: b, kappa: "holo://" + hex, hex, size: b.length }); }
+            else if (String(d.ref || "").startsWith("/home/")) { const M = await filesMod(); const name = String(d.ref).split("/").pop(); const r = await M.read({ source: "opfs", path: d.ref, name, mime: M.mimeOf(name) }); reply(true, { bytes: r.bytes, mime: r.mime, size: r.size, name }); }
+            else reply(false, null, "unsupported ref — pass a holo://κ or a /home/ path");
+          } else if (d.op === "reveal") {                         // surface it in the explorer / open the object
+            const hex = hexOfRef(d.ref); if (hex) omniGo("holo://" + hex); else openFiles(); reply(true, {});
+          } else if (d.op === "pick") {                           // a governed picker UI is the next slice; reveal works today
+            openFiles(); reply(false, null, "picker UI is the next slice — opened Holo Files so you can copy a κ");
+          } else reply(false, null, "unknown op: " + d.op);
+        } catch (err) { reply(false, null, (err && err.message) || String(err)); }
       });
       q.addEventListener("input", () => renderResults(q.value));
       q.addEventListener("keydown", (e) => { if (e.key === "ArrowDown") { e.preventDefault(); selIdx = Math.min(selIdx + 1, spotList.length - 1); markSel(); } else if (e.key === "ArrowUp") { e.preventDefault(); selIdx = Math.max(selIdx - 1, 0); markSel(); } else if (e.key === "Enter") { e.preventDefault(); spotList[selIdx] && launch(spotList[selIdx]); } });
