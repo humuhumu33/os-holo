@@ -19,43 +19,43 @@
         -webkit-font-smoothing: antialiased; display: flex; flex-direction: column; overflow: hidden; }
       .mono { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
       a { color: var(--acc); text-decoration: none; } button { font: inherit; }
-      main { flex: 1 1 auto; min-height: 0; overflow: auto; padding: var(--s-m) var(--s-s) var(--s-l); max-width: 30rem; width: 100%; margin: 0 auto; }
+      main { flex: 1 1 auto; min-height: 0; overflow: auto; padding: clamp(1.2rem, 4vh, 3rem) var(--s-s) var(--s-l); width: 100%; }
+      .wrap-in { max-width: 33rem; width: 100%; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; justify-content: center; }
 
-      /* identity header */
-      .who { display: flex; align-items: center; gap: var(--s-s); margin-bottom: var(--s-2xs); }
-      .av { width: var(--s-l); height: var(--s-l); border-radius: 50%; flex: 0 0 auto; display: grid; place-items: center;
-        font-weight: 800; font-size: 1.25rem; color: #06210f; background: var(--good); }
-      .who h1 { margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: -.02em; }
-      .who .role { color: var(--dim); font-size: .82rem; font-weight: 600; }
-      .lede { color: var(--dim); margin: 0 0 var(--s-m); max-width: 26rem; }
-      .kbadges { display: flex; flex-wrap: wrap; gap: var(--s-2xs); margin: var(--s-xs) 0 var(--s-m); }
-      .badge { display: inline-flex; align-items: center; gap: .35rem; font: 600 .76rem ui-sans-serif; color: var(--ink);
-        background: var(--surface); border: 1px solid var(--line); border-radius: var(--pill); padding: .28rem .66rem; }
+      /* hero — the card is the centrepiece; the identity reads off it */
+      .hero { text-align: center; }
+      .idrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .5rem; margin: var(--s-s) 0 var(--s-2xs); }
+      .role-tag { font: 700 .92rem ui-sans-serif; color: var(--ink); }
+      .badge { display: inline-flex; align-items: center; gap: .35rem; font: 600 .9rem ui-sans-serif; color: var(--ink);
+        background: var(--surface); border: 1px solid var(--line); border-radius: var(--pill); padding: .3rem .7rem; }
       .badge.ok { color: var(--good); border-color: color-mix(in srgb, var(--good) 40%, transparent); }
-      .badge .k { color: var(--dim); cursor: pointer; max-width: 11rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .kchip { font: 600 .88rem ui-monospace, monospace; color: var(--dim); background: var(--surface); border: 1px solid var(--line);
+        border-radius: var(--pill); padding: .3rem .7rem; cursor: pointer; } .kchip:hover { color: var(--acc); border-color: var(--acc); }
+      .tagline { margin: var(--s-2xs) 0 var(--s-m); color: var(--dim); font-size: 1.02rem; } .tagline b { color: var(--ink); font-weight: 700; }
 
-      /* facet rows */
+      /* facet rows — clean, one line each */
+      .facets { margin-top: var(--s-m); }
       .row { display: flex; align-items: center; gap: var(--s-s); width: 100%; text-align: left; cursor: pointer;
-        background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s-s); margin-bottom: var(--s-2xs); color: var(--ink); transition: border-color .14s, background .14s; }
+        background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s-s); margin-bottom: .5rem; color: var(--ink); transition: border-color .14s, background .14s; }
       .row:hover { border-color: var(--acc); background: var(--surface2); }
-      .row .ic { width: 2.2rem; height: 2.2rem; border-radius: 50%; flex: 0 0 auto; display: grid; place-items: center; background: var(--surface2); color: var(--acc); }
-      .row .ic svg { width: 1.2rem; height: 1.2rem; } .row .m { flex: 1 1 auto; min-width: 0; }
-      .row .m b { display: block; font-size: .98rem; } .row .m span { color: var(--dim); font-size: .82rem; }
-      .row .chev { color: var(--dim); } .row .chev svg { width: 1.1rem; height: 1.1rem; }
-      h3 { font: 700 .74rem ui-sans-serif; color: var(--dim); text-transform: uppercase; letter-spacing: .07em; margin: var(--s-m) 0 var(--s-xs); }
+      .row .ic { width: 2.4rem; height: 2.4rem; border-radius: 50%; flex: 0 0 auto; display: grid; place-items: center; background: var(--surface2); color: var(--acc); }
+      .row .ic svg { width: 1.25rem; height: 1.25rem; } .row .m { flex: 1 1 auto; min-width: 0; }
+      .row .m b { display: block; font-size: 1.05rem; } .row .m span { color: var(--dim); font-size: .92rem; }
+      .row.danger { justify-content: center; color: var(--dim); } .row.danger:hover { color: var(--holo-danger, #ff6b6b); border-color: var(--holo-danger, #ff6b6b); }
+      .row .chev { color: var(--dim); } .row .chev svg { width: 1.15rem; height: 1.15rem; }
+      h3 { font: 700 .92rem ui-sans-serif; color: var(--dim); text-transform: uppercase; letter-spacing: .07em; margin: var(--s-m) 0 var(--s-xs); }
 
-      .agent { display: flex; align-items: center; gap: .7rem; padding: .6rem .2rem; border-bottom: 1px solid var(--line); }
-      .agent:last-of-type { border-bottom: 0; } .agent .d { width: 1.6rem; height: 1.6rem; border-radius: 50%; flex: 0 0 auto; display: grid; place-items: center; background: var(--surface2); font-size: .8rem; }
-      .agent .m { flex: 1 1 auto; min-width: 0; } .agent .m b { display: block; font-size: .9rem; } .agent .m span { color: var(--dim); font-size: .74rem; }
-      .agent .caps { color: var(--dim); font-size: .72rem; white-space: nowrap; }
-      .empty { color: var(--dim); font-size: .88rem; padding: .4rem .2rem .8rem; }
+      .agent { display: flex; align-items: center; gap: .7rem; padding: .7rem .2rem; border-bottom: 1px solid var(--line); }
+      .agent:last-of-type { border-bottom: 0; } .agent .d { width: 2rem; height: 2rem; border-radius: 50%; flex: 0 0 auto; display: grid; place-items: center; background: var(--surface2); font-size: .9rem; }
+      .agent .m { flex: 1 1 auto; min-width: 0; } .agent .m b { display: block; font-size: 1rem; } .agent .m span { color: var(--dim); font-size: .86rem; }
+      .agent .caps { color: var(--dim); font-size: .84rem; white-space: nowrap; }
+      .empty { color: var(--dim); font-size: .96rem; padding: .4rem .2rem .8rem; }
 
-      .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; font: 600 .95rem ui-sans-serif;
-        color: #06210f; background: var(--good); border: 0; border-radius: var(--r-sm); padding: .72rem 1.1rem; cursor: pointer; width: 100%; transition: filter .12s; }
-      .btn:hover { filter: brightness(1.06); } .btn.ghost { color: var(--ink); background: transparent; border: 1px solid var(--line); }
-      .btn.ghost:hover { border-color: var(--acc); } .btn svg { width: 1.05rem; height: 1.05rem; }
-      .foot { display: flex; gap: var(--s-2xs); margin-top: var(--s-m); }
-      .note { color: var(--dim); font-size: .8rem; margin-top: var(--s-s); }
+      .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; font: 700 1rem ui-sans-serif;
+        color: #06210f; background: var(--good); border: 0; border-radius: var(--pill); padding: .8rem 1.4rem; cursor: pointer; transition: filter .12s, transform .08s; }
+      .btn:hover { filter: brightness(1.07); } .btn:active { transform: scale(.985); } .btn.ghost { color: var(--ink); background: transparent; border: 1px solid var(--line); }
+      .btn.ghost:hover { border-color: var(--acc); } .btn svg { width: 1.1rem; height: 1.1rem; } .btn.wide { width: 100%; }
+      .note { color: var(--dim); font-size: .92rem; margin-top: var(--s-s); }
       .hidden { display: none !important; }
 
       /* ── the SOVEREIGN platinum card — photoreal, golden-ratio (φ=1.618), resolution-independent (8K/retina) ── */
@@ -69,8 +69,7 @@
           radial-gradient(135% 80% at 50% -8%, rgba(255,255,255,.45), rgba(255,255,255,0) 52%),
           linear-gradient(102deg, #1c1f25 0%, #565d68 13%, #b4bcc8 29%, #79808c 43%, #eef2f8 57%, #767d8a 72%, #4c525c 86%, #23272d 100%);
         box-shadow: 0 46px 90px -28px rgba(0,0,0,.92), 0 14px 30px rgba(0,0,0,.55),
-          inset 0 1px 0 rgba(255,255,255,.62), inset 0 -2px 9px rgba(0,0,0,.62), inset 0 0 0 1px rgba(255,255,255,.12);
-        -webkit-box-reflect: below 2px linear-gradient(transparent, transparent 55%, rgba(255,255,255,.13)); }
+          inset 0 1px 0 rgba(255,255,255,.62), inset 0 -2px 9px rgba(0,0,0,.62), inset 0 0 0 1px rgba(255,255,255,.12); }
       /* micrograin — SVG fractal noise, crisp at any DPI; kills banding, adds metal tooth */
       .card .grain { position:absolute; inset:0; z-index:1; opacity:.13; mix-blend-mode:overlay; pointer-events:none;
         background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
@@ -127,6 +126,7 @@
   </head>
   <body>
     <main>
+      <div class="wrap-in">
       <!-- GUEST -->
       <section id="guest" class="hidden">
         <svg width="56" height="56" viewBox="0 0 24 24" style="margin:1rem 0"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--acc)"/><stop offset="1" stop-color="var(--good)"/></linearGradient></defs><path fill="url(#g)" d="M12 2l8 3v6c0 5-3.4 8.5-8 11-4.6-2.5-8-6-8-11V5l8-3z"/></svg>
@@ -145,33 +145,33 @@
               <span class="brand"><span class="mk">◈</span> Hologram</span>
               <span class="sov">Sovereign Identity</span>
               <span class="name" id="cardName">—</span>
-              <span class="meta"><span>Member since <b id="cardDate">—</b></span><span class="mono" id="cardK">—</span></span>
+              <span class="meta">Member since <b id="cardDate">—</b></span>
             </div>
             <span class="qr" id="cardQr" title="your identity address (holo://)"></span>
             <span class="edge"></span>
           </div>
         </div>
-        <div class="share"><button class="btn ghost" id="shareCard"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2.5h3.3l-7.2 8.2 8.5 11.3h-6.7l-5.2-6.9-6 6.9H1.6l7.7-8.8L1 2.5h6.8l4.7 6.3 5.7-6.3Zm-1.2 17.6h1.8L7.1 4.3H5.2L17 20.1Z"/></svg> Share my identity</button></div>
-        <div class="who"><span class="av" id="av">·</span><div><h1 id="label">—</h1><div class="role" id="role">Player</div></div></div>
-        <p class="lede">One sovereign key. Your wallet and your agents are facets of it — nothing acts beyond what you grant.</p>
-        <div class="kbadges">
-          <span class="badge ok" id="pqBadge" title="Verified by re-derivation (Ed25519 ‖ ML-DSA, Law L5)">🛡 Post-quantum secured</span>
-          <span class="badge"><span class="k mono" id="kid" title="your identity address — tap to copy">did:holo —</span></span>
+        <div class="idrow">
+          <span class="role-tag" id="role">Player</span>
+          <span class="badge ok" id="pqBadge" title="Verified by re-derivation (Ed25519 ‖ ML-DSA)">🛡 Post-quantum</span>
+          <button class="kchip" id="kid" title="your identity address — tap to copy">did:holo —</button>
         </div>
+        <p class="tagline">Yours alone. Yours <b>forever</b>.</p>
+        <button class="btn" id="shareCard"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2.5h3.3l-7.2 8.2 8.5 11.3h-6.7l-5.2-6.9-6 6.9H1.6l7.7-8.8L1 2.5h6.8l4.7 6.3 5.7-6.3Zm-1.2 17.6h1.8L7.1 4.3H5.2L17 20.1Z"/></svg> Share my sovereign card</button>
 
-        <button class="row" id="walletRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2"/><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/><path d="M16 13h.01"/></svg></span><span class="m"><b>Wallet</b><span>Hold and move value — every chain, one tap to sign.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+        <div class="facets">
+          <button class="row" id="walletRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2"/><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/><path d="M16 13h.01"/></svg></span><span class="m"><b>Wallet</b><span>Every chain, one tap to sign.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
 
-        <h3>Agents</h3>
-        <p class="note" style="margin:0 0 .4rem">Helpers that act for you — each gets only the powers you grant, and only you can revoke.</p>
-        <div id="agentList"></div>
-        <button class="btn ghost" id="newAgent" style="margin-top:.6rem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> New agent</button>
+          <h3>Agents</h3>
+          <div id="agentList"></div>
+          <button class="btn ghost wide" id="newAgent" style="margin-top:.5rem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> New agent</button>
 
-        <h3>Security</h3>
-        <button class="row" id="backupRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M5 11V8a7 7 0 0 1 14 0v3"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg></span><span class="m"><b>Recovery phrase</b><span>Your only backup — save it offline. There is no reset.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
-
-        <div class="foot"><button class="btn ghost" id="signout">Sign out</button></div>
-        <p class="note">Sign out clears this session only. Your key stays sealed on this device until you unlock it again.</p>
+          <h3>Security</h3>
+          <button class="row" id="backupRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M5 11V8a7 7 0 0 1 14 0v3"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg></span><span class="m"><b>Recovery phrase</b><span>Your only backup.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+          <button class="row danger" id="signout" style="margin-top:.5rem">Sign out</button>
+        </div>
       </section>
+      </div>
     </main>
 
     <!-- mint agent -->
@@ -193,7 +193,7 @@
       import { mintNpc, delegate } from "/_shared/holo-delegate.mjs";
 
       const $ = (id) => document.getElementById(id);
-      const show = (id) => { for (const s of document.querySelectorAll("main > section")) s.classList.add("hidden"); $(id).classList.remove("hidden"); };
+      const show = (id) => { for (const s of document.querySelectorAll("main section")) s.classList.add("hidden"); $(id).classList.remove("hidden"); };
       const short = (k, n = 7) => { k = String(k || ""); return k.length > 2 * n + 3 ? k.slice(0, n) + "…" + k.slice(-n) : k; };
       const toast = (m) => { const t = $("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 1800); };
       const copy = (s) => navigator.clipboard?.writeText(s).then(() => toast("copied"));
@@ -223,8 +223,6 @@
         const kappa = (identity && identity.operator) || (op && op.kappa) || "";
         const pq = !!(identity && identity.pqPub);
         const npc = identity && identity.subjectType === "npc";
-        $("av").textContent = (label[0] || "·").toUpperCase();
-        $("label").textContent = label;
         $("role").textContent = npc ? "Agent" : "Player";
         $("pqBadge").classList.toggle("hidden", !pq);
         $("kid").textContent = short(kappa, 8); $("kid").onclick = () => copy(kappa);
@@ -232,7 +230,6 @@
         $("cardName").textContent = label;
         const joined = (op && op.createdAt) || (identity && identity.issuedAt) || new Date().toISOString();
         try { $("cardDate").textContent = new Date(joined).toLocaleDateString(undefined, { month: "short", year: "numeric" }); } catch { $("cardDate").textContent = "—"; }
-        $("cardK").textContent = short(kappa, 5);
         renderCardQr(kappa); wireCard();
         renderAgents(kappa);
         show("me");
