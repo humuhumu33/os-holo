@@ -47,6 +47,12 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="/usr/share/icons/og-card.png" />
     <link rel="stylesheet" href="/_shared/holo-theme.css" data-holo-shared="holo-theme.css" />
+    <!-- Adaptive-fidelity policy (exploration: hyper-real, device-adaptive holospaces): reads the
+         user's hardware ⊗ connection ⊗ preferences and publishes --holo-fx-* + <html data-holo-fidelity>
+         so every surface scales its effects to the device. Loads early; CSS vars default to full (1). -->
+    <script type="module" src="/_shared/holo-fidelity.mjs"></script>
+    <!-- measurement harness — ONLY with ?metrics=1, so it never touches the default experience. -->
+    <script>try{if(new URLSearchParams(location.search).has("metrics"))import("/_shared/holo-metrics.mjs");}catch(e){}</script>
     <!-- Holo Dock (ADR-0059): the universal native-feel bottom dock — the one consistent bar across
          every shell. Self-contained (portable --hd-* tokens), so it needs nothing but holo-theme.css. -->
     <link rel="stylesheet" href="/_shared/holo-dock.css" data-holo-shared="holo-dock.css" />
@@ -86,6 +92,10 @@
           radial-gradient(820px 640px at -8% 112%, rgba(45,212,191,.15), transparent 60%),
           radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);
         background-size: auto, auto, 26px 26px; }
+      /* ADAPTIVE FIDELITY — on a low-tier device (set by holo-fidelity.mjs) the heavy layered shadow is
+         too costly, so drop to a single light shadow: same floating read, far cheaper to paint. */
+      :root[data-holo-fidelity="720p"] #world, :root[data-holo-fidelity="1080p"] #world {
+        box-shadow: 0 12px 30px -14px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06); }
       /* ── tab strip — Chrome-precise: tabs at the bottom edge, the active tab flush with the toolbar ── */
       #tabstrip { position: fixed; top: 0; left: var(--holo-dock-w, 0px); right: 0; height: var(--tabrow-h); z-index: 60; display: flex; align-items: flex-end; gap: 1px;
         padding: 0 var(--gap); background: #141417; overflow-x: auto; scrollbar-width: none; user-select: none; }   /* recessed strip BEHIND the tabs; tabs are inset by --gap horizontally to line up with the holospace card below. No vertical padding → align-self:center cluster gets EQUAL top/bottom space; tabs are flex-end so they're unaffected. */
@@ -1000,11 +1010,46 @@
         b.onclick = () => { try { if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else { const el = document.documentElement; (el.requestFullscreen || el.webkitRequestFullscreen).call(el); } } catch (e) {} };
         document.addEventListener("fullscreenchange", sync); document.addEventListener("webkitfullscreenchange", sync); sync();
       })();
-      // ── Wallet, left of full screen → launch Holo Wallet (the OS signing seam: one seed, every
-      //    chain, default-deny). navApp resolves the catalog + gates caps at click time. ──
+      // ── Wallet → a right-docked, isolated, capability-gated holospace that SLIDES in from the edge
+      //    (a browser-extension wallet, OS-native). It RE-MOUNTS on every open (fresh sandboxed iframe)
+      //    so the wallet always boots LOCKED and re-requests biometrics — value can never be reached
+      //    without a fresh tap. Closing unmounts it (→ relocked). The iframe is sandboxed + gated by the
+      //    same host capability seam every app passes, so it is self-verified and default-deny. ──
       (function wireWallet() {
         const b = $("#wallet-btn"); if (!b) return;
-        b.onclick = () => navApp("org.hologram.HoloWallet");
+        let panel, frame, isOpen = false, busy = false;
+        function build() {
+          panel = document.createElement("div"); panel.id = "wallet-panel";
+          panel.innerHTML = '<div class="wp-scrim"></div><aside class="wp-dock" role="dialog" aria-modal="true" aria-label="Holo Wallet"><iframe title="Holo Wallet"></iframe></aside>';
+          document.body.appendChild(panel);
+          frame = panel.querySelector("iframe");
+          panel.querySelector(".wp-scrim").onclick = () => toggle(false);
+        }
+        async function mount() {
+          const app = catalog.find((a) => a.id === "org.hologram.HoloWallet");
+          if (!app) { toast("Wallet not available offline"); return false; }
+          let def = {}; try { def = await fetch(app.landing.replace(/[^/]+$/, "holospace.json")).then((r) => r.json()); } catch {}
+          const { sandbox, allow } = capabilitiesToSandbox(await gateCaps(def));   // self-verified: declared ∩ agreed
+          if (sandbox) frame.setAttribute("sandbox", sandbox);
+          frame.setAttribute("allow", (allow ? allow + "; " : "") + "publickey-credentials-get *; publickey-credentials-create *; clipboard-write");
+          frame.src = app.landing + "?panel=1#" + Date.now();   // fresh load → locked → biometric every open
+          return true;
+        }
+        async function toggle(next) {
+          if (!panel) build();
+          next = next === undefined ? !isOpen : next;
+          if (next) {
+            if (busy || isOpen) return; busy = true;
+            const ok = await mount(); busy = false; if (!ok) return;
+            void panel.offsetWidth;   // flush the closed transform so the slide-in transition fires (rAF is throttled when backgrounded)
+            panel.classList.add("on"); isOpen = true; b.classList.add("on"); b.setAttribute("aria-expanded", "true");
+          } else {
+            if (!isOpen) return; panel.classList.remove("on"); isOpen = false; b.classList.remove("on"); b.setAttribute("aria-expanded", "false");
+            setTimeout(() => { if (!isOpen && frame) frame.src = "about:blank"; }, 340);   // unmount → wallet relocked
+          }
+        }
+        b.onclick = () => toggle();
+        addEventListener("keydown", (e) => { if (e.key === "Escape" && isOpen) toggle(false); });
       })();
 
       // ── Chrome-grade tab manipulation (in-page, serverless): drag to REARRANGE · drag DOWN to DETACH
@@ -3073,10 +3118,11 @@
             (window.HoloBoost ? "" : "Enable a boost model for free-form answers; otherwise I keep to what I can verify.");
         }
 
-        async function handle(text) {
+        async function handle(text, suppliedCtx) {
           if (busy) return; busy = true;
           addMsg("user", esc(text));
-          const c = setCtx();
+          let c = setCtx();
+          if (suppliedCtx && (suppliedCtx.source || suppliedCtx.name)) c = { name: suppliedCtx.name || c.name, source: suppliedCtx.source || c.source, kappa: suppliedCtx.kappa || c.kappa };
           try {
             if (isQuestion(text)) {
               const m = addMsg("asst", "…");
@@ -3126,8 +3172,12 @@
         } };
         import("/_shared/q/holo-q-mux.js").then((mx) => { const b = mx.bindSpecialist || (mx.default && mx.default.bindSpecialist); if (b) b("ask", _askSpecialist); }).catch(() => {});
 
-        function run(text) { open(); const t = String(text || "").trim(); if (t) handle(t); }
+        function run(text, ctx) { open(); const t = String(text || "").trim(); if (t) handle(t, ctx); }
         window.__holoQOrb = { toggle: toggle, open: open, close: close, run: run };
+        // host authority: apps (sandboxed iframes) reach this ONE Q over the governed holo-gov channel
+        // (ADR-0091 cross-frame). q.create rides Q.agent (fail-closed + receipted); the app holds nothing.
+        (function installServe() { if (typeof window === "undefined") return; if (!window.Q) { setTimeout(installServe, 200); return; }
+          import("/_shared/q/holo-q-app.js").then((m) => { try { window.HoloQServe = m.createQServe({ Q: window.Q, summon: (t, c) => { t ? run(t, c) : open(); } }); } catch (e) {} }).catch(() => {}); })();
       })();
       // ── Ambient Q alternate invokes: the omnibar (⌘/Ctrl+Enter sends your line to Q) and VOICE (an
       //    unhandled spoken turn routes to Q). The orb stays the ONE surface; these just open it. ──
@@ -3407,6 +3457,19 @@
       #fullscreen-btn:active, #wallet-btn:active { transform: scale(.92); }
       #fullscreen-btn svg { width: 18px; height: 18px; }
       #wallet-btn svg { width: 18px; height: 18px; }
+      #wallet-btn.on { background: color-mix(in srgb, var(--holo-ink) 12%, transparent); color: var(--holo-ink); }
+      /* Wallet holospace — a right-docked, isolated panel that slides in from the edge (a browser-grade
+         extension wallet). Scrim dims the world; the dock is its own gated sandbox. */
+      #wallet-panel { position: fixed; inset: 0; z-index: 9000; pointer-events: none; }
+      #wallet-panel .wp-scrim { position: absolute; inset: 0; background: color-mix(in srgb, #000 36%, transparent); opacity: 0; transition: opacity .3s ease; }
+      #wallet-panel .wp-dock { position: absolute; top: 0; right: 0; height: 100%; width: min(420px, 94vw);
+        background: var(--holo-bg, #0b0d12); border-left: 1px solid var(--holo-border);
+        box-shadow: -26px 0 70px -22px rgba(0,0,0,.7); transform: translateX(100%);
+        transition: transform .34s cubic-bezier(.2,.8,.2,1); will-change: transform; overflow: hidden; }
+      #wallet-panel .wp-dock iframe { width: 100%; height: 100%; border: 0; display: block; background: var(--holo-bg, #0b0d12); }
+      #wallet-panel.on { pointer-events: auto; }
+      #wallet-panel.on .wp-scrim { opacity: 1; }
+      #wallet-panel.on .wp-dock { transform: translateX(0); }
       #empty .nt { display: flex; flex-direction: column; align-items: center; gap: 13px; }
       #empty .nt .mark svg { width: 60px; height: 60px; }
       #empty .nt h1 { margin: 0; font-weight: 600; font-size: clamp(20px, 3vw, 27px); color: var(--holo-ink); }
