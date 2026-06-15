@@ -24,11 +24,15 @@
   var TYPES = {};                                                 // type id → spec
   var PROVIDERS = {};                                            // provider name → factory()
   var live = [];                                                 // mounted instances {id,type,x,y,w,h,config,el,body,_subs}
+  var SCENES = {};                                              // named preset arrangements (e.g. the Momentum "focus" scene)
+  var onChangeFns = [];                                         // board-mutation subscribers — the shell saves each holospace's board here
+  var persistScope = true;                                     // does THIS board persist to localStorage? Home/standalone: yes; a shell-driven app holospace: no — it rides that holospace's κ instead
 
   // ── persistence ─────────────────────────────────────────────────────────────────────────
   function load() { try { return JSON.parse(W.localStorage.getItem(LS) || "[]"); } catch (e) { return []; } }
   function serialize() { return live.map(function (w) { return { id: w.id, type: w.type, x: w.x, y: w.y, w: w.w, h: w.h, hidden: w.hidden, config: w.config }; }); }
-  function save() { try { W.localStorage.setItem(LS, JSON.stringify(serialize())); } catch (e) {} }
+  function save() { try { if (persistScope) W.localStorage.setItem(LS, JSON.stringify(serialize())); } catch (e) {} fireChange(); }
+  function fireChange() { var snap; try { snap = serialize(); } catch (e) { return; } onChangeFns.forEach(function (fn) { try { fn(snap); } catch (e) {} }); }
   function uid() { try { return "w" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); } catch (e) { return "w" + (uid._n = (uid._n || 0) + 1); } }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function toast(m) { try { (W.HoloDesk && W.HoloDesk.toast || W.toast || function () {})(m); } catch (e) {} }
@@ -40,7 +44,8 @@
     var gs = getComputedStyle(DOC.documentElement);
     var dW = parseFloat(gs.getPropertyValue("--holo-dock-w")) || 0;
     var dH = parseFloat(gs.getPropertyValue("--holo-dock-h")) || 0;
-    return { minX: EDGE + dW, minY: EDGE, maxX: innerWidth - EDGE, maxY: innerHeight - EDGE - dH };
+    var top = parseFloat(gs.getPropertyValue("--holo-top-inset")) || 0;   // shells with top chrome (tab strip + toolbar) set this so widgets clear it
+    return { minX: EDGE + dW, minY: EDGE + top, maxX: innerWidth - EDGE, maxY: innerHeight - EDGE - dH };
   }
   function clampPos(w, x, y) {
     var b = deskBounds(), ww = w.el.offsetWidth, hh = w.el.offsetHeight;
@@ -101,6 +106,9 @@
         "text-shadow:0 1px 18px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.5);transition:filter .2s}",
       ".hw-widget[hidden]{display:none}",
       ".hw-widget.dragging{cursor:grabbing}",
+      // glide — applied only while the canvas reflows (a side panel opening/closing), so every object
+      // slides to its new centre-anchored home together. Never on during drag (that sets left/top live).
+      ".hw-widget.hw-gliding{transition:left .34s cubic-bezier(.2,.8,.2,1),top .34s cubic-bezier(.2,.8,.2,1)}",
       // the holo-object reveal — invisible at rest (clean text on the wallpaper), a soft glass frame on hover
       ".hw-frame{position:absolute;inset:-12px -16px;border-radius:18px;pointer-events:none;opacity:0;",
         "background:color-mix(in srgb,var(--holo-surface,#11141a) 34%,transparent);",
@@ -343,7 +351,7 @@
     var sp = spec(type); if (!sp) { toast("Unknown widget: " + type); return null; }
     var hiddenOnes = live.filter(function (w) { return w.hidden && w.type === type; });
     if (!config && !pos && hiddenOnes.length) { hiddenOnes.forEach(showW); return hiddenOnes[0]; }   // restore before spawning
-    var w = { id: uid(), type: type, x: 0, y: 0, w: sp.defaultW || 260, h: 0, hidden: false, config: config || JSON.parse(JSON.stringify(sp.defaultConfig || {})) };
+    var w = { id: uid(), type: type, x: 0, y: 0, w: (pos && pos.w) || sp.defaultW || 260, h: 0, hidden: false, config: config || JSON.parse(JSON.stringify(sp.defaultConfig || {})) };
     var n = live.length;
     w.x = (pos && pos.x != null) ? pos.x : Math.max(40, Math.round(innerWidth / 2 - (w.w / 2) + ((n % 3) - 1) * 40));
     w.y = (pos && pos.y != null) ? pos.y : Math.max(40, Math.round(innerHeight * 0.3 + (n % 4) * 30));
@@ -357,9 +365,97 @@
 
   function reflowAll() { live.forEach(function (w) { if (w.el && !w.hidden) { var p = clampPos(w, w.x, w.y); w.x = p.x; w.y = p.y; w.el.style.left = w.x + "px"; w.el.style.top = w.y + "px"; } }); }
 
+  // ── centre-anchored reflow — keep every floating object fixed RELATIVE TO THE HOLOSPACE CENTRE as the
+  //    canvas resizes (a side panel opening narrows the usable width). Shift each by HALF the viewport
+  //    delta: the centre moves by exactly that, so the composition tracks it instead of hiding under the
+  //    panel — and GLIDES there, so the whole desktop reflows as one. Deltas sum, so it is exact and
+  //    reversible across open ⇄ close, and the constant left-rail offset cancels (we shift by Δ, not abs). ──
+  var lastVW = W.innerWidth, lastVH = W.innerHeight, glideT = null;
+  function recenter() {
+    var dx = (W.innerWidth - lastVW) / 2, dy = (W.innerHeight - lastVH) / 2;
+    lastVW = W.innerWidth; lastVH = W.innerHeight;
+    if (!dx && !dy) return reflowAll();                              // no centre shift → just keep them in bounds
+    live.forEach(function (w) {
+      if (!w.el || w.hidden) return;
+      w.x += dx; w.y += dy;                                          // logical, unclamped → open ⇄ close is exactly reversible
+      var p = clampPos(w, w.x, w.y);                                 // clamp only the DISPLAY so it never hides under the panel
+      w.el.classList.add("hw-gliding"); w.el.style.left = p.x + "px"; w.el.style.top = p.y + "px";
+    });
+    clearTimeout(glideT); glideT = setTimeout(function () {         // drop the glide once settled; the shift is a
+      live.forEach(function (w) { w.el && w.el.classList.remove("hw-gliding"); });   // transient VIEW transform (driven
+    }, 360);                                                         // by panel state), so it is not persisted — drags are.
+  }
+
+  // ── board swap — the shell hands a DIFFERENT widget set per holospace tab (per-holospace scope) ──
+  // Tears down the current live board and mounts `records` in its place (the inverse of snapshot()).
+  // opts.persist === false ⇒ this board does NOT touch localStorage: it belongs to a non-home holospace
+  // and rides that holospace's κ instead. A pure restore — no save(), no onChange (it isn't a mutation).
+  function mountRecord(s) {
+    if (!spec(s.type)) return null;                               // type not registered here — skip, keep the record on the shell side
+    var w = { id: s.id || uid(), type: s.type, x: s.x, y: s.y, w: s.w, h: s.h, hidden: !!s.hidden, config: s.config || {} };
+    if (!mount(w)) return null;
+    live.push(w);
+    if (!w.hidden) { var p = clampPos(w, w.x, w.y); w.x = p.x; w.y = p.y; w.el.style.left = w.x + "px"; w.el.style.top = w.y + "px"; }
+    return w;
+  }
+  function setBoard(records, opts) {
+    opts = opts || {};
+    closeEdit(); closeMenu();
+    live.slice().forEach(function (w) { teardown(w); if (w.el) w.el.remove(); });
+    live.length = 0;
+    persistScope = opts.persist !== false;
+    (records || []).forEach(mountRecord);
+    return live.length;
+  }
+  // A "sticky" widget type (e.g. the Holo Q voice orb) is a SYSTEM affordance: it survives mode switches
+  // and is never folded into a mode's saved board, so it isn't duplicated or lost when you change modes.
+  function isStickyType(t) { var sp = spec(t); return !!(sp && sp.sticky); }
+  function modeSnapshot() { return serialize().filter(function (s) { return !isStickyType(s.type); }); }
+
+  // ── scenes — a one-click composed arrangement of widgets (the Momentum-style "Focus space") ──────
+  // A scene declares only a responsive layout() → [{type,config?,x,y,w}]; each item becomes an ordinary
+  // κ-widget, so the whole "enclosed experience" is just widgets you can then move, resize, edit or share.
+  var MODE_ORDER = [];                                          // scenes flagged {mode:true}, in registration order — the desktop modes
+  function defineScene(name, sp) { SCENES[name] = sp; if (sp && sp.mode && MODE_ORDER.indexOf(name) < 0) MODE_ORDER.push(name); return W.HoloWidgets; }
+  function addScene(name, opts) {
+    var sc = SCENES[name]; if (!sc) { toast("Unknown scene: " + name); return null; }
+    opts = opts || {};
+    if (opts.replace) live.slice().forEach(function (w) { remove(w); });
+    var b = deskBounds();
+    var items = (sc.layout && sc.layout(innerWidth, innerHeight, b)) || [];
+    var made = items.map(function (it) { return add(it.type, it.config ? JSON.parse(JSON.stringify(it.config)) : null, { x: it.x, y: it.y, w: it.w }); }).filter(Boolean);
+    if (!opts.quiet) toast((sc.name || name) + " · " + made.length + " widgets — drag, resize or edit any of them");
+    return made;
+  }
+
+  // ── desktop modes — switch the whole board between curated presets (Focused · Learn · Work · Play). ──
+  // A mode is just a scene flagged {mode:true}. Switching REPLACES the board, but each mode REMEMBERS its
+  // own layout (per-mode localStorage), so flipping between them is non-destructive — your customised Work
+  // board is still there when you come back from Play. Active only on a persisting board (the Home desktop).
+  var MODE_LS = "holo-widgets.mode.v1", MODES_LS = "holo-widgets.modeboards.v1", currentMode = null;
+  function modeBoardsLoad() { try { return JSON.parse(W.localStorage.getItem(MODES_LS) || "{}"); } catch (e) { return {}; } }
+  function modeBoardsSave(m) { try { W.localStorage.setItem(MODES_LS, JSON.stringify(m)); } catch (e) {} }
+  function currentModeName() { if (currentMode) return currentMode; try { return W.localStorage.getItem(MODE_LS) || null; } catch (e) { return null; } }
+  function modeList() { return MODE_ORDER.map(function (n) { var s = SCENES[n] || {}; return { name: n, label: s.name || n, icon: s.icon || "layout-grid", blurb: s.blurb || "" }; }); }
+  function setMode(name) {
+    if (!SCENES[name]) { toast("Unknown mode: " + name); return; }
+    var prev = currentModeName(), boards = modeBoardsLoad();
+    if (persistScope && prev && prev !== name) { boards[prev] = modeSnapshot(); modeBoardsSave(boards); }   // remember the mode we're leaving (minus sticky system widgets)
+    currentMode = name;
+    try { if (persistScope) W.localStorage.setItem(MODE_LS, name); } catch (e) {}
+    closeEdit(); closeMenu();
+    for (var i = live.length - 1; i >= 0; i--) { if (!isStickyType(live[i].type)) { teardown(live[i]); if (live[i].el) live[i].el.remove(); live.splice(i, 1); } }   // drop the mode widgets, keep system orbs (sticky)
+    var saved = persistScope ? boards[name] : null;
+    if (saved && saved.length) saved.filter(function (s) { return !isStickyType(s.type); }).forEach(mountRecord);   // restore your customised version of this mode
+    else addScene(name, { quiet: true });                                       // first visit → seed the curated preset (on top of the kept sticky widgets)
+    if (persistScope) { boards[name] = modeSnapshot(); modeBoardsSave(boards); save(); }
+    toast((SCENES[name].name || name) + " mode");
+    return name;
+  }
+
   // ── boot ────────────────────────────────────────────────────────────────────────────────
   function boot() {
-    W.addEventListener("resize", reflowAll);
+    W.addEventListener("resize", recenter);
     var saved = load();
     saved.forEach(function (s) {
       if (!spec(s.type)) return;                                  // type not registered (yet) — skip, keep the record
@@ -389,8 +485,16 @@
     show: function (id) { (id ? live.filter(function (x) { return x.id === id; }) : live.filter(function (x) { return x.hidden; })).forEach(showW); },
     hide: function (id) { var w = live.filter(function (x) { return x.id === id; })[0]; if (w) hide(w); },
     list: function () { return live; }, types: function () { return Object.keys(TYPES); },
-    snapshot: serialize,                                         // the persistable board — folded into the desktop κ by holo-desk
-    openGallery: openGallery,                                   // the right-click "Add a widget" catalog
+    snapshot: serialize,                                         // the persistable board — folded into the holospace κ
+    setBoard: setBoard,                                         // swap the whole board (the shell calls this per holospace tab)
+    onChange: function (fn) { if (typeof fn === "function") onChangeFns.push(fn); return W.HoloWidgets; },   // notified after any board mutation — the shell mirrors it into the active tab
+    addScene: addScene,                                        // drop a composed arrangement
+    defineScene: defineScene,                                  // register a scene preset
+    scenes: function () { return Object.keys(SCENES); },
+    setMode: setMode,                                          // switch the desktop to a curated mode (remembers each mode's board)
+    mode: currentModeName,                                     // the active mode name (or null)
+    modes: modeList,                                           // the ordered modes [{name,label,icon,blurb}]
+    openGallery: openGallery,                                   // the right-click "Add a widget / space" catalog
     kappa: sealAll,
     // for the desktop "New" menu — one entry per registered type
     menuItems: function () { return Object.keys(TYPES).filter(function (t) { return !TYPES[t].menuHidden; }).map(function (t) { var sp = TYPES[t]; return { icon: sp.icon || "box", label: sp.name || t, fn: function () { add(t); } }; }); },
@@ -707,6 +811,114 @@
         grid.appendChild(a);
       });
       wrap.appendChild(grid); host.body.appendChild(wrap);
+    },
+  });
+
+  // ── Quote — a daily line to think on (offline, deterministic by day; editable in place) ──────────
+  // Like the Momentum quote: a calm italic line over the wallpaper. Rotates once per day from a bundled
+  // set (no network), or you can pin your own. The very heart of the "enclosed" focus experience.
+  var QUOTES = [
+    { t: "Remember that wherever your heart is, there you will find your treasure.", a: "Paulo Coelho" },
+    { t: "We suffer more often in imagination than in reality.", a: "Seneca" },
+    { t: "You have power over your mind — not outside events. Realize this, and you will find strength.", a: "Marcus Aurelius" },
+    { t: "The first principle is that you must not fool yourself — and you are the easiest person to fool.", a: "Richard Feynman" },
+    { t: "Simplicity is the ultimate sophistication.", a: "Leonardo da Vinci" },
+    { t: "Less, but better.", a: "Dieter Rams" },
+    { t: "It is not that we have a short time to live, but that we waste a lot of it.", a: "Seneca" },
+    { t: "Knowing yourself is the beginning of all wisdom.", a: "Aristotle" },
+    { t: "What we do now echoes in eternity.", a: "Marcus Aurelius" },
+    { t: "The obstacle is the way.", a: "Marcus Aurelius" },
+    { t: "Quality is not an act, it is a habit.", a: "Aristotle" },
+    { t: "He who has a why to live can bear almost any how.", a: "Friedrich Nietzsche" },
+    { t: "Waste no more time arguing about what a good person should be. Be one.", a: "Marcus Aurelius" },
+    { t: "The unexamined life is not worth living.", a: "Socrates" },
+  ];
+  function quoteOfDay() { var day; try { day = Math.floor(Date.now() / 864e5); } catch (e) { day = 0; } return QUOTES[((day % QUOTES.length) + QUOTES.length) % QUOTES.length]; }
+  W.HoloWidgets.define("quote", {
+    name: "Quote", icon: "quote", blurb: "A daily line to think on.", defaultW: 440, minW: 200, maxW: 700,
+    defaultConfig: { text: "", author: "" },                      // empty text ⇒ the daily rotation
+    fields: [
+      { key: "text", label: "Your own quote (blank = a daily one)", type: "textarea" },
+      { key: "author", label: "Author", type: "text" },
+    ],
+    render: function (host) {
+      var c = host.config, own = (c.text || "").trim();
+      var q = own ? { t: own, a: c.author || "" } : quoteOfDay();
+      var wrap = DOC.createElement("div"); wrap.style.cssText = "text-align:center";
+      var p = DOC.createElement("div"); p.style.cssText = "font-style:italic;font-weight:300;font-size:clamp(14px,calc(var(--hw-w,440px)*.052),27px);line-height:1.4";
+      p.textContent = "“" + (q.t || "") + "”";
+      wrap.appendChild(p);
+      if (q.a) { var a = DOC.createElement("div"); a.style.cssText = "margin-top:.55em;font-size:clamp(10px,calc(var(--hw-w,440px)*.03),14px);letter-spacing:.14em;text-transform:uppercase;opacity:.68"; a.textContent = "— " + q.a; wrap.appendChild(a); }
+      host.body.appendChild(wrap);
+      host.subscribe("time", function (d) { if (!own && d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0) host.refresh(); });   // roll at midnight
+    },
+  });
+
+  // ── Desktop modes — four curated presets the whole board switches between, one right-click away. ─────
+  // Each is a Momentum-style "enclosed experience" tuned to an intent; every piece stays an independent,
+  // editable, movable κ-widget. Switching a mode REPLACES the board but each mode remembers its own layout.
+  function HX(b) { return Math.round((b.minX || 0) + 56); }      // left column x (clear of the dock)
+  function RX(W_, w) { return Math.round(W_ - 40 - w); }         // right-aligned x for a widget of width w
+  function CX(W_, w) { return Math.round((W_ - w) / 2); }        // centred x
+
+  // Focused — distraction-free deep work: the time, today's one goal, a timer, a line to think on.
+  W.HoloWidgets.defineScene("focused", {
+    name: "Focused", icon: "target", mode: true,
+    blurb: "Distraction-free: clock, your one goal, a focus timer and a quote.",
+    layout: function (W_, H_, b) {
+      return [
+        { type: "clock", config: { greet: true }, w: 380, x: CX(W_, 380), y: Math.round(H_ * 0.20) },
+        { type: "note",  config: { text: "What is your main goal for today?", rule: true }, w: 440, x: CX(W_, 440), y: Math.round(H_ * 0.45) },
+        { type: "focus", config: { minutes: 25 }, w: 150, x: HX(b), y: Math.round(H_ * 0.13) },
+        { type: "quote", config: { text: "" }, w: 460, x: CX(W_, 460), y: Math.round(H_ * 0.80) },
+      ];
+    },
+  });
+
+  // Learn — study session: a pomodoro timer, a study plan, your resources, a schedule, a thought.
+  W.HoloWidgets.defineScene("learn", {
+    name: "Learn", icon: "school", mode: true,
+    blurb: "Study mode: focus timer, study plan, resource links, calendar and a quote.",
+    layout: function (W_, H_, b) {
+      return [
+        { type: "clock",    config: { greet: false }, w: 300, x: CX(W_, 300), y: Math.round(H_ * 0.10) },
+        { type: "focus",    config: { minutes: 25 }, w: 160, x: HX(b), y: Math.round(H_ * 0.10) },
+        { type: "calendar", config: {}, w: 300, x: HX(b), y: Math.round(H_ * 0.34) },
+        { type: "tasks",    config: { title: "Study plan" }, w: 300, x: RX(W_, 300), y: Math.round(H_ * 0.10) },
+        { type: "links",    config: { title: "Resources" }, w: 300, x: RX(W_, 300), y: Math.round(H_ * 0.46) },
+        { type: "quote",    config: { text: "" }, w: 460, x: CX(W_, 460), y: Math.round(H_ * 0.82) },
+      ];
+    },
+  });
+
+  // Work — a productivity dashboard: clock, weather, your day, your to-do, your tools, the machine.
+  W.HoloWidgets.defineScene("work", {
+    name: "Work", icon: "briefcase", mode: true,
+    blurb: "Productivity dashboard: clock, weather, calendar, to-do, tool links and system stats.",
+    layout: function (W_, H_, b) {
+      return [
+        { type: "clock",    config: { greet: true }, w: 300, x: HX(b), y: Math.round(H_ * 0.10) },
+        { type: "weather",  config: { place: "" }, w: 200, x: RX(W_, 200), y: Math.round(H_ * 0.10) },
+        { type: "calendar", config: {}, w: 300, x: HX(b), y: Math.round(H_ * 0.36) },
+        { type: "tasks",    config: { title: "To-do" }, w: 300, x: RX(W_, 300), y: Math.round(H_ * 0.36) },
+        { type: "links",    config: { title: "Tools" }, w: 300, x: HX(b), y: Math.round(H_ * 0.68) },
+        { type: "system",   config: {}, w: 280, x: RX(W_, 280), y: Math.round(H_ * 0.68) },
+      ];
+    },
+  });
+
+  // Play — wind down: the clock, the music disc + what's playing, the weather, a thought.
+  W.HoloWidgets.defineScene("play", {
+    name: "Play", icon: "player-play", mode: true,
+    blurb: "Wind down: clock, the music disc, now-playing, weather and a quote.",
+    layout: function (W_, H_, b) {
+      return [
+        { type: "clock",       config: { greet: true }, w: 300, x: CX(W_, 300), y: Math.round(H_ * 0.12) },
+        { type: "weather",     config: { place: "" }, w: 200, x: RX(W_, 200), y: Math.round(H_ * 0.12) },
+        { type: "vinyl",       w: 240, x: HX(b), y: Math.round(H_ * 0.40) },
+        { type: "now-playing", w: 300, x: RX(W_, 300), y: Math.round(H_ * 0.40) },
+        { type: "quote",       config: { text: "" }, w: 460, x: CX(W_, 460), y: Math.round(H_ * 0.82) },
+      ];
     },
   });
 
