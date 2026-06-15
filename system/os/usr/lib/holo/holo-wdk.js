@@ -57,6 +57,7 @@ export const CHAINS = {
   plasma:   { kind: "evm", name: "Plasma",   symbol: "XPL", decimals: 18, coinType: 60, chainId: 9745, rpc: "https://rpc.plasma.to", rpcs: ["https://rpc.plasma.to"], explorer: "https://plasmascan.to", accent: "#00d18f", coingecko: "plasma" },   // ADR-0068: the Tether-native, gas-abstracted USD₮0 stablecoin rail (eip155:9745)
   bitcoin:  { kind: "btc", name: "Bitcoin",  symbol: "BTC", decimals: 8, coinType: 0, network: "mainnet", explorer: "https://mempool.space", accent: "#f7931a", coingecko: "bitcoin" },
   solana:   { kind: "sol", name: "Solana",   symbol: "SOL", decimals: 9, coinType: 501, rpc: "https://api.mainnet-beta.solana.com", rpcs: ["https://api.mainnet-beta.solana.com", "https://solana-rpc.publicnode.com"], explorer: "https://solscan.io", accent: "#14f195", coingecko: "solana" },
+  hyperliquid:{ kind: "evm", name: "Hyperliquid", symbol: "HYPE", decimals: 18, coinType: 60, chainId: 999, rpc: "https://rpc.hyperliquid.xyz/evm", rpcs: ["https://rpc.hyperliquid.xyz/evm"], explorer: "https://hyperevmscan.io", accent: "#50d2c1", coingecko: "hyperliquid" },   // HyperEVM (eip155:999), the Hyperliquid venue's EVM — see etc/holo-chains/hyperliquid.uor.json
 };
 // Failover JSON-RPC: try each public endpoint in order; the first to answer wins (no custodian).
 function failoverRpc(urls) {
