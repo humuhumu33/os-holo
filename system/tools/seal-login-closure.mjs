@@ -28,6 +28,7 @@ const FILES = {
   "_shared/holo-login.mjs": "usr/lib/holo/holo-login.mjs",                     // seed → identity + wallet (now ML-DSA co-key)
   "_shared/holo-pqc.mjs": "usr/lib/holo/holo-pqc.mjs",                         // hybrid post-quantum primitive
   "_shared/holo-pqc/holo-pqc.bundle.mjs": "usr/lib/holo/holo-pqc/holo-pqc.bundle.mjs",   // vendored FIPS 203/204/205, no CDN
+  "_shared/holo-delegate.mjs": "usr/lib/holo/holo-delegate.mjs",               // PC → NPC delegation (ZK + hybrid KEM)
   "_shared/holo-host.mjs": "usr/lib/holo/holo-host.mjs",
   "etc/sddm.conf": "etc/sddm.conf",
   "usr/share/sddm/greeter.uor.json": "usr/share/sddm/greeter.uor.json",   // the agent-facing greeter descriptor

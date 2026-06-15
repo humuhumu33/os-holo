@@ -72,7 +72,13 @@ during transition).
 ## Consequences / honesty
 
 - **Done + witnessed:** the serverless hybrid-PQC primitive and the self-verifying identity κ
-  (`holo-pqc.mjs` + bundle + `holo-pqc-witness` 15/15).
+  (`holo-pqc.mjs` + bundle + `holo-pqc-witness` 15/15); the Greeter's hybrid PC/NPC session
+  (`holo-login`/`holo-identity` + `holo-identity-hybrid-witness` 11/11); the Shell + Wallet surfacing
+  the verified PC/NPC + post-quantum identity (`window.HoloIdentity`, the wallet a subset of identity);
+  and **PC → NPC delegation** (`holo-delegate.mjs` + `holo-delegate-witness` 11/11) — a PC mints an agent
+  with its own hybrid κ, a hybrid-signed scoped capability grant with content-addressed lineage, and a
+  **Holo-ZK minimal disclosure** (wired to the existing `holo-ceremony`/`holo-zk` selective disclosure)
+  **sealed by the hybrid KEM** so only that agent can open it (the rest leak nothing).
 - **Staged:** the unified facade wiring into Greeter/Shell/Wallet; the PC/NPC record + delegation; the
   migration of the existing Ed25519-only `holo-login` vault/κ onto the hybrid scheme (must preserve
   existing identities — the versioned κ object is designed for exactly this).

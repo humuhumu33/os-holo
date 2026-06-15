@@ -2545,6 +2545,12 @@
       "sri": "sha256-oxz5wMGvAHUE4nQb1ce9Pyde3YGfdYe+6mTP8cwjraM=",
       "multibase": "uEiCjHPnAwa8AdQTidBvVx70_J17dgZ91h77qZM_xzCOtow",
       "bytes": 63819
+    },
+    "_shared/holo-delegate.mjs": {
+      "kappa": "did:holo:sha256:4a2d5fd9e60751fad09d880483d4629a546e91ae95c778add51ce43085bdcd23",
+      "sri": "sha256-Si1f2eYHUfrQnYgEg9RimlRuka6Vx3it1RzkMIW9zSM=",
+      "multibase": "uEiBKLV_Z5gdR-tCdiASD1GKaVG6RrpXHeK3VHOQwhb3NIw",
+      "bytes": 6141
     }
   }
 }
