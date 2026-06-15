@@ -20,10 +20,17 @@
       .mono { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
       a { color: var(--acc); text-decoration: none; } button { font: inherit; }
       main { flex: 1 1 auto; min-height: 0; overflow: auto; padding: clamp(1.2rem, 4vh, 3rem) var(--s-s) var(--s-l); width: 100%; }
-      .wrap-in { max-width: 33rem; width: 100%; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; justify-content: center; }
+      .wrap-in { max-width: 52rem; width: 100%; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; justify-content: center; }
+      #guest { max-width: 30rem; margin: 0 auto; text-align: center; }
 
-      /* hero — the card is the centrepiece; the identity reads off it */
-      .hero { text-align: center; }
+      /* the card is the centrepiece; on a wide screen the facets sit beside it (one screen, no scroll) */
+      .me-grid { display: grid; gap: var(--s-m); align-items: center; }
+      .col-card { text-align: center; }
+      .col-card .card-wrap { max-width: 26rem; margin: 0 auto; }
+      @media (min-width: 800px) {
+        .me-grid { grid-template-columns: minmax(0, 27rem) minmax(0, 22rem); justify-content: center; align-items: center; gap: var(--s-l); }
+        .col-info { text-align: left; margin-top: 0; } .col-info h3:first-child { margin-top: 0; }
+      }
       .idrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .5rem; margin: var(--s-s) 0 var(--s-2xs); }
       .role-tag { font: 700 .92rem ui-sans-serif; color: var(--ink); }
       .badge { display: inline-flex; align-items: center; gap: .35rem; font: 600 .9rem ui-sans-serif; color: var(--ink);
@@ -60,9 +67,8 @@
 
       /* ── the SOVEREIGN platinum card — photoreal, golden-ratio (φ=1.618), resolution-independent (8K/retina) ── */
       .card-wrap { perspective: 1500px; margin: var(--s-2xs) 0 var(--s-m); }
-      .card { --mx:50%; --my:32%; --tx:0deg; --ty:0deg; position: relative; width: 100%; aspect-ratio: 1.618; border-radius: 18px;
-        transform: rotateX(var(--ty)) rotateY(var(--tx)); transform-style: preserve-3d; transition: transform .12s ease-out;
-        will-change: transform; isolation: isolate; overflow: hidden;
+      .card { --mx:50%; --my:32%; position: relative; width: 100%; aspect-ratio: 1.618; border-radius: 18px;
+        isolation: isolate; overflow: hidden;
         /* polished platinum — cool silver, ribbed; layered base (bottom): ridges · top softbox · brushed sweep · metal */
         background:
           repeating-linear-gradient(90deg, rgba(255,255,255,.055) 0 1px, rgba(0,0,0,.13) 1px 2px, rgba(255,255,255,.02) 2px 3px, transparent 3px 4.2px),
@@ -138,37 +144,41 @@
 
       <!-- SIGNED IN -->
       <section id="me" class="hidden">
-        <div class="card-wrap" id="cardWrap">
-          <div class="card" id="card">
-            <span class="grain"></span><span class="env"></span><span class="sheen"></span><span class="gloss" id="gloss"></span>
-            <div class="content">
-              <span class="brand"><span class="mk">◈</span> Hologram</span>
-              <span class="sov">Sovereign Identity</span>
-              <span class="name" id="cardName">—</span>
-              <span class="meta">Member since <b id="cardDate">—</b></span>
+        <div class="me-grid">
+          <div class="col-card">
+            <div class="card-wrap" id="cardWrap">
+              <div class="card" id="card">
+                <span class="grain"></span><span class="env"></span><span class="sheen"></span><span class="gloss" id="gloss"></span>
+                <div class="content">
+                  <span class="brand"><span class="mk">◈</span> HOLOGRAM</span>
+                  <span class="sov">Sovereign Identity</span>
+                  <span class="name" id="cardName">—</span>
+                  <span class="meta">Member since <b id="cardDate">—</b></span>
+                </div>
+                <span class="qr" id="cardQr" title="your identity address (holo://)"></span>
+                <span class="edge"></span>
+              </div>
             </div>
-            <span class="qr" id="cardQr" title="your identity address (holo://)"></span>
-            <span class="edge"></span>
+            <div class="idrow">
+              <span class="role-tag" id="role">Player</span>
+              <span class="badge ok" id="pqBadge" title="Verified by re-derivation (Ed25519 ‖ ML-DSA)">🛡 Post-quantum</span>
+              <button class="kchip" id="kid" title="your identity address — tap to copy">did:holo —</button>
+            </div>
+            <p class="tagline">Yours alone. Yours <b>forever</b>.</p>
+            <button class="btn" id="shareCard"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2.5h3.3l-7.2 8.2 8.5 11.3h-6.7l-5.2-6.9-6 6.9H1.6l7.7-8.8L1 2.5h6.8l4.7 6.3 5.7-6.3Zm-1.2 17.6h1.8L7.1 4.3H5.2L17 20.1Z"/></svg> Share my sovereign card</button>
           </div>
-        </div>
-        <div class="idrow">
-          <span class="role-tag" id="role">Player</span>
-          <span class="badge ok" id="pqBadge" title="Verified by re-derivation (Ed25519 ‖ ML-DSA)">🛡 Post-quantum</span>
-          <button class="kchip" id="kid" title="your identity address — tap to copy">did:holo —</button>
-        </div>
-        <p class="tagline">Yours alone. Yours <b>forever</b>.</p>
-        <button class="btn" id="shareCard"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2.5h3.3l-7.2 8.2 8.5 11.3h-6.7l-5.2-6.9-6 6.9H1.6l7.7-8.8L1 2.5h6.8l4.7 6.3 5.7-6.3Zm-1.2 17.6h1.8L7.1 4.3H5.2L17 20.1Z"/></svg> Share my sovereign card</button>
 
-        <div class="facets">
-          <button class="row" id="walletRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2"/><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/><path d="M16 13h.01"/></svg></span><span class="m"><b>Wallet</b><span>Every chain, one tap to sign.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+          <div class="col-info facets">
+            <button class="row" id="walletRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2"/><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/><path d="M16 13h.01"/></svg></span><span class="m"><b>Wallet</b><span>Every chain, one tap to sign.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
 
-          <h3>Agents</h3>
-          <div id="agentList"></div>
-          <button class="btn ghost wide" id="newAgent" style="margin-top:.5rem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> New agent</button>
+            <h3>Agents</h3>
+            <div id="agentList"></div>
+            <button class="btn ghost wide" id="newAgent" style="margin-top:.5rem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> New agent</button>
 
-          <h3>Security</h3>
-          <button class="row" id="backupRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M5 11V8a7 7 0 0 1 14 0v3"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg></span><span class="m"><b>Recovery phrase</b><span>Your only backup.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
-          <button class="row danger" id="signout" style="margin-top:.5rem">Sign out</button>
+            <h3>Security</h3>
+            <button class="row" id="backupRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M5 11V8a7 7 0 0 1 14 0v3"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg></span><span class="m"><b>Recovery phrase</b><span>Your only backup.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+            <button class="row danger" id="signout" style="margin-top:.5rem">Sign out</button>
+          </div>
         </div>
       </section>
       </div>
@@ -246,13 +256,11 @@
         if (cardWired) return; cardWired = true;
         const wrap = $("cardWrap"), card = $("card");
         wrap.addEventListener("mousemove", (e) => {
-          const r = card.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
-          card.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
-          card.style.setProperty("--my", (py * 100).toFixed(1) + "%");
-          card.style.setProperty("--tx", ((px - .5) * 16).toFixed(2) + "deg");
-          card.style.setProperty("--ty", (-(py - .5) * 16).toFixed(2) + "deg");
+          const r = card.getBoundingClientRect();
+          card.style.setProperty("--mx", (((e.clientX - r.left) / r.width) * 100).toFixed(1) + "%");
+          card.style.setProperty("--my", (((e.clientY - r.top) / r.height) * 100).toFixed(1) + "%");
         });
-        wrap.addEventListener("mouseleave", () => { card.style.setProperty("--tx", "0deg"); card.style.setProperty("--ty", "0deg"); card.style.setProperty("--mx", "50%"); card.style.setProperty("--my", "32%"); });
+        wrap.addEventListener("mouseleave", () => { card.style.setProperty("--mx", "50%"); card.style.setProperty("--my", "32%"); });
         $("shareCard").onclick = () => {
           const text = "Just minted my sovereign Holo Identity ◈ — one post-quantum key for every app, chain and agent. Self-verifying. Serverless. Mine alone.";
           window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(text), "_blank", "noopener");

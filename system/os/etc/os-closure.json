@@ -751,12 +751,12 @@
       ]
     },
     "splash.html": {
-      "kappa": "did:holo:sha256:0cad11c0617ce887724529adfd3f5b1c2b055a7ffb5c7fd554ffc58f443057e3",
-      "sri": "sha256-DK0RwGF86IdyRSmt/T9bHCsFWn/7XH/VVP/Fj0QwV+M=",
-      "multibase": "uEiAMrRHAYXzoh3JFKa39P1scKwVaf_tcf9VU_8WPRDBX4w",
-      "bytes": 102215,
+      "kappa": "did:holo:sha256:de3d7c3f0454efcbc75d954eb797759467b1809339c7a4026cb344f6d264b830",
+      "sri": "sha256-3j18PwRU78vHXZVOt5d1lGexgJM5x6QCbLNE9tJkuDA=",
+      "multibase": "uEiDePXw_BFTvy8ddlU63l3WUZ7GAkznHpAJss0T20mS4MA",
+      "bytes": 102015,
       "alsoKnownAs": [
-        "did:holo:blake3:597cf26dd61b0e6ffe643b450f350c8efab1cfcacda642463228ae442d7ec8a0"
+        "did:holo:blake3:690cd76f27f55957d60f064c5b26f2b742efbf9d4c164ee7525a6bc163c7241d"
       ]
     },
     "workspace.html": {
@@ -2553,10 +2553,10 @@
       "bytes": 7413
     },
     "identity.html": {
-      "kappa": "did:holo:sha256:b4c7392f076420aeef5a05d1a4cdd9df82618d5dfc49762393a948da5baab5e2",
-      "sri": "sha256-tMc5LwdkIK7vWgXRpM3Z34JhjV38SXYjk6lI2luqteI=",
-      "multibase": "uEiC0xzkvB2Qgru9aBdGkzdnfgmGNXfxJdiOTqUjaW6q14g",
-      "bytes": 28889
+      "kappa": "did:holo:sha256:5ff33f45c00b7f562d22f175f7ad4520a8b749373324c66f0dd0b31a308e5ad9",
+      "sri": "sha256-X/M/RcALf1YtIvF1961FIKi3STczJMZvDdCzGjCOWtk=",
+      "multibase": "uEiBf8z9FwAt_Vi0i8XX3rUUgqLdJNzMkxm8N0LMaMI5a2Q",
+      "bytes": 29187
     }
   }
 }
