@@ -1146,7 +1146,10 @@
         addEventListener("message", (e) => {
           if (e.origin !== location.origin || !e.data || e.data.type !== "holo-identity") return;
           const a = e.data.action;
-          if (a === "open-wallet") { toggle(false); const wb = $("#wallet-btn"); if (wb) setTimeout(() => wb.click(), 360); }
+          const tap = (sel) => { toggle(false); const el = $(sel); if (el) setTimeout(() => el.click(), 360); };
+          if (a === "open-wallet") tap("#wallet-btn");                 // Money
+          else if (a === "open-q") tap("#holo-orb");                   // Intelligence (Holo Q)
+          else if (a === "open-network") tap("#share-btn");            // Network (peer-to-peer share)
           else if (a === "signed-in" || a === "signed-out") { setTimeout(() => location.reload(), 200); }
         });
       })();
@@ -2750,6 +2753,21 @@
         // SAME live holospace (chat→liveEdit; the DevTools mutate path → window.HoloLiveEdit). Simple first.
         function mountDev() {
           try { window.HoloDevToolsTarget = studio && studio.node && studio.node.id; } catch (e) {}   // DevTools edits → THIS holospace (liveEdit, ADR-0093)
+          // Point the κ-CDP backend at THIS holospace: seal its CURRENT source as a UOR object + a one-node
+          // scene, and re-install the backend with the live conscience so Elements/Sources (read) and the
+          // edit door all operate on what's actually on screen — not the empty desktop projection. Re-pointed
+          // on every Dev open so it tracks the latest source; liveEdit auto-wires to HoloDevToolsTarget.
+          try {
+            if (r.editable && window.HoloDevTools && window.HoloDevTools.install) {
+              const src = (ta && typeof ta.value === "string" && ta.value) ? ta.value : r.src;
+              const pub = repo.publishSource({ name: (node && node.name) || name || "app", source: src });
+              window.HoloDevToolsServe = window.HoloDevTools.install({
+                objects: [pub],
+                placements: [{ k: pub.id, x: 0, y: 0, w: 1280, h: 800 }],
+                conscience: window.HoloConscience || null,
+              });
+            }
+          } catch (e) {}
           if (!devFrame || devFrame.dataset.mounted) return; devFrame.dataset.mounted = "1";
           devFrame.src = "/_shared/devtools/holo-devtools.html#" + Date.now();
           devFrame.addEventListener("load", function () {

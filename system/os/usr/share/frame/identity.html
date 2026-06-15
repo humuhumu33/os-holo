@@ -169,14 +169,18 @@
           </div>
 
           <div class="col-info facets">
-            <button class="row" id="walletRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2"/><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/><path d="M16 13h.01"/></svg></span><span class="m"><b>Wallet</b><span>Every chain, one tap to sign.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+            <button class="row" id="walletRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2"/><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/><path d="M16 13h.01"/></svg></span><span class="m"><b>Money</b><span>Your wallet — every chain, one tap to sign.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+
+            <button class="row" id="qRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.8L18.5 9l-4.6 1.9L12 16l-1.9-5.1L5.5 9l4.6-1.2z"/><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9z"/></svg></span><span class="m"><b>Intelligence</b><span>Holo Q — your private AI to create, ask and act.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+
+            <button class="row" id="netRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="12" cy="18" r="2.3"/><path d="M7.7 7.6l8.6 0M7.2 7.9l4 8.2M16.8 7.9l-4 8.2"/></svg></span><span class="m"><b>Network</b><span>Connect peer-to-peer — a link, no server.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
 
             <h3>Agents</h3>
             <div id="agentList"></div>
             <button class="btn ghost wide" id="newAgent" style="margin-top:.5rem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> New agent</button>
 
             <h3>Security</h3>
-            <button class="row" id="backupRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M5 11V8a7 7 0 0 1 14 0v3"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg></span><span class="m"><b>Recovery phrase</b><span>Your only backup.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+            <button class="row" id="backupRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M5 11V8a7 7 0 0 1 14 0v3"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg></span><span class="m"><b>Recovery</b><span>Your only backup.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
             <button class="row danger" id="signout" style="margin-top:.5rem">Sign out</button>
           </div>
         </div>
@@ -287,8 +291,14 @@
         renderAgents(owner); toast("Agent revoked");
       }
 
-      // wallet is a facet — ask the shell to open it
-      $("walletRow").onclick = () => { try { window.parent.postMessage({ type: "holo-identity", action: "open-wallet" }, location.origin); } catch {} };
+      // the sovereign domains are facets of the one identity — ask the shell to open each
+      const openInShell = (action) => {
+        if (window.parent && window.parent !== window) { try { window.parent.postMessage({ type: "holo-identity", action }, location.origin); return; } catch {} }
+        toast("Open this from your Hologram shell");
+      };
+      $("walletRow").onclick = () => openInShell("open-wallet");
+      $("qRow").onclick = () => openInShell("open-q");
+      $("netRow").onclick = () => openInShell("open-network");
       $("backupRow").onclick = () => toast("Recovery phrase opens in the Wallet → Settings");
 
       // guest → biometric sign-in (mints the key)
