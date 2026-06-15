@@ -4,7 +4,7 @@
 import { principalFromSeed } from "../os/usr/lib/holo/holo-login.mjs";
 import { firstRun } from "../os/usr/lib/holo/holo-ceremony.mjs";
 import { generateMnemonic, seedFromMnemonic } from "../os/usr/lib/holo/holo-wdk.js";
-import { mintNpc, delegate, verifyDelegation, openDelegation, grants } from "../os/usr/lib/holo/holo-delegate.mjs";
+import { mintNpc, delegate, verifyDelegation, openDelegation, grants, authorizeRequest } from "../os/usr/lib/holo/holo-delegate.mjs";
 
 let pass = 0, fail = 0;
 const ok = (n, c) => { (c ? pass++ : fail++); console.log(`  ${c ? "✓" : "✗"}  ${n}`); };
@@ -44,6 +44,18 @@ ok("ZK disclosure reveals ONLY name + tier (region/did/identity stay hidden)",
 // a different agent cannot open it (wrong KEM key → AEAD authentication fails)
 let blocked = false; try { await openDelegation(mintNpc("Mallory"), sealed); } catch { blocked = true; }
 ok("a different agent cannot open the sealed disclosure", blocked);
+
+// ── wallet-seam authorisation: an agent may only spend if its grant includes wallet:spend, isn't revoked ──
+const spender = mintNpc("Treasurer");
+const { credential: spendGrant } = await delegate(pc, spender, { capabilities: ["wallet:read", "wallet:spend"], notAfter: "2030-01-01T00:00:00Z" }, pcCeremony);
+const { credential: readGrant } = await delegate(pc, mintNpc("Viewer"), { capabilities: ["wallet:read"], notAfter: "2030-01-01T00:00:00Z" });
+ok("authorizeRequest honors a spend grant for a send", authorizeRequest(spendGrant, { kind: "send" }).ok === true);
+ok("authorizeRequest reveals the acting agent", (authorizeRequest(spendGrant, { kind: "send" }).agent || {}).subject === spender.kappa);
+ok("read-only grant CANNOT spend (send refused)", authorizeRequest(readGrant, { kind: "send" }).ok === false);
+ok("read-only grant CAN read an address", authorizeRequest(readGrant, { kind: "address" }).ok === true);
+ok("a revoked agent is refused", authorizeRequest(spendGrant, { kind: "send", revoked: [spender.kappa] }).ok === false);
+ok("an expired grant is refused at the seam", authorizeRequest((await delegate(pc, spender, { capabilities: ["wallet:spend"], notAfter: "2000-01-01T00:00:00Z" })).credential, { kind: "send", nowIso: "2026-06-15T00:00:00Z" }).ok === false);
+ok("no delegation ⇒ not an agent request (governed elsewhere)", authorizeRequest(null, { kind: "send" }).ok === true && authorizeRequest(null, {}).agent === null);
 
 console.log(`\n${fail ? "WITNESS FAILED" : "WITNESSED ✓"}  ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

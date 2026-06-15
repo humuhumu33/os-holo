@@ -26,13 +26,15 @@ export function requestSignature(request, { timeoutMs = 120000 } = {}) {
 }
 
 // Convenience wrappers. amount is a human decimal string in the chain's native unit.
-export const requestSend = (chain, to, amount, opts = {}) => requestSignature({ kind: "send", chain, to, amount, token: opts.token });
-export const requestSignMessage = (chain, message) => requestSignature({ kind: "sign", chain, message });
+// An AGENT (NPC) may pass its capability grant as opts.delegation — the wallet verifies it (must be
+// valid, unrevoked, and grant the needed capability) before the human ever sees the consent gate (ADR-0094).
+export const requestSend = (chain, to, amount, opts = {}) => requestSignature({ kind: "send", chain, to, amount, token: opts.token, delegation: opts.delegation });
+export const requestSignMessage = (chain, message, opts = {}) => requestSignature({ kind: "sign", chain, message, delegation: opts.delegation });
 
 // EIP-712 typed-data signing — the seam Holo Trade signs Hyperliquid actions through: the SDK
 // builds the typed data, the WALLET hashes + signs it (the key never leaves the wallet), default-deny.
 // Returns { signature } — a 0x{r}{s}{v} hex string the caller hands straight to the SDK.
-export const requestSignTypedData = (chain, typedData) => requestSignature({ kind: "signTypedData", chain, typedData });
+export const requestSignTypedData = (chain, typedData, opts = {}) => requestSignature({ kind: "signTypedData", chain, typedData, delegation: opts.delegation });
 
 // Solana spot SWAP via Jupiter — the OS-wide spot-liquidity seam. Any app (Holo Trade, an agent,
 // a holospace) asks the wallet to swap; the wallet re-derives the min-out floor, asserts the sealed
@@ -40,7 +42,7 @@ export const requestSignTypedData = (chain, typedData) => requestSignature({ kin
 //   const { txid } = await requestSwap({ inputMint: MINTS.SOL, outputMint: MINTS.USDC, amount: "0.5" });
 // `amount` is human decimal in the input token's units; pass inputDecimals for non-SOL inputs.
 export const requestSwap = ({ inputMint, outputMint, amount, slippageBps = 50, inputDecimals } = {}, opts = {}) =>
-  requestSignature({ kind: "swap", chain: "solana", inputMint, outputMint, amount, slippageBps, inputDecimals }, { timeoutMs: opts.timeoutMs ?? 180000 });
+  requestSignature({ kind: "swap", chain: "solana", inputMint, outputMint, amount, slippageBps, inputDecimals, delegation: opts.delegation }, { timeoutMs: opts.timeoutMs ?? 180000 });
 
 // the wallet's address for a chain (so a caller can name the signer without holding the key)
 export const requestAddress = (chain) => requestSignature({ kind: "address", chain }, { timeoutMs: 30000 });

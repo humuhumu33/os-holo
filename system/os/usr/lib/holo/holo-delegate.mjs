@@ -91,3 +91,18 @@ export async function openDelegation(npc, sealed) {
 
 // has-capability check (after verifyDelegation)
 export const grants = (body, capability) => !!body && Array.isArray(body.capabilities) && body.capabilities.includes(capability);
+
+// ── authorise an agent's WALLET request at the seam (the single source of truth, shared by the wallet
+//    listener and the witness). A signing request's kind maps to the capability it needs; the grant must
+//    verify, not be revoked, and include that capability. The HUMAN still approves at the gate afterwards —
+//    this only governs who may ask (default-deny). No delegation ⇒ not an agent request (governed elsewhere). ──
+export const CAP_FOR_KIND = { address: "wallet:read", sign: "wallet:sign", signTypedData: "wallet:spend", swap: "wallet:spend", send: "wallet:spend" };
+export function authorizeRequest(delegation, { kind = "send", revoked = [], nowIso = null } = {}) {
+  if (!delegation) return { ok: true, agent: null };
+  const body = verifyDelegation(delegation, { nowIso });
+  if (!body) return { ok: false, reason: "delegation failed verification" };
+  if (Array.isArray(revoked) && revoked.includes(body.subject)) return { ok: false, reason: "agent has been revoked" };
+  const need = CAP_FOR_KIND[kind] || "wallet:spend";
+  if (!grants(body, need)) return { ok: false, reason: "agent not granted “" + need + "”" };
+  return { ok: true, agent: { subject: body.subject, label: body.subjectLabel, cap: need, issuer: body.issuer } };
+}
