@@ -2553,10 +2553,10 @@
       "bytes": 7413
     },
     "identity.html": {
-      "kappa": "did:holo:sha256:b2c692cd1506c35026e0b8a6a6d461cc25e2a4729fc42ce926f05ad50cc7f44b",
-      "sri": "sha256-ssaSzRUGw1Am4LimptRhzCXipHKfxCzpJvBa1QzH9Es=",
-      "multibase": "uEiCyxpLNFQbDUCbguKam1GHMJeKkcp_ELOkm8FrVDMf0Sw",
-      "bytes": 26376
+      "kappa": "did:holo:sha256:9e63625639ce929acecedcc4de7207d9caff2771997a9670b92ab0e5c993c918",
+      "sri": "sha256-nmNiVjnOkprOztzE3nIH2cr/J3GZepZwuSqw5cmTyRg=",
+      "multibase": "uEiCeY2JWOc6Sms7O3MTecgfZyv8ncZl6lnC5KrDlyZPJGA",
+      "bytes": 29387
     }
   }
 }
