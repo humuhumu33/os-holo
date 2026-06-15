@@ -406,9 +406,17 @@
   // re-apply the layout a few times over the first ~1.2s so a board seeded/restored during the shell's boot
   // (when the viewport is briefly narrower) settles to the FINAL size — the cause of off-centre home widgets.
   function settleMode() { var n = 0; (function tick() { var did = repositionToMode(); if (did) { anchorOrb(); save(); } if (++n < 8) setTimeout(tick, 320); })(); }   // ~2.4s window — re-fits as the shell's boot layout settles to its final width
+  // the holospace CENTRE accounts for the dock (left) AND an aside carrier (right) — NOT just innerWidth.
+  // An in-shell side panel (Wallet/Identity) narrows the canvas via --holo-aside-w WITHOUT changing
+  // innerWidth, so we must measure the real usable bounds, else the centre shift is computed as zero and
+  // widgets drift relative to the re-centred content. deskBounds() already subtracts dock + aside + top.
+  var lastCx = null, lastCy = null;
+  function centreOf() { var b = deskBounds(); return { cx: (b.minX + b.maxX) / 2, cy: (b.minY + b.maxY) / 2 }; }
   function recenter() {
-    var dx = (W.innerWidth - lastVW) / 2, dy = (W.innerHeight - lastVH) / 2;
-    lastVW = W.innerWidth; lastVH = W.innerHeight;
+    var c = centreOf();
+    if (lastCx == null) { lastCx = c.cx; lastCy = c.cy; }
+    var dx = c.cx - lastCx, dy = c.cy - lastCy;                      // how far the holospace centre moved (dock/aside-aware)
+    lastCx = c.cx; lastCy = c.cy; lastVW = W.innerWidth; lastVH = W.innerHeight;
     if (repositionToMode()) { anchorOrb(); scheduleUnglide(); save(); return; }   // a preset mode → re-derive its golden layout for the new size
     if (!dx && !dy) return reflowAll();                              // no centre shift → just keep them in bounds
     live.forEach(function (w) {
@@ -901,7 +909,7 @@
   function MARGIN(W_, H_) { return Math.round(clamp(Math.min(W_, H_) * (1 / (PHI * PHI * PHI)) * 0.62, 32, 80)); }   // ≈ a φ-scaled, clamped breathing margin
   function HX(b, m) { return Math.round((b.minX || 0) + (m != null ? m : 44)); }   // left column x (clear of the dock), one margin in
   function RX(W_, w, m) { return Math.round(W_ - (m != null ? m : 44) - w); }      // right-aligned x, same margin from the right
-  function CX(W_, w) { return Math.round((W_ - w) / 2); }                          // centred x
+  function CX(W_, w) { var b = deskBounds(); return Math.round((b.minX + b.maxX) / 2 - w / 2); }   // centred on the CANVAS centre (dock + aside aware), not the raw viewport
   // golden vertical placement inside the usable height [top..bottom]: f∈[0,1] eased onto the φ rhythm
   function GY(top, H_, m, f) { var a = top + m, b = H_ - m; return Math.round(a + (b - a) * f); }
 
