@@ -83,7 +83,7 @@ async function boot() {
   await sealConstitution().catch(() => {});
   // Resolve from the content-addressed index (the lean store: { did:holo → metadata }).
   const index = await fetch("./apps/index.jsonld").then((r) => r.json()).catch(() => null);
-  if (!index) return die("No app index yet — run <code>node tools/build-app.mjs</code>.");
+  if (!index) return die("No app index yet run <code>node tools/build-app.mjs</code>.");
   const apps = index["dcat:dataset"] || [];
   let app = link ? apps.find((a) => a["@id"] === link.did)
           : raw  ? apps.find((a) => a["schema:identifier"] === raw || a["@id"] === raw)
@@ -97,14 +97,20 @@ async function boot() {
     app = apps.find((a) => String((a["dcat:landingPage"] || "").split("/")[1] || "").toLowerCase() === r)
        || apps.find((a) => String(a["schema:identifier"] || "").toLowerCase().endsWith(r));
   }
-  if (!app) return die(`<b>Hologram OS</b> — pick a holospace:<div class="apps">` +
+  if (!app) return die(`<b>Hologram OS</b> pick a holospace:<div class="apps">` +
     apps.map((a) => `<a href="?app=${encodeURIComponent(a["@id"])}">${a["schema:name"]}</a>`).join(" · ") + `</div>`);
 
-  // Fetch the app's definition + content-address lock.
-  const landing = app["dcat:landingPage"];                 // apps/<id>/index.html
-  const id = landing.split("/")[1];
+  // Fetch the app's definition + content-address lock. A "lean" OS-image catalogue carries only
+  // @id · identifier · fhs and omits dcat:landingPage — so when it's absent, fall back to the app
+  // REFERENCE as the folder id (the launcher / launchApp pass apps/<id>, and every app's files live
+  // at apps/<id>/). This also guards the old `landing.split` crash on a lean index.
+  const landingDecl = app["dcat:landingPage"];             // apps/<id>/index.html (full catalogue)
+  const id = landingDecl ? landingDecl.split("/")[1] : String(raw || "").replace(/[^a-z0-9._-]/gi, "");
+  if (!id) return die("Couldn't resolve which app to open.");
   const def = await fetch(`./apps/${id}/holospace.json`).then((r) => r.json());
   const lock = await fetch(`./apps/${id}/holospace.lock.json`).then((r) => r.json());
+  // the page to mount: the index's landing, else reconstructed from the app's own entry (def.entry).
+  const landing = landingDecl || ("apps/" + id + "/" + (def.entry || "index.html"));
   // Holo Terms enforcement: derive the EFFECTIVE capabilities (declared ∩ the user's grant under
   // their standing term) — opening a consent dialog for sensitive/egress requests — and spawn the
   // app with only those. Fail-closed: no HoloTerms ⇒ undefined ⇒ mount falls back to declared.
@@ -162,8 +168,19 @@ async function boot() {
 const hashParams = new URLSearchParams((location.hash || "").replace(/^#/, ""));
 const shared = !!hashParams.get("k") || params.get("shared") === "1";
 const wantChrome = shared || params.get("chrome") === "1";
+// A shared holospace can carry its WIDGET overlay in the fragment (&w=<board>) — the sender's clock,
+// quote, tasks, … laid over this app. Bring up the widget runtime ONLY when a board is present, and
+// mount EXACTLY that board, session-only (persist:false → it never touches this guest's own storage).
+function restoreSharedWidgets() {
+  const enc = hashParams.get("w"); if (!enc) return;
+  let board; try { board = JSON.parse(enc); } catch (e) { return; }
+  if (!Array.isArray(board) || !board.length) return;
+  const s = document.createElement("script"); s.src = "_shared/holo-widgets.js"; s.defer = true;
+  s.onload = () => { let tries = 0; (function go() { const h = window.HoloWidgets; if (h && h.setBoard) return h.setBoard(board, { persist: false }); if (++tries < 60) setTimeout(go, 80); })(); };
+  document.body.appendChild(s);
+}
 if (params.get("bare") === "1" || shared) {
-  boot().then((ctx) => { if (wantChrome && ctx && window.HoloShareChrome) window.HoloShareChrome.mount(ctx); })
+  boot().then((ctx) => { if (wantChrome && ctx && window.HoloShareChrome) window.HoloShareChrome.mount(ctx); restoreSharedWidgets(); })
         .catch((e) => die("Boot failed: <code>" + (e && e.message || e) + "</code>"));
 } else {
   // Normal link → the ONE canonical shell (os/usr/share/frame/shell.html), which hosts the app in its

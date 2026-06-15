@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Holo Find — the open web, resolved</title>
-  <meta name="description" content="One search bar onto the open web's object universe. Type anything — a paper, a place, a person, a book, an identifier — and get a self-verifying, corroborated answer. No AI." />
+  <title>Holo Find the open web, resolved</title>
+  <meta name="description" content="One search bar onto the open web's object universe. Type anything a paper, a place, a person, a book, an identifier and get a self-verifying, corroborated answer. No AI." />
   <!-- the shared conformance + theme layers (every shipped page adopts them) -->
   <link rel="stylesheet" href="_shared/holo-mobile.css" />
   <link rel="stylesheet" href="_shared/holo-theme.css" />
@@ -116,12 +116,12 @@
 <body>
   <div class="hero">
     <div class="wordmark"><span class="holo">Holo</span> Search</div>
-    <div class="tagline">One box for the verifiable web — a corroborated answer with sourced results, every one a self-verifying object. No AI, no tracking.</div>
+    <div class="tagline">One box for the verifiable web a corroborated answer with sourced results, every one a self-verifying object. No AI, no tracking.</div>
     <form id="f" role="search">
       <input id="q" type="search" name="q" autocomplete="off" autofocus placeholder="Search the verifiable web" aria-label="Search the verifiable web" />
       <button type="button" class="icon clear" id="clear" aria-label="Clear" hidden><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
-      <button type="button" class="icon mic" aria-label="Search by voice" title="Voice — coming soon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
-      <button type="button" class="icon lens" aria-label="Search by image" title="Lens — coming soon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 4 10.2 6H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.2L12 4zm0 4.5A3.5 3.5 0 1 1 8.5 12 3.5 3.5 0 0 1 12 8.5z"/></svg></button>
+      <button type="button" class="icon mic" aria-label="Search by voice" title="Voice coming soon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
+      <button type="button" class="icon lens" aria-label="Search by image" title="Lens coming soon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 4 10.2 6H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.2L12 4zm0 4.5A3.5 3.5 0 1 1 8.5 12 3.5 3.5 0 0 1 12 8.5z"/></svg></button>
       <span class="sep"></span>
       <button type="submit" class="icon go" id="go" aria-label="Search"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg></button>
     </form>
@@ -129,7 +129,7 @@
   </div>
   <div class="tabs"><div class="tab on" data-mode="all">All</div><div class="tab" data-mode="shopping">Shopping</div><div class="tab" data-mode="images">Images</div><div class="tab" data-mode="videos">Videos</div><div class="tab" data-mode="shorts">Short videos</div><div class="tab" data-mode="news">News</div><div class="tab" data-mode="more">More ▾</div><div class="tab" data-mode="tools">Tools ▾</div></div>
   <main><div id="out" aria-live="polite"></div></main>
-  <footer>Resolved live from the open web — Wikipedia · Wikidata · Crossref · Open Library · OpenStreetMap. <b>No AI · no tracking.</b> <b>Holo Search</b> retrieves · <b>Holo Rank</b> orders · <b>Holo Find</b> corroborates — every result a verified object.</footer>
+  <footer>Resolved live from the open web Wikipedia · Wikidata · Crossref · Open Library · OpenStreetMap. <b>No AI · no tracking.</b> <b>Holo Search</b> retrieves · <b>Holo Rank</b> orders · <b>Holo Find</b> corroborates every result a verified object.</footer>
 
   <script type="module">
     // ONE search over three corpora, ranked as one. Holo Search (BM25) retrieves + orders; Holo Find
@@ -198,6 +198,19 @@
       return { id: "dir:" + (e.id || e.kind + ":" + t), kind: "dir", title: e.name, desc: e.desc || kl, text: e.name + " " + (e.desc || "") + " " + (e.tags || []).join(" "), source: e.section || "Directory", url: t || kl, href, badge: "✓ " + kl, weight: 1.12, msg: { type: "holo-open", address: isApp ? (e.id || t) : t } };
     }
     const candWeb = (x) => { const h = host(x.url); return { id: "web:" + (x.url || x.name), kind: "web", title: x.name || x.url, desc: x.description || "", text: (x.name || "") + " " + (x.description || ""), source: h ? siteName(h) : (x.source || "Web"), url: x.url ? crumb(x.url) : "verified object", href: x.url || "#", badge: x.foundBy > 1 ? ("✓ " + x.foundBy + " sources agree") : "✓ verified on open", weight: 1.0, foundBy: x.foundBy || 1, msg: { type: "holo-open", address: x.url || "" } }; };
+    // ── Holo Recall (ADR-0099): YOUR private corpus — the holospaces you've built, indexed-on-build in the
+    //    shell. When embedded we reach the shell's live recall corpus via the same-origin parent (window.
+    //    parent.Q.recall): κ-graph retrieval (BM25 ⊕ the auto-link graph) surfaces what you made even when a
+    //    filename search can't, and a graph-linked hit is flagged. STRICTLY your stuff — never the open web. ──
+    const candPrivate = (rr) => { const hex = String(rr.pageId || rr.kappa || "").replace(/^did:holo:sha256:/, ""); const linked = Array.isArray(rr.via) && rr.via.indexOf("graph") >= 0; return { id: "recall:" + rr.kappa, kind: "object", hex, title: rr.text || "a holospace you built", desc: "From your holospaces · κ-graph recall" + (linked ? " · linked" : ""), text: rr.text || "", source: "Your holospaces", url: "did:holo:sha256 · recall", href: "/.holo/sha256/" + hex, badge: "✓ recall", weight: 1.3, msg: { type: "holo-open", object: { hex, ext: "", name: rr.text || "holospace" } } }; };
+    async function recallPrivate(q, limit = 5) {
+      try {
+        const PQ = (EMBEDDED && window.parent && window.parent.Q) ? window.parent.Q : (window.Q || null);
+        if (!PQ || typeof PQ.recall !== "function") return [];
+        const r = await PQ.recall(q, { k: limit, synthesize: false });           // deterministic core (no model), instant
+        return (r && r.ok && Array.isArray(r.results)) ? r.results.map(candPrivate) : [];
+      } catch (e) { return []; }
+    }
 
     function dedup(cands) { const seen = new Set(), out = []; for (const c of cands) { const k = c.kind === "web" ? host(c.href) + "|" + (c.title || "").toLowerCase() : c.id; if (seen.has(k)) continue; seen.add(k); out.push(c); } return out; }
 
@@ -260,7 +273,7 @@
       if (primary.length) { if (hasAnswer) parts.push(`<h2 class="section">Results</h2>`); for (const c of primary.slice(0, 16)) parts.push(push(c)); }
       if (noise.length) { parts.push(`<h2 class="section">More from the open web</h2>`); for (const c of noise.slice(0, 4)) parts.push(push(c)); }
       if (r.webPending) parts.push(`<p class="status">Searching the open web…</p>`);
-      if (r.webError) parts.push(`<p class="status">Open web unavailable — showing your verified local results.</p>`);
+      if (r.webError) parts.push(`<p class="status">Open web unavailable showing your verified local results.</p>`);
       if (!hasAnswer && !cands.length && !r.webPending) parts.push(`<p class="status">No verifiable results for “${esc(r.q)}”.</p>`);
       out.innerHTML = parts.join("");
     }
@@ -299,7 +312,7 @@
           const href = "https://en.wikinews.org/wiki/" + encodeURIComponent(String(h.title).replace(/ /g, "_"));
           const snip = String(h.snippet || "").replace(/<[^>]+>/g, "");
           let date = ""; try { date = h.timestamp ? new Date(h.timestamp).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : ""; } catch {}
-          const c = { kind: "web", source: "Wikinews", url: "en.wikinews.org", href, title: h.title, desc: (date ? date + " — " : "") + snip, badge: "✓ verified on open", msg: { type: "holo-open", address: href } };
+          const c = { kind: "web", source: "Wikinews", url: "en.wikinews.org", href, title: h.title, desc: (date ? date + " " : "") + snip, badge: "✓ verified on open", msg: { type: "holo-open", address: href } };
           const i = RENDERED.length; RENDERED.push(c); return candCard(c, i);
         }).join("");
       } catch { out.innerHTML = `<div class="empty">Couldn’t load news right now.</div>`; }
@@ -314,8 +327,11 @@
       if (!SUBSTRATE) await loadSubstrate();                   // ensure YOUR universe is ready (cold-start only; warmed at init)
       if (gen !== RUN) return;                                 // superseded while the index loaded
       go.disabled = true;
-      // pass 1 — YOUR universe + the curated directory, instant (offline-capable), ranked by Holo Search
-      const localCands = [...searchSubstrate(q).map(candObject), ...searchDirectory(q).map(candDir)];
+      // pass 1 — YOUR universe + the curated directory, instant (offline-capable), ranked by Holo Search.
+      // ADR-0099: fold in your PRIVATE recall corpus (the holospaces you built) — κ-graph retrieval, no model.
+      const priv = await recallPrivate(q);
+      if (gen !== RUN) return;                                 // superseded while recall ran
+      const localCands = [...priv, ...searchSubstrate(q).map(candObject), ...searchDirectory(q).map(candDir)];
       if (localCands.length) showAll({ cands: rank(q, localCands, false), webPending: true, q }, gen);
       else if (MODE === "all") searching(`Searching the verifiable web for “${q}”…`);
       // pass 2 — the open web (federated, corroborated), merged + re-ranked into the one list
@@ -329,7 +345,7 @@
       } catch (e) {
         if (gen !== RUN) return;
         if (localCands.length) showAll({ cands: rank(q, localCands, false), webError: true, q }, gen);
-        else if (MODE === "all") status("Could not reach the open web — and no local match for that query.");
+        else if (MODE === "all") status("Could not reach the open web and no local match for that query.");
       } finally { if (gen === RUN) go.disabled = false; }
     }
 

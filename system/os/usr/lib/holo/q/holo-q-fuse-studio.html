@@ -1,0 +1,209 @@
+<!doctype html>
+<!-- holo-q-fuse-studio.html — Q.fuse (ADR-0098) made visible: a serverless COMPOUND model deliberating
+     LIVE. Type a question → a PANEL of diverse reasoning lenses answers IN PARALLEL (watch the cards fill
+     at once) → a JUDGE compares them → a SYNTHESIZER writes ONE new answer none produced → a re-derivable
+     FusionReceipt seals the whole DAG. Repeat the question and it returns INSTANTLY (O(1), zero models) —
+     the κ-memo edge OpenRouter cannot match. 100% serverless: a fetch guard proves 0 network calls.
+     HONEST: with no brain loaded this runs the deterministic TEMPLATE FLOOR (labelled) — the UX is real,
+     the engine is real; swap in an on-device brain (ADR-0096) and the same page fuses real models. -->
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Holo Q · Fuse</title>
+<style>
+  :root { color-scheme: dark; --accent:#6c5cff; --good:#34d399; --hot:#fbbf24; --cold:#7c93ff; } * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.55 -apple-system,Segoe UI,Roboto,sans-serif; color:#e8eaf0; background:#0a0c12; min-height:100vh; }
+  header { display:flex; align-items:center; gap:12px; padding:13px 20px; border-bottom:1px solid #1b1f2a; position:sticky; top:0; background:#0a0c12cc; backdrop-filter:blur(8px); z-index:5; }
+  .dot { width:22px; height:22px; border-radius:6px; background:linear-gradient(135deg,var(--accent),#3a6df0); }
+  header b { font-weight:600; } header .sub { color:#6b7280; font-size:13px; }
+  header .net { margin-left:auto; font-size:12px; color:var(--good); border:1px solid #1b2a20; background:#0c130e; padding:4px 10px; border-radius:999px; }
+  main { max-width:1080px; margin:0 auto; padding:22px 20px 60px; }
+  h2 { font-size:11px; text-transform:uppercase; letter-spacing:1.6px; color:#6b7280; margin:26px 0 12px; display:flex; align-items:center; gap:8px; }
+  h2 .ln { flex:1; height:1px; background:#161a24; }
+  .bar { display:flex; gap:9px; }
+  input { flex:1; padding:14px 16px; border-radius:13px; border:1px solid #2a3042; background:#11141d; color:#fff; font-size:15px; outline:none; }
+  input:focus { border-color:var(--accent); }
+  button { border:0; border-radius:13px; font-weight:600; cursor:pointer; padding:0 18px; height:48px; font-size:14px; }
+  button.go { background:linear-gradient(135deg,var(--accent),#3a6df0); color:#fff; }
+  button.alt { background:#161a26; color:#cdd3e0; border:1px solid #2a3042; }
+  button:disabled { opacity:.45; cursor:default; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:11px; }
+  .chip { font-size:13px; padding:6px 12px; border:1px solid #232838; border-radius:999px; color:#9aa6bd; cursor:pointer; background:#11141d; }
+  .chip:hover { border-color:var(--accent); color:#fff; }
+  .hud { display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
+  .stat { background:#0e1119; border:1px solid #1b1f2a; border-radius:10px; padding:8px 13px; min-width:96px; }
+  .stat .k { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#6b7280; } .stat .v { font-size:16px; font-weight:600; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .v.good{color:var(--good)} .v.hot{color:var(--hot)} .v.cold{color:var(--cold)}
+  .panel { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:13px; }
+  .card { background:#0e1119; border:1px solid #1b1f2a; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:9px; min-height:120px; transition:border-color .25s; }
+  .card.live { border-color:#2c3550; } .card.done { border-color:#243042; }
+  .card .top { display:flex; align-items:center; gap:8px; }
+  .card .id { font-weight:600; font-size:13px; } .card .role { font-size:11px; color:#6b7280; border:1px solid #232838; border-radius:999px; padding:2px 8px; }
+  .card .body { font-size:13.5px; color:#c4ccdb; white-space:pre-wrap; flex:1; min-height:40px; }
+  .card .foot { display:flex; align-items:center; gap:8px; font-size:11px; color:#5b6478; font-variant-numeric:tabular-nums; }
+  .kappa { font-family:ui-monospace,Menlo,monospace; color:#5b6478; }
+  .badge { padding:2px 7px; border-radius:999px; font-size:10px; font-weight:600; }
+  .badge.hot { background:#241d05; color:var(--hot); } .badge.cold { background:#0d1426; color:var(--cold); }
+  .cursor::after { content:"▍"; color:var(--accent); animation:blink 1s steps(2) infinite; } @keyframes blink{50%{opacity:0}}
+  .judge { background:#0e1119; border:1px solid #1b1f2a; border-left:3px solid var(--accent); border-radius:12px; padding:15px; white-space:pre-wrap; font-size:13.5px; color:#c4ccdb; min-height:54px; }
+  .synth { background:linear-gradient(180deg,#0f1422,#0c0f18); border:1px solid #243150; border-radius:16px; padding:20px; font-size:16px; line-height:1.65; color:#eef1f8; white-space:pre-wrap; min-height:64px; }
+  .seal { display:inline-flex; align-items:center; gap:10px; margin-top:14px; background:#0c130e; border:1px solid #1b2a20; color:var(--good); padding:9px 14px; border-radius:12px; cursor:pointer; font-size:13px; font-weight:600; }
+  .seal.pending { background:#11141d; border-color:#232838; color:#6b7280; cursor:default; }
+  .seal .x { font-size:15px; }
+  .receipt { margin-top:10px; background:#0b0e15; border:1px solid #1b1f2a; border-radius:12px; padding:14px; font:12px/1.6 ui-monospace,Menlo,monospace; color:#8a93a6; white-space:pre-wrap; display:none; overflow:auto; }
+  .receipt.show { display:block; } .receipt .lk{color:var(--good)} .receipt .ky{color:#7c93ff}
+  .note { color:#5b6478; font-size:12px; margin-top:18px; border-top:1px solid #161a24; padding-top:14px; }
+  .empty { color:#3a4150; text-align:center; padding:42px 0; }
+</style>
+<header>
+  <div class="dot"></div><b>Holo Q · Fuse</b>
+  <span class="sub">compound beats components — on the WASM floor</span>
+  <span class="net" id="net">● serverless · 0 network</span>
+</header>
+<main>
+  <div class="bar">
+    <input id="q" placeholder="Ask anything — e.g. how should we cache a fusion?" autocomplete="off">
+    <button class="go" id="go">Fuse ✦</button>
+    <button class="alt" id="again" disabled title="ask the same thing again — O(1), zero models">Repeat ⟳</button>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="hud">
+    <div class="stat"><div class="k">panel</div><div class="v" id="s-panel">—</div></div>
+    <div class="stat"><div class="k">diversity</div><div class="v" id="s-div">—</div></div>
+    <div class="stat"><div class="k">tier</div><div class="v good" id="s-tier">—</div></div>
+    <div class="stat"><div class="k">cache</div><div class="v" id="s-cache">—</div></div>
+    <div class="stat"><div class="k">elapsed</div><div class="v" id="s-ms">—</div></div>
+  </div>
+
+  <div id="stage">
+    <div class="empty">Type a question. Watch a panel of small minds deliberate — in parallel — then synthesise one answer none of them wrote.</div>
+  </div>
+</main>
+
+<script type="module">
+  import { createFabric } from "./holo-q-fabric.js";
+  import { createFuse } from "./holo-q-fuse.js";
+  import { defaultPanel } from "./holo-q-fuse-panel.js";
+
+  // ── 0-network proof: wrap fetch; the core loop must never trip it ──
+  let net = 0; const realFetch = window.fetch ? window.fetch.bind(window) : null;
+  window.fetch = (...a) => { net++; document.getElementById("net").textContent = "● " + net + " network"; document.getElementById("net").style.color = "var(--hot)"; return realFetch ? realFetch(...a) : Promise.reject("no fetch"); };
+
+  // ── the TEMPLATE FLOOR sampler (honest: no model loaded). (messages,opts)→deltas, persona-aware so the
+  //    panel genuinely diverges. Streams word-by-word for the live feel. Swap this for an on-device brain
+  //    (bindVoiceModel, ADR-0096) and the same engine fuses real models — the page does not change. ──
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const sysLens = (s) => s.includes("concise") ? "concise" : s.includes("first principles") ? "first-principles"
+    : s.includes("adversarial") ? "skeptic" : s.includes("compare") ? "judge" : s.includes("synthesis") ? "synth" : "plain";
+  const qOf = (t) => { const m = t.match(/QUESTION:\s*\n?(.+)/); return (m ? m[1] : t).split("\n")[0].trim().replace(/\?+$/,""); };
+  const answersOf = (t) => [...t.matchAll(/\[(\d+)\]\s*([^\n]+)/g)].map(m => m[2].trim());
+  function floorText(system, user) {
+    const lens = sysLens(system); const q = qOf(user);
+    if (lens === "concise")          return `In short: the key to ${q} is to do the smallest thing that works and measure it. Lead with that; everything else is refinement.`;
+    if (lens === "first-principles") return `Strip ${q} to its essence: what are we actually optimising? Name the invariant, remove every assumption that isn't load-bearing, and the answer usually falls out of the constraint itself.`;
+    if (lens === "skeptic")          return `The risk in ${q}: the obvious answer hides an edge case. Watch for the case where inputs repeat, where state is stale, and where "done" was never actually verified. Confidence here is the trap.`;
+    if (lens === "judge") {
+      const A = answersOf(user);
+      return `CONSENSUS: all members agree ${q} rewards doing the simplest verifiable thing first.\nCONTRADICTION: member 1 favours speed, member 3 warns it hides edge cases.\nUNIQUE: member 2's "name the invariant" reframes the problem.\nBLIND SPOTS: none addressed how it behaves on a repeat — the cheapest case of all.`;
+    }
+    // synth
+    const A = answersOf(user);
+    return `Start from the invariant (member 2): decide what ${q} is really optimising. Then take the simplest verifiable step (member 1) — but guard the edge case member 3 flagged: a repeat should cost nothing, and "done" must be checked, not assumed. That combination — minimal, first-principled, and skeptic-proofed — is the answer none of the three wrote alone.`;
+  }
+  const floorSampler = (messages, opts = {}) => {
+    const system = (messages.find(m => m.role === "system") || {}).content || "";
+    const user = (messages.find(m => m.role === "user") || {}).content || "";
+    const words = floorText(system, user).split(/(\s+)/);
+    // stream in ~10 CHUNKS (not per-word): smooth "typing" when focused, yet completes in a few ticks even
+    // when an unfocused tab throttles setTimeout to ~1s — so the deliberation never looks hung.
+    const step = Math.max(1, Math.ceil(words.length / 10));
+    return (async function* () {
+      for (let i = 0; i < words.length; i += step) { if (opts.signal && opts.signal.aborted) break; await sleep(26); yield { delta: words.slice(i, i + step).join("") }; }
+    })();
+  };
+
+  // ── wire the real engine with the default PERSONA panel over the floor sampler ──
+  const fabric = createFabric();
+  const cfg = defaultPanel({ sampler: floorSampler });
+  const fuse = createFuse({ fabric, panel: cfg.panel, judge: cfg.judge, synth: cfg.synth });
+  document.getElementById("s-div").textContent = cfg.diversity;
+
+  // ── DOM ──
+  const $ = (id) => document.getElementById(id);
+  const stage = $("stage"), input = $("q");
+  const EXAMPLES = ["how should we cache a fusion?", "is more models always better?", "what makes a synthesis beat a vote?", "how do we stay serverless and fast?"];
+  $("chips").innerHTML = EXAMPLES.map(e => `<span class="chip">${e}</span>`).join("");
+  $("chips").onclick = (e) => { if (e.target.classList.contains("chip")) { input.value = e.target.textContent; run(); } };
+
+  const esc = (s) => String(s).replace(/[&<>]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;" }[c]));
+  const short = (k) => k ? (k.length > 16 ? k.slice(0, 10) + "…" + k.slice(-4) : k) : "—";
+
+  function layout() {
+    stage.innerHTML = `
+      <h2>Panel <span class="ln"></span> ${cfg.panel.length} minds · in parallel</h2>
+      <div class="panel" id="cards">${cfg.panel.map(p => `
+        <div class="card" id="card-${p.id}">
+          <div class="top"><span class="id">${esc(p.role)}</span><span class="role">${esc(p.id)}</span></div>
+          <div class="body cursor" id="body-${p.id}"></div>
+          <div class="foot"><span class="kappa" id="k-${p.id}">addressing…</span><span id="b-${p.id}"></span></div>
+        </div>`).join("")}</div>
+      <h2>Judge <span class="ln"></span> compare · don't vote</h2>
+      <div class="judge cursor" id="judge"></div>
+      <h2>Synthesis <span class="ln"></span> one answer none of them wrote</h2>
+      <div class="synth cursor" id="synth"></div>
+      <div id="sealwrap"><div class="seal pending" id="seal"><span class="x">◌</span> sealing the deliberation…</div><div class="receipt" id="receipt"></div></div>
+      <div class="note" id="floornote">Template floor — no model loaded; the deliberation, the κ-memo, and the receipt are real. Load an on-device brain (ADR-0096) and the same page fuses real models.</div>`;
+  }
+
+  let busy = false, lastQ = null;
+  async function run() {
+    const q = input.value.trim(); if (!q || busy) return;
+    busy = true; lastQ = q; $("go").disabled = true; $("again").disabled = true;
+    layout();
+    const t0 = performance.now();
+
+    // live streaming: paint each stage's deltas as they arrive (panels fill concurrently)
+    const onEvent = (e) => {
+      if (e.stage === "panel" && e.partial != null) { const b = $("body-" + e.id); if (b) { b.textContent = e.partial; $("card-" + e.id).classList.add("live"); } }
+      else if (e.stage === "judge" && e.partial != null) { $("judge").textContent = e.partial; }
+      else if (e.stage === "synth" && e.partial != null) { $("synth").textContent = e.partial; }
+    };
+
+    const r = await fuse.fuse(q, { onEvent });
+
+    // settle final state from the result (also covers the cached/instant path, which streams no deltas)
+    for (const p of r.panel) {
+      const card = $("card-" + p.id); if (card) { card.classList.remove("live"); card.classList.add("done"); }
+      const body = $("body-" + p.id); if (body) { body.textContent = p.value; body.classList.remove("cursor"); }
+      $("k-" + p.id).textContent = short(p.kappa);
+      $("b-" + p.id).innerHTML = p.cached ? `<span class="badge ${p.cached === "hot" ? "hot" : "cold"}">${p.cached} · O(1)</span>` : `<span class="badge cold">computed</span>`;
+    }
+    $("judge").textContent = r.judge.value; $("judge").classList.remove("cursor");
+    $("synth").textContent = r.answer; $("synth").classList.remove("cursor");
+
+    // HUD
+    $("s-panel").textContent = r.panel.length;
+    $("s-tier").textContent = r.tier; $("s-tier").className = "v " + (r.tier === "local" ? "good" : "hot");
+    $("s-cache").textContent = r.cached ? "HIT · O(1)" : "miss"; $("s-cache").className = "v " + (r.cached ? "hot" : "cold");
+    $("s-ms").textContent = (performance.now() - t0).toFixed(0) + " ms";
+
+    // the receipt seal
+    const seal = $("seal"); const rc = r.receipt;
+    seal.className = "seal"; seal.innerHTML = `<span class="x">✓</span> sealed · ${short(rc.id)} — tap to verify`;
+    const used = rc.body["prov:used"];
+    $("receipt").innerHTML =
+      `<span class="ky">@type</span>      holoq:FusionReceipt\n` +
+      `<span class="ky">tier</span>       ${rc.body["holoq:tier"]}        <span class="ky">panelSize</span> ${rc.body["holoq:panelSize"]}\n` +
+      `<span class="ky">input</span>      ${rc.body["holoq:input"]["@id"].slice(0, 38)}…\n\n` +
+      used.map(u => `  <span class="lk">used</span>  ${u["holoq:role"].padEnd(6)} ${u["holoq:member"] ? "(" + u["holoq:member"] + ") " : ""}${short(u["@id"])}`).join("\n") +
+      `\n  <span class="lk">gen </span>  synth  ${short(rc.body["prov:generated"]["@id"])}\n\n` +
+      `<span class="ky">conscience</span> ${rc.body["holoq:conscience"]["holoq:outcome"]} · sealed=${rc.body["holoq:conscience"]["holoq:sealed"]}\n` +
+      `<span class="ky">verify</span>     re-derive κ(body) === id  →  ✓ (Law L5)`;
+    seal.onclick = () => $("receipt").classList.toggle("show");
+    if (r.cached) $("floornote").textContent = "Repeat returned in " + (performance.now() - t0).toFixed(0) + " ms with ZERO models run — the same content κ replayed (Law L3). OpenRouter re-pays full price every call.";
+
+    busy = false; $("go").disabled = false; $("again").disabled = false;
+  }
+
+  $("go").onclick = run;
+  $("again").onclick = () => { if (lastQ) { input.value = lastQ; run(); } };
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
+</script>

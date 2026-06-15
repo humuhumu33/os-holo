@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Holo Splash — Hologram OS</title>
-    <meta name="description" content="Holo Splash — the hologram-native Plymouth: real .plymouth themes (script · two-step · text · details), a faithful Plymouth-script interpreter, boot progress, messages and password prompts — content-addressed and κ-verified, running entirely in the browser. No server." />
+    <title>Holo Splash Hologram OS</title>
+    <meta name="description" content="Holo Splash the hologram-native Plymouth: real .plymouth themes (script · two-step · text · details), a faithful Plymouth-script interpreter, boot progress, messages and password prompts content-addressed and κ-verified, running entirely in the browser. No server." />
     <!-- The mobile conformance layer every shipped holospace adopts (the enforce-witnesses gate). -->
     <link rel="stylesheet" href="_shared/holo-mobile.css" />
     <link rel="stylesheet" href="_shared/holo-phi.css" />
@@ -107,7 +107,7 @@
       /* During a real boot handoff (Holo Boot → splash → OS) the plymouth client dock is
          hidden for an authentic full-screen splash; a hint to skip is shown instead. */
       body.handoff #dock { display: none; }
-      body.handoff #skip { display: block; }
+      body.handoff #skip { display: none; }   /* no "Press F2…" hint — a sovereign boot just powers on (skip/F2 still work silently) */
       body.handoff #impBtn { display: none; }   /* a boot splash is not interactive */
       body.handoff #bar { display: none; }       /* hide the dev chrome → a clean, full-screen boot splash */
       #skip kbd { display: inline-block; border: 1px solid #3a4570; border-radius: 4px; padding: 1px 7px; color: #cdd6ff; background: rgba(139,92,246,.14); margin: 0 2px; }
@@ -119,6 +119,73 @@
       body.leaving::after { content: ""; position: fixed; inset: 0; background: #000; z-index: 60; pointer-events: none; animation: bootVeil .18s linear forwards; }
       @keyframes bootVeil { from { opacity: 0; } to { opacity: 1; } }
       @media (prefers-reduced-motion: reduce) { body.leaving::after { animation-duration: .01s; } }
+
+      /* ── BOOT BEATS — the diegetic security confirmations (handoff only). Calm, certain, fast:
+         each step ticks to a sure teal check as the boot proceeds; the last is the serverless reveal.
+         Sits in the lower third, clear of the centred mark and the loading bar. */
+      /* the sovereign line — ONE row: a STATIC "Own your" and a single word that materialises out of
+         scrambling braille (the OS's own κ glyphs) and resolves, cycling compute → data → intelligence
+         → future (see scrambleWord). Type matches the LOGIN greeter — same family, weight (300) and size
+         (u·φ) — so the boot and sign-in read as one piece. The seam between "Own your" and the word is
+         pinned to screen centre by two absolute halves (.own right-aligned to it, .word left-aligned from
+         it), so it is font-independent and "Own your" never moves as the word changes. */
+      #bootbeats { position: absolute; left: 50%; top: 73.8%; z-index: 5; display: none; pointer-events: none;
+        white-space: pre; font-family: "Segoe UI", system-ui, -apple-system, "Oxygen", sans-serif; }
+      body.handoff #bootbeats { display: block; }
+      #bootbeats .own, #bootbeats .word { position: absolute; top: 0; line-height: 1; color: #ffffff; font-weight: 300; }
+      #bootbeats .own { right: 0; }    /* "Own your " ends at the centre seam */
+      #bootbeats .word { left: 0; }     /* the word begins at the centre seam */
+      #bootbeats .word.final { text-shadow: 0 0 16px rgba(125,239,201,.6), 0 0 42px rgba(125,239,201,.32); }
+      body.bg-light #bootbeats .own, body.bg-light #bootbeats .word { color: #0a0c12; }
+
+      /* ── BOOT HANDOFF COMPOSITION — a calm, golden-ratio, hyper-real power-on. ONE progress bar,
+         no small type, generous rhythm: a real computer powering up, unhurried and certain. Scoped
+         to a real handoff so the Plymouth studio is left exactly as it was. φ = 1.618; --u is the
+         rhythm unit AND the readability floor — never below 16px, like the greeter.
+
+         Vertical order, top → bottom, anchored on the two golden lines (38.2% · 61.8%):
+           the breathing mark (upper golden line) → the progress bar (lower golden line) →
+           the system-status confirmations → the firmware hint. Nothing overlaps; everything balances. */
+      body.handoff { --phi: 1.618; --u: clamp(16px, 1.7vmin, 19px);
+        --g1: calc(var(--u) * 1.618); --g2: calc(var(--u) * 2.618); --g3: calc(var(--u) * 4.236); }
+      /* no-flash handoff: from the FIRST paint the stage wears the SAME wallpaper as the login greeter
+         (its radial aurora gradient), and the "starting plymouthd…" hint is suppressed — so the gateway's
+         black veil flows into the splash, and the splash flows into login, over one continuous backdrop. */
+      body.handoff #stage { background: radial-gradient(120% 120% at 20% 0%, #1b2a4a 0%, #0d1117 60%, #05070c 100%); }
+      body.handoff #hint { display: none; }
+      body.handoff #field { display: none; }   /* the soulbis wave field is never part of a real boot — never flash it */
+      /* the greeter aurora blobs — identical to login.html .wall, screen-blended over the dark canvas so
+         the teal/blue light glows in the open field while the bright mark stays crisp. Soft like the
+         greeter's acrylic. Handoff only. */
+      #aurora { position: absolute; inset: 0; z-index: 1; display: none; pointer-events: none; mix-blend-mode: screen; }
+      body.handoff #aurora { display: block; }
+      #aurora i { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .5; }
+      #aurora .a { left: 8%; top: 12%; width: 42vw; height: 42vw; background: radial-gradient(circle, rgba(52,211,166,.5), transparent 62%); }
+      #aurora .b { right: 6%; bottom: 4%; width: 46vw; height: 46vw; background: radial-gradient(circle, rgba(64,99,214,.45), transparent 62%); }
+      #aurora .c { left: 44%; top: 48%; width: 30vw; height: 30vw; background: radial-gradient(circle, rgba(125,239,201,.26), transparent 62%); }
+      /* the centre animation — scaled DOWN to 1/φ² of the stage and lifted onto the upper golden line,
+         so it reads as a poised mark with room to breathe (was filling the field and colliding with the
+         status text). Downscale only → razor sharp. */
+      body.handoff #screen, body.handoff #gpuScreen { transform: translateY(-11.8%) scale(0.46); }
+      /* ONE clean line bar — golden width, sitting ON the lower golden line, ABOVE the status text.
+         The braille blocks + % readout are removed (a real boot shows a single bar). */
+      body.handoff #loadbar { top: 61.8%; bottom: auto; width: min(38.2vw, 30rem); gap: var(--u); }
+      body.handoff #loadbarTrack { height: 2px; }
+      body.handoff #loadbarMeta { display: none; }
+      /* the sovereign line — at the golden point below the bar, sized like the login greeter's name
+         (u·φ, weight 300) so boot and sign-in feel identical. */
+      body.handoff #bootbeats { font-size: calc(var(--u) * var(--phi)); letter-spacing: .005em; }
+      /* a quiet boot label ABOVE the progress bar — login type, smaller and calmer than the manifesto */
+      #bootlabel { position: absolute; left: 50%; transform: translateX(-50%); z-index: 5; display: none;
+        pointer-events: none; white-space: nowrap; color: rgba(255,255,255,.78); font-weight: 400;
+        font-family: "Segoe UI", system-ui, -apple-system, "Oxygen", sans-serif; }
+      #bootlabel b { font-weight: 600; color: #ffffff; letter-spacing: .16em; }
+      body.handoff #bootlabel { display: block; top: calc(61.8% - var(--g3)); font-size: var(--u); letter-spacing: .08em; }
+      /* the firmware hint — readable and quiet, on a golden inset */
+      body.handoff #skip { bottom: var(--g2); font-size: var(--u); color: rgba(231,237,250,.42); letter-spacing: .03em; }
+      body.handoff #skip kbd { font-size: .9em; padding: .12em .65em; border-color: rgba(125,239,201,.4); color: #cdeee2; background: rgba(125,239,201,.1); }
+      /* no toast during a real boot — keep the field uncluttered */
+      body.handoff #toast { display: none; }
       @media (max-width: 640px) {
         #bar .k { max-width: 60vw; } #bar .stat { order: 9; flex-basis: 100%; max-width: 96vw; }
         #bar button, #bar select, #dock button, #dock select { min-height: 44px; }
@@ -259,6 +326,10 @@
     </style>
   </head>
   <body data-no-teleport>
+    <!-- NO-FLASH HANDOFF: when arriving from the gateway (?next=…), mark the body as a boot handoff
+         SYNCHRONOUSLY — before #bar paints — so the dev chrome never flickers and the stage is black
+         from the very first frame. The module re-asserts this and forces the Dark field. -->
+    <script>try{if(new URLSearchParams(location.search).get("next"))document.body.classList.add("handoff");}catch(e){}</script>
     <div id="bar">
       <span class="name">Holo Splash</span>
       <span class="tag">· holospace</span>
@@ -268,7 +339,7 @@
       <span class="stat" id="now" title="boot status"></span>
       <span class="dot" id="dot">●</span>
       <span class="tag" id="state">idle</span>
-      <select id="themeSel" title="Plymouth theme — the original .plymouth format; κ-verified on load"></select>
+      <select id="themeSel" title="Plymouth theme the original .plymouth format; κ-verified on load"></select>
       <button id="impBtn" title="import a community theme from adi1090x/plymouth-themes">✦ Import</button>
       <button id="replayBtn" title="replay boot (r)">⟳ replay</button>
       <button id="fsBtn" title="fullscreen (f)">⛶ fullscreen</button>
@@ -279,6 +350,9 @@
       <!-- the hologram-native WebGPU present layer (Lanczos super-resolution + the O(1)
            content-addressed LUT grade); shown over #screen while presenting, else hidden. -->
       <canvas id="gpuScreen" aria-hidden="true"></canvas>
+      <!-- the greeter aurora — the SAME wallpaper the login screen wears, screen-blended over the dark
+           canvas so boot and sign-in share one continuous backdrop (handoff only). -->
+      <div id="aurora" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></div>
       <!-- the soulbis wave field — living holographic backdrop over the boot theme -->
       <canvas id="field" aria-hidden="true"></canvas>
       <input id="pw" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-hidden="true" />
@@ -291,6 +365,12 @@
         <div id="loadbarTrack"><div id="loadbarFill"></div></div>
         <div id="loadbarMeta"><span id="loadbarSpin" aria-hidden="true">⠋</span><span id="loadbarPct">0%</span></div>
       </div>
+      <!-- BOOT BEATS — the diegetic security confirmations, shown only during a real handoff: the
+           machine proving itself as it powers on. Each ticks to a sure teal check as boot proceeds;
+           the last is the serverless reveal. Driven from eng.progress (see revealBeats). -->
+      <!-- a quiet boot label above the progress bar (handoff only) -->
+      <div id="bootlabel" aria-hidden="true">Booting <b>HOLOGRAM OS</b></div>
+      <div id="bootbeats" aria-hidden="true"><span class="own">Own your </span><span class="word" id="bootword"></span></div>
     </div>
 
     <!-- the splash controls — background mode + centre-animation size, the whole studio in one row -->
@@ -333,7 +413,7 @@
           <div class="a-info">
             <span class="a-nm" id="aName"></span>
             <span class="a-k" id="aK" title="content address of this theme"></span>
-            <span class="a-v" id="aVer" title="Law L5 — every theme byte re-derives to its κ"></span>
+            <span class="a-v" id="aVer" title="Law L5 every theme byte re-derives to its κ"></span>
           </div>
           <div class="a-acts">
             <button class="keep" id="aKeep">Keep</button>
@@ -348,9 +428,9 @@
             <button class="step" id="cStepF" title="step forward one frame">⏭</button>
           </div>
           <span class="lbl">freq</span>
-          <input id="cSpeed" type="range" min="-2" max="4" step="0.01" value="0" title="animation frequency spectrum — 0 (frozen) → very high; the band maps slow → fast" />
+          <input id="cSpeed" type="range" min="-2" max="4" step="0.01" value="0" title="animation frequency spectrum 0 (frozen) → very high; the band maps slow → fast" />
           <span class="spd" id="cSpeedV">1.00×</span>
-          <button class="ghost" id="cFx" title="holographic FX — chromatic aberration · bloom · scanlines · grain">✦ FX</button>
+          <button class="ghost" id="cFx" title="holographic FX chromatic aberration · bloom · scanlines · grain">✦ FX</button>
           <span class="hud" id="cHud"></span>
         </div>
       </div>
@@ -380,7 +460,7 @@
       const ver = { ok: null, total: 0, bad: 0 };
       function renderVer() {
         if (ver.ok === null) { $("ver").textContent = ""; $("ver").className = "ver"; return; }
-        $("ver").textContent = ver.ok ? `✓ κ verified (${ver.total})` : "✗ κ mismatch — refused";
+        $("ver").textContent = ver.ok ? `✓ κ verified (${ver.total})` : "✗ κ mismatch refused";
         $("ver").className = "ver " + (ver.ok ? "ok" : "bad");
         $("ver").title = `Law L5 · ${ver.total - ver.bad}/${ver.total} theme bytes re-derive to their κ`;
       }
@@ -490,6 +570,10 @@
       //     the centre animation reveals only that same colour — a seamless seam.
       const BG_DARK = [0.000, 0.000, 0.000];    // == #000000 (body.bg-dark #stage)
       const BG_LIGHT = [0.941, 0.933, 0.910];   // == #f0eee8 (body.bg-light #stage)
+      // the LOGIN greeter's wallpaper colours — a real boot handoff wears the SAME backdrop as sign-in,
+      // so the two screens read as one continuous space (login.html .wall: #1b2a4a → #05070c).
+      const LOGIN_BG_TOP = [0.106, 0.165, 0.290];     // #1b2a4a
+      const LOGIN_BG_BOTTOM = [0.020, 0.027, 0.047];  // #05070c
       const BG_MODES = ["dark", "light", "immersive"];
       const BG_PREF = "holo-splash:bg";
       let themeBg = null;   // the active theme's OWN background — captured at load, restored in Immersive
@@ -551,6 +635,8 @@
         // Canvas fill: Immersive restores the theme's own bg; Dark/Light a clean solid matching #stage.
         if (immersive) { if (themeBg) be.bg = { top: themeBg.top.slice(), bottom: themeBg.bottom.slice() }; }
         else { const c = bgMode === "dark" ? BG_DARK : BG_LIGHT; be.bg = { top: c.slice(), bottom: c.slice() }; }
+        // (a real boot clears the canvas to TRANSPARENT — see the paint override in loadTheme — so the
+        //  page aurora behind it is the only backdrop; be.bg is unused there.)
         be.dirty(); be.paint();
       }
 
@@ -593,7 +679,9 @@
       let navigated = false, reachedAt = 0, brandVer = null;
       function gotoNext() { if (navigated || !NEXT) return; navigated = true; cancelAnimationFrame(rafId); toast("starting " + (LABEL || "system") + "…");
         document.body.classList.add("leaving"); setTimeout(() => { location.href = NEXT; }, 180); }   // veil to #000, then hand off → login rises back out of the same black
-      if (NEXT) document.body.classList.add("handoff");
+      // A real power-on hands off on a clean BLACK field (not the theme's own backdrop): force Dark so
+      // the canvas behind the mark is pure #000, matching the gateway and login. Studio mode is untouched.
+      if (NEXT) { document.body.classList.add("handoff"); bgMode = "dark"; }
       // Boot Menu (rEFInd) reachable via F2 during a handoff — like real firmware (F2 is page-preventable).
       const MENU = params.get("menu") || "";
       function gotoMenu() { if (navigated || !MENU) return; navigated = true; cancelAnimationFrame(rafId); location.href = MENU; }
@@ -651,13 +739,18 @@
         } catch {}
         return { x: fx, y: fy };
       }
-      try {
-        field = createSoulbisField($("field"), {
-          dpr: PROFILE.dpr, maxDim: PROFILE.maxDim,
-          focus: logoFocus,   // the soul orb follows the live boot logo
-        });
-        field.start();
-      } catch (e) { console.warn("soulbis field unavailable:", e); }
+      // NOT in a real boot handoff: the holo-pulse boot is a SOLO mark on the shared aurora, so the
+      // soulbis field is never wanted — and creating it here (before applyBackground hides it) would
+      // flash a different animation for a frame between the gateway and the splash. Skip it entirely.
+      if (!NEXT) {
+        try {
+          field = createSoulbisField($("field"), {
+            dpr: PROFILE.dpr, maxDim: PROFILE.maxDim,
+            focus: logoFocus,   // the soul orb follows the live boot logo
+          });
+          field.start();
+        } catch (e) { console.warn("soulbis field unavailable:", e); }
+      }
       // CSS rect + an effective dpr capped so the backing store's longest edge ≤ `ceiling`.
       function stageSize(ceiling) {
         const r = $("stage").getBoundingClientRect();
@@ -722,6 +815,23 @@
         const sz = stageSize();
         const cv = $("screen");
         be = new CanvasBackend(cv, {}); be.resize(sz.w, sz.h, sz.dpr);
+        // A real boot draws the mark on a TRANSPARENT canvas: clear to alpha 0 instead of filling a
+        // backdrop, so the page's aurora shows through uniformly and ONLY the floating mark is visible
+        // (no canvas-shaped rectangle). Instance-only override — the shared engine is untouched. Mirrors
+        // CanvasBackend.paint exactly, minus the opaque background fill.
+        if (NEXT) {
+          be.paint = function () {
+            const ctx = this.ctx, w = this.w, h = this.h;
+            ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+            ctx.clearRect(0, 0, w, h);
+            for (const s of [...this.sprites].sort((a, b) => a.z - b.z)) {
+              if (!s.image || !s.image.bitmap || s.opacity <= 0 || s.__hidden) continue;
+              ctx.globalAlpha = Math.max(0, Math.min(1, s.opacity));
+              try { ctx.drawImage(s.image.bitmap, Math.round(s.x), Math.round(s.y)); } catch {}
+            }
+            ctx.globalAlpha = 1; this._dirty = false;
+          };
+        }
         be.setMode(MODES.includes(prevMode) ? prevMode : "boot");
         const assets = {};
         for (const key of src.pngList()) {
@@ -775,6 +885,7 @@
           // drive the status stream from progress
           const idx = Math.min(STATUSES.length - 1, Math.floor(eng.progress * STATUSES.length));
           if (idx !== statusIdx && eng.running) { statusIdx = idx; eng.updateStatus(STATUSES[idx]); }
+          revealBeats(eng.progress);   // tick the diegetic security confirmations as boot proceeds (handoff only)
           reflectState();
           // Plymouth handoff: once boot completes, hold briefly, then chain to the OS.
           if (NEXT && !navigated && !asking && !eng.paused && eng.progress >= 1) {
@@ -784,6 +895,39 @@
         };
         rafId = requestAnimationFrame(step);
       }
+      // THE SOVEREIGN LINE — one word after "Own your", materialising out of scrambling braille (the
+      // OS's own κ glyphs) and resolving left → right, cycling compute → data → intelligence → future
+      // as the boot proceeds. Handoff-only (a real power-on); the standalone studio never shows it.
+      const OWN_WORDS = ["compute", "data", "intelligence", "future"];
+      const OWN_AT = [0.08, 0.32, 0.56, 0.80];   // calm cadence; "future" lands late and HOLDS to 100%
+      const OWN_RM = (typeof matchMedia === "function") && matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const brailleGlyph = () => String.fromCharCode(0x2801 + Math.floor(Math.random() * 0xFE));   // a random κ braille glyph (skip the blank cell)
+      let ownIdx = -1, ownRAF = 0;
+      function scrambleWord(word, isFinal) {
+        const el = document.getElementById("bootword"); if (!el) return;
+        el.classList.remove("final");
+        if (OWN_RM) { el.textContent = word; if (isFinal) el.classList.add("final"); return; }   // reduced-motion: resolve instantly
+        cancelAnimationFrame(ownRAF);
+        const n = word.length, dur = 720, t0 = performance.now();
+        const tick = (now) => {
+          const t = Math.min(1, (now - t0) / dur);
+          const locked = Math.floor(t * n);                 // characters resolve left → right out of the braille
+          let s = "";
+          for (let i = 0; i < n; i++) s += (i < locked || t >= 1) ? word[i] : brailleGlyph();
+          el.textContent = s;
+          if (t < 1) ownRAF = requestAnimationFrame(tick);
+          else if (isFinal) el.classList.add("final");      // the arrival holds with a teal glow
+        };
+        ownRAF = requestAnimationFrame(tick);
+      }
+      // called each boot frame; advances to the next word when progress crosses its threshold (monotonic)
+      function revealBeats(p) {
+        if (!NEXT) return;
+        let want = -1;
+        for (let i = 0; i < OWN_AT.length; i++) if (p >= OWN_AT[i]) want = i;
+        if (want > ownIdx) { ownIdx = want; scrambleWord(OWN_WORDS[ownIdx], ownIdx === OWN_WORDS.length - 1); }
+      }
+
       function reflectState() {
         if (!eng) return;
         const pct = Math.round(eng.progress * 100);
@@ -829,7 +973,7 @@
       function startAsk(prompt) {
         asking = true; const inp = $("pw"); inp.value = ""; inp.style.pointerEvents = "auto";
         eng.displayPassword(prompt || "Enter passphrase to unlock disk:", 0);
-        setTimeout(() => inp.focus(), 0); toast("ask-for-password — type, then Enter");
+        setTimeout(() => inp.focus(), 0); toast("ask-for-password type, then Enter");
       }
       $("pw").addEventListener("input", (e) => { if (asking) eng.displayPassword(curPrompt, e.target.value.length); });
       let curPrompt = "Enter passphrase to unlock disk:";
@@ -969,7 +1113,7 @@
       function renderGrid() {
         const grid = $("impGrid"); grid.innerHTML = "";
         if (CATALOG === null) return grid.appendChild(emptyMsg("Loading the live catalog…"));
-        if (CATALOG === false) return grid.appendChild(emptyMsg("Couldn't reach the catalog — check the connection and reopen."));
+        if (CATALOG === false) return grid.appendChild(emptyMsg("Couldn't reach the catalog check the connection and reopen."));
         let list = CATALOG.themes;
         if (galPack !== "all") list = list.filter((t) => t.pack === galPack);
         if (galQuery) list = list.filter((t) => t.name.toLowerCase().includes(galQuery));

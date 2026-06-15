@@ -1,14 +1,7 @@
 {
   "spec": "Hologram OS — canonical login gateway: rEFInd → Plymouth → SDDM (real theme run by the Holo QML engine) → PrimeOS, authenticated by a self-sovereign key bound to local hardware (holospaces docs/08; Laws L1/L4/L5), 100% serverless",
-  "witnessed": true,
-  "covers": [
-    "sddm-greeter",
-    "qml-projection",
-    "self-sovereign-login",
-    "hardware-binding",
-    "session-l5",
-    "boot-chain"
-  ],
+  "witnessed": false,
+  "covers": [],
   "results": [
     {
       "name": "every login-chain resource resolves (rEFInd · SDDM theme · components · runtime)",
@@ -18,22 +11,22 @@
     {
       "name": "rEFInd boots (Secure-Boot verified) → hands off to Plymouth with SDDM interposed",
       "ok": true,
-      "detail": "splash.html?next=login.html?next=apps%2Fsdk%2Findex.html&label=Hologram+OS&logo="
+      "detail": "splash.html?next=login.html?next=shell.html&label=Hologram+OS&logo=boot%2Ficons%"
     },
     {
       "name": "the QML ENGINE runs the real SDDM theme → DOM (a self-sovereign sign-in affordance + field)",
-      "ok": true,
-      "detail": "buttons=Access"
+      "ok": false,
+      "detail": "buttons=Restart/Shut down/AI agent/Continue as Guest/Ask the human to sign in"
     },
     {
       "name": "the real theme's images paint (wallpaper Background + rectangle.png panel)",
-      "ok": true,
-      "detail": "bg=true panel=true"
+      "ok": false,
+      "detail": "bg=false panel=false"
     },
     {
       "name": "a self-sovereign key enrols + a session opens, hardware-bound (operator ⊗ host ⊗ session, all content-addressed)",
       "ok": true,
-      "detail": "op=did:holo:sha256:4df5af… host=did:holo:sha256:5d…"
+      "detail": "op=did:holo:sha256:583493… host=did:holo:sha256:5c…"
     },
     {
       "name": "the session assertion re-derives + signature-verifies (Law L5)",
@@ -41,9 +34,9 @@
       "detail": "verified"
     },
     {
-      "name": "the ONE shell (apps/sdk) receives the handoff: sovereign operator + host stamped, desktop ready",
+      "name": "the ONE shell (shell.html) receives the handoff: sovereign operator + host stamped, desktop ready",
       "ok": true,
-      "detail": "op=\"● ilya · 4df5afd0…\" host=\"⌂ on this machine · 5d4b9f0c\" ready=true"
+      "detail": "op=\"● ilya · 5834930e…\" host=\"⌂ on this machine · 5c7d379e\" ready=true"
     },
     {
       "name": "a wrong passphrase is refused — the self-sovereign key does not unlock (Law L1)",

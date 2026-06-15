@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<!-- holo-devtools.html — the Holo DevTools holospace (ADR-0095). It does TWO things and nothing else
+     (the devtools UI is vendored UNMODIFIED — no hand-written inspector):
+       1. install globalThis.InspectorFrontendHost BEFORE the bundle loads, binding the embedder seam
+          (sendMessageToBackend ⇄ the DispatchMessage event) to the shell's κ-CDP backend over the
+          EXISTING holo-privacy:rpc bus (method:"cdp" — holo-gov.js routes it; the host asserts our id).
+       2. load the VENDORED Chrome devtools entrypoint — the real, complete F12 UI.
+     100% serverless: every path is same-origin (/_shared/...), no CDN, no socket. Low latency: CDP rides
+     the in-page bus (no WebSocket round-trip), answered by an O(1) κ-memo store (Law L3). -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Holo DevTools</title>
+  <link rel="stylesheet" href="/_shared/holo-theme.css" data-holo-shared="holo-theme.css" />
+  <style>
+    html, body { margin: 0; height: 100%; background: var(--holo-bg, #0b0d10); color: var(--holo-ink, #e8eef5);
+      font-family: var(--holo-font, system-ui, sans-serif); font-size: max(var(--holo-font-min, 16px), 1rem); }
+    #holo-devtools-fallback { display: none; padding: 2rem; max-width: 56ch; line-height: 1.6; }
+    #holo-devtools-fallback code { background: var(--holo-surface, #161a20); padding: .1em .4em; border-radius: var(--holo-radius-sm, 6px); }
+    :root.holo-devtools-needs-bundle #holo-devtools-fallback { display: block; }
+  </style>
+</head>
+<body>
+  <!-- the vendored devtools mounts into the document root; this shows only if the BUILT bundle is absent -->
+  <div id="holo-devtools-fallback" role="status">
+    <h1>Holo DevTools</h1>
+    <p><strong>My machine, open to inspect.</strong> Nothing here is hidden from me — every part re-derives to its own address (Law L5).</p>
+    <p>The κ-CDP backend is <strong>live and bound</strong> over the governed cross-frame bus — every
+      handle is a κ, reads re-derive (Law L5), <code>Runtime.evaluate</code> is fail-closed.</p>
+    <p>The vendored Chrome DevTools <em>UI</em> needs its <strong>built bundle</strong>. npm ships
+      TypeScript source, so run the build/extract step (see <code>holo-devtools-cdp-flowmap.md §5</code>)
+      to drop the compiled <code>front_end/</code> at <code>/_shared/devtools/vendor/front_end/</code>.
+      Once present, this page boots the real, feature-complete inspector against the κ substrate.</p>
+  </div>
+
+  <!-- 1 · install the embedder host shim, bound to the κ-CDP backend, BEFORE the bundle. IN-SHELL (iframe):
+       route over the parent's holo-privacy:rpc bus (holo-gov.js → window.HoloDevToolsServe). TOP-LEVEL
+       (opened directly): run a LOCAL κ-CDP backend over a demo scene, so it paints standalone too. Both
+       paths are 100% serverless + κ-anchored. -->
+  <script type="module">
+    // installHoloBridgeWebSocket — override window.WebSocket so devtools-frontend's WebSocketConnection to
+    // the holo-bridge sentinel is served by the κ backend over the parent's holo-privacy:rpc bus (method:"cdp").
+    // Each ws.send(jsonFrame) → one rpc to the parent → HoloDevToolsServe; the reply AND every streamed CDP
+    // event are delivered back as ws.onmessage frames — byte-identical to a real socket. Other URLs fall
+    // through to the real WebSocket. This routes the proven WebSocketConnection path at the κ substrate.
+    function installHoloBridgeWebSocket(handler) {
+      const rpc = handler;   // (cdp, onDelta) => Promise<replyFrame> — bridges to a κ backend (parent bus or local serve)
+      const RealWS = window.WebSocket;
+      const frame = (obj) => (typeof obj === "string" ? obj : JSON.stringify(obj));
+      class BridgeWS {
+        constructor(url) { this.url = url; this.readyState = 0; this.onopen = this.onmessage = this.onclose = this.onerror = null;
+          Promise.resolve().then(() => { this.readyState = 1; if (this.onopen) this.onopen({ type: "open" }); }); }
+        send(data) {
+          let cdp; try { cdp = JSON.parse(data); } catch (e) { return; }
+          rpc(cdp, (evt) => { if (this.onmessage) this.onmessage({ data: frame(evt) }); })   // streamed CDP events
+            .then((reply) => { if (reply != null && this.onmessage) this.onmessage({ data: frame(reply) }); })   // the method reply
+            .catch((err) => { if (this.onmessage) this.onmessage({ data: JSON.stringify({ id: cdp.id, error: { message: String((err && err.message) || err) } }) }); });
+        }
+        close() { this.readyState = 3; if (this.onclose) this.onclose({ type: "close" }); }
+        addEventListener(t, fn) { this["on" + t] = fn; } removeEventListener(t) { this["on" + t] = null; }
+      }
+      BridgeWS.CONNECTING = 0; BridgeWS.OPEN = 1; BridgeWS.CLOSING = 2; BridgeWS.CLOSED = 3;
+      window.WebSocket = function (url, protocols) { return String(url).indexOf("holo-bridge") >= 0 ? new BridgeWS(url) : new RealWS(url, protocols); };
+      window.WebSocket.prototype = BridgeWS.prototype;
+      window.WebSocket.CONNECTING = 0; window.WebSocket.OPEN = 1; window.WebSocket.CLOSING = 2; window.WebSocket.CLOSED = 3;
+    }
+
+    // ── NATIVE REAL-CDP path (ADR-0095, the native human door) ──────────────────────────────────────
+    // On the native host the Tauri webview is Chromium (WebView2) with the real Chrome DevTools Protocol
+    // open on a localhost debugging port. When the shell mounts us with ?ws=<host/path>, devtools-frontend
+    // connects over that REAL WebSocket (its native WebSocketConnection path) and inspects the LIVE page —
+    // genuine F12 (real DOM · Console · Sources · Network), fully reflective of the holospace tab. We
+    // install NO κ-CDP shim here: the ws param drives the real connection and the bundle supplies its own
+    // InspectorFrontendHostStub. The κ-CDP shim in the else-branch is the PURE-WEB fallback.
+    const __qs = new URLSearchParams(location.search);
+    const __wsParam = __qs.get("ws") || __qs.get("wss");
+    const __isRealWs = __wsParam && __wsParam !== "holo-bridge";   // a real host:port → the NATIVE real CDP socket (Tier 3)
+    const __loadBundle = () => import("/_shared/devtools/vendor/front_end/entrypoints/devtools_app/devtools_app.js")
+      .catch(() => document.documentElement.classList.add("holo-devtools-needs-bundle"));
+
+    if (__isRealWs) {
+      // ── NATIVE Tier 3: a real WebSocket to WebView2's real Chrome DevTools Protocol — genuine F12. ──
+      __loadBundle();
+    } else if (__wsParam === "holo-bridge") {
+      // ── PURE-WEB (Tier 1/2): the FAKE-WebSocket bridge. devtools-frontend uses its PROVEN WebSocketConnection
+      //    path; the bridge routes each CDP frame to a κ backend — the frontend can't tell it from a socket.
+      //    IN-SHELL ⇒ bridge to the parent's live/scene backend over the governed holo-privacy:rpc bus;
+      //    STANDALONE ⇒ a LOCAL κ-scene serve in this frame. This is what makes the Elements tree actually paint. ──
+      let handler;
+      if (window.parent && window.parent !== window) {
+        const pending = new Map(); let seq = 0;
+        addEventListener("message", (e) => {
+          const d = e.data; if (!d || (d.type !== "holo-privacy:res" && d.type !== "holo-privacy:delta")) return;
+          const p = pending.get(d.id); if (!p) return;
+          if (d.type === "holo-privacy:delta") { if (p.onDelta) try { p.onDelta(d.delta); } catch (x) {} return; }
+          pending.delete(d.id); if (d.error) p.reject(new Error(d.error)); else p.resolve(d.result);
+        });
+        handler = (cdp, onDelta) => new Promise((resolve, reject) => {
+          const id = "dt-" + (++seq); pending.set(id, { resolve, reject, onDelta });
+          try { parent.postMessage({ type: "holo-privacy:rpc", method: "cdp", args: { cdp }, id }, "*"); }
+          catch (err) { pending.delete(id); reject(err); }
+        });
+      } else {
+        // standalone: a LOCAL κ-scene backend over a demo scene of self-verifying objects (100% serverless).
+        const [{ installDevToolsServe }, { address }] = await Promise.all([
+          import("/_shared/devtools/holo-devtools-ui.js"),
+          import("/_shared/holo-object.mjs"),
+        ]);
+        const seal = (o) => ({ ...o, id: address(o) });
+        const objects = [
+          seal({ "@type": ["schema:CreativeWork", "holo:Note"], "schema:name": "Welcome", "schema:text": "Holo DevTools — inspecting the live κ-addressed scene. Every node is a κ; reads re-derive (Law L5)." }),
+          seal({ "@type": ["schema:SoftwareApplication", "holo:Widget"], "schema:name": "Clock", "holo:widget": "clock" }),
+        ];
+        const placements = objects.map((o, i) => ({ k: o.id, x: 40 + i * 240, y: 60, w: 220, h: 140 }));
+        const serve = installDevToolsServe({ objects, placements });
+        handler = (cdp, onDelta) => serve({ app: "holo-devtools-local", method: "cdp", args: { cdp }, onEvent: onDelta })
+          .then((o) => { if (o && o.error) throw new Error(o.error); return o && o.result; });
+      }
+      installHoloBridgeWebSocket(handler);
+      __loadBundle();
+    } else {
+      // No ws param → engage the bridge so the tree paints (re-enter with the sentinel).
+      location.replace(location.pathname + "?ws=holo-bridge" + location.hash);
+    }
+  </script>
+</body>
+</html>

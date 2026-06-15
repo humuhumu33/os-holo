@@ -278,13 +278,13 @@ function sortNodes(list) {
 // NOTE: indices 0..4 are referenced by the explorer chrome (at=… deep-links, holospaces count).
 // New roots are APPENDED to keep those stable — Desktop is index 5.
 export const ROOTS = () => [
-  node({ name: "Home", path: "/home/user", kind: "location", source: "opfs", writable: true, role: "your writable space · OPFS", glyph: "home" }),
+  node({ name: "Home", path: "/home/user", kind: "location", source: "opfs", writable: true, role: "my writable space · OPFS", glyph: "home" }),
   node({ name: "This Hologram", path: "/", kind: "location", source: "fhs", role: "the OS as a content-addressed graph", glyph: "drive" }),
   node({ name: "Holospaces", path: "holospaces:", kind: "location", source: "holospaces", role: "every app, by κ", glyph: "apps" }),
   node({ name: "OS Runtime", path: "os:", kind: "location", source: "osruntime", role: "the OS-wide closure · path → κ", glyph: "chip" }),
-  node({ name: "Holo Cloud", path: "cloud:", kind: "location", source: "cloud", writable: true, role: "your private, end-to-end-encrypted cloud · synced with Holo Cloud", glyph: "cloud", _cloudPath: "/" }),
-  node({ name: "Desktop", path: "desktop:", kind: "location", source: "desktop", writable: true, role: "your holospace desktop — folders · apps · objects (the SAME model the shell shows)", glyph: "desktop" }),
-  node({ name: "Recycle Bin", path: "trash:", kind: "location", source: "trash", role: "deleted Home items — restore or empty (nothing leaves your device)", glyph: "trash" }),
+  node({ name: "Holo Cloud", path: "cloud:", kind: "location", source: "cloud", writable: true, role: "my private, end-to-end-encrypted cloud · synced with Holo Cloud", glyph: "cloud", _cloudPath: "/" }),
+  node({ name: "Desktop", path: "desktop:", kind: "location", source: "desktop", writable: true, role: "my holospace desktop — folders · apps · objects (the SAME model the shell shows)", glyph: "desktop" }),
+  node({ name: "Recycle Bin", path: "trash:", kind: "location", source: "trash", role: "deleted Home items — restore or empty (nothing leaves my device)", glyph: "trash" }),
 ];
 
 // ── DESKTOP unification — the explorer and the shell's desktop are ONE model ─────────────────

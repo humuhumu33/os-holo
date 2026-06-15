@@ -10,11 +10,13 @@ const DEFAULTS = {
   lib: "vendor/transformers/transformers.js",
   ortPath: "vendor/transformers/",
   localPath: "vendor/models/",
-  // Two tiers, picked by device. WebGPU gets the stronger 1.5B (q4f16, fast on a real GPU); WASM gets the
-  // light 0.5B (int8) so any browser stays responsive. int8-on-WebGPU is broken, so the tiers differ by
-  // BOTH model and dtype, not dtype alone.
-  webgpu: { model: "onnx-community/Qwen2.5-1.5B-Instruct", dtype: "q4f16" },   // quality tier
-  wasm: { model: "onnx-community/Qwen2.5-0.5B-Instruct", dtype: "q8" },        // any-browser floor
+  // ONE any-browser brain that covers general conversation AND agentic coding (ADR-0096): the verified
+  // best compact coder, Qwen2.5-Coder-1.5B-Instruct at q8, on transformers.js — WASM is the any-browser
+  // default, WebGPU where it works. The light 0.5B is the responsive FALLBACK (also if the coder isn't
+  // vendored yet). q8 (not fp16) per the research. WebGPU on this stack can abort on some HW → WASM floor.
+  webgpu: { model: "onnx-community/Qwen2.5-Coder-1.5B-Instruct", dtype: "q8" },   // same model, GPU when available
+  wasm: { model: "onnx-community/Qwen2.5-Coder-1.5B-Instruct", dtype: "q8" },     // any-browser brain + coder
+  wasmFallback: { model: "onnx-community/Qwen2.5-0.5B-Instruct", dtype: "q8" },   // responsive floor / not-yet-vendored fallback
   maxTokens: 256,
   preferWebGPU: false,    // WASM floor is the default; opt into WebGPU after verifying it on real HW.
   proxy: true,            // run onnxruntime-web in a Web Worker so load/generation never freezes the UI.
@@ -53,9 +55,16 @@ export function createLLM(opts = {}) {
       try {
         if (wantGPU) { pipe = await build("webgpu", cfg.webgpu); info = { ready: true, model: cfg.webgpu.model, device: "webgpu", dtype: cfg.webgpu.dtype }; return info; }
       } catch (e) { /* WebGPU path failed → fall through to the WASM floor (any browser) */ }
-      pipe = await build("wasm", cfg.wasm);
-      info = { ready: true, model: cfg.wasm.model, device: "wasm", dtype: cfg.wasm.dtype };
-      return info;
+      try {
+        pipe = await build("wasm", cfg.wasm);
+        info = { ready: true, model: cfg.wasm.model, device: "wasm", dtype: cfg.wasm.dtype };
+        return info;
+      } catch (e) {                                                    // coder not vendored / failed → the lighter 0.5B floor
+        if (!cfg.wasmFallback || cfg.wasmFallback.model === cfg.wasm.model) throw e;
+        pipe = await build("wasm", cfg.wasmFallback);
+        info = { ready: true, model: cfg.wasmFallback.model, device: "wasm", dtype: cfg.wasmFallback.dtype };
+        return info;
+      }
     })().catch((e) => { loading = null; throw e; });
     return loading;
   }

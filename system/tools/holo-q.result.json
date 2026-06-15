@@ -1,0 +1,45 @@
+{
+  "@type": "earl:TestResult",
+  "subject": "#holo-q — the Holo Q stack conformance suite (ADR-0091 + the Mixture-of-Specialists spine)",
+  "witnessed": true,
+  "suites": 5,
+  "checks": 91,
+  "failed": 0,
+  "rows": [
+    {
+      "id": "spine",
+      "what": "Create build rides trinity.create → mux → fabric κ-memo (O(1) repeat)",
+      "pass": 12,
+      "fail": 0,
+      "ok": true
+    },
+    {
+      "id": "unified",
+      "what": "Q — one verb (create·ask·act) + fail-closed governed agent door",
+      "pass": 23,
+      "fail": 0,
+      "ok": true
+    },
+    {
+      "id": "ambient",
+      "what": "context-aware · summon · OS-wide scope · omnipotent intent · capabilities",
+      "pass": 32,
+      "fail": 0,
+      "ok": true
+    },
+    {
+      "id": "bridge",
+      "what": "Q reachable inside a sandboxed app, governed, the app holds nothing",
+      "pass": 9,
+      "fail": 0,
+      "ok": true
+    },
+    {
+      "id": "surface",
+      "what": "warm-κ surface cache — O(1) re-open · warm-on-close · LRU-bounded",
+      "pass": 15,
+      "fail": 0,
+      "ok": true
+    }
+  ]
+}

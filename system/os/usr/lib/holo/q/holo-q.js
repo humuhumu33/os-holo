@@ -24,6 +24,8 @@
 
 import { installTrinity } from "./holo-q-trinity.js";
 import mux from "./holo-q-mux.js";
+import { createFuse } from "./holo-q-fuse.js";
+import { createRecall } from "./holo-q-recall.js";
 
 const intentText = (i) => typeof i === "string" ? i : (i && (i.text || i.utterance || i.input || i.prompt)) || "";
 
@@ -205,15 +207,56 @@ export function createQ({ trinity = null, mux: muxImpl = mux, conscience = null,
     return { count: items.length, open: items, focused, summary };
   }
 
+  // ── FUSE — the COMPOUND verb (ADR-0098): run a PANEL of small specialists on the SAME prompt in
+  //    parallel, JUDGE them, then SYNTHESIZE one new answer none produced. Rides the κ-memo fabric, so a
+  //    repeat fusion is O(1) and every deliberation seals a re-derivable holoq:FusionReceipt. The host
+  //    wires the panel (which models) via configureFuse — exactly like binding a specialist (mux's job);
+  //    with no panel configured, fuse() returns an honest notice (never throws), like ask(). Conscience
+  //    is passed through so the FusionReceipt carries the gate's verdict. Lift, not magic — see
+  //    holo-q-fuse.describeFuse(): "compound beats components on the WASM floor", not "Fable-5 in a tab". ──
+  let _fuse = null;
+  function configureFuse(config = {}) {
+    if (config && typeof config.fuse === "function") { _fuse = config; }      // an already-built createFuse() instance
+    else { _fuse = createFuse({ panel: config.panel || [], judge: config.judge || null, synth: config.synth || null, fabric: config.fabric || null, clock }); }
+    return q;
+  }
+  async function fuse(input, opts = {}) {
+    if (!_fuse) return { ok: false, refused: true, reason: "Q.fuse: no panel configured — call Q.configureFuse({ panel, judge?, synth? }) first" };
+    remember({ intent: intentText(input) });
+    try { return await _fuse.fuse(input, { conscience: resolveGate(), ...opts }); }
+    catch (e) { return { ok: false, refused: true, reason: "Q.fuse: " + (e && e.message || e) }; }
+  }
+
+  // ── RECALL — κ-graph retrieval over the PRIVATE corpus (ADR-0099): semantic ⊕ lexical ⊕ graph-expanded
+  //    retrieval over YOUR own objects, sealed as a re-derivable holoq:RecallReceipt. This is the "what do
+  //    I know" door — STRICTLY separate from the open-web stack (ADR-0037–0046, "what does the open web
+  //    know"). The host wires the corpus (which objects are indexed) via configureRecall — exactly like
+  //    binding a fuse panel or a specialist (the host's job); with no corpus, recall() returns an honest
+  //    notice (never throws), like ask()/fuse(). The deterministic core runs zero models; synthesize:true
+  //    is an opt-in cited answer + gap analysis over the injected synth (a Q.fuse instance or a provider).
+  //    Conscience is passed through so the RecallReceipt carries the gate's verdict. ──
+  let _recall = null;
+  function configureRecall(config = {}) {
+    if (config && typeof config.recall === "function") { _recall = config; }              // an already-built createRecall() instance
+    else if (config && config.corpus) { _recall = createRecall({ corpus: config.corpus, synth: config.synth || _fuse || null, clock }); }
+    return q;
+  }
+  async function recall(query, opts = {}) {
+    if (!_recall) return { ok: false, refused: true, reason: "Q.recall: no corpus configured — call Q.configureRecall({ corpus }) first" };
+    remember({ intent: intentText(query) });
+    try { return await _recall.recall(query, { conscience: resolveGate(), ...opts }); }
+    catch (e) { return { ok: false, refused: true, reason: "Q.recall: " + (e && e.message || e) }; }
+  }
+
   const q = {
-    create, ask, agent, summon, scope, intent, capabilities, act, configureActions, perceive, improve, remember,
+    create, ask, agent, summon, scope, intent, capabilities, act, configureActions, fuse, configureFuse, recall, configureRecall, perceive, improve, remember,
     get context() { return { recent: ctx.recent.slice(), feedback: { ...ctx.feedback }, intents: ctx.intents }; },
     route: (task) => muxImpl.routeTask(task),
     trinity: T, mux: muxImpl,
     startEvolving: (ms = 2000) => T.startImproving(ms), stopEvolving: () => T.stopImproving(),
     describe: () => ({
       what: "Q — the one surface for hologram-native intelligence: humans, apps, and external agents all touch this single door",
-      verbs: "create/ask (build·answer, rides the κ-memo spine) · summon(context) (context-locked Q — resolves intent against what you're looking at) · agent (governed external door, fail-closed + receipted) · perceive/improve (self-healing) · remember (bounded adaptation)",
+      verbs: "create/ask (build·answer, rides the κ-memo spine) · fuse (compound model — panel→judge→synthesize, ADR-0098) · recall (κ-graph retrieval over your PRIVATE corpus — hybrid ⊕ graph-expand, ADR-0099) · summon(context) (context-locked Q — resolves intent against what you're looking at) · agent (governed external door, fail-closed + receipted) · perceive/improve (self-healing) · remember (bounded adaptation)",
       ubiquity: "installQ() → window.Q singleton; every app inherits ONE Q (composes, never replaces, HoloTrinity/HoloMind/HoloConscience)",
       governance: "external / non-human callers get ONLY Q.agent — conscience-gated (fail-closed), receipted; the interior is never exposed raw",
       honest: "self-evolving = the bounded heal/reevaluate loop (not open-ended learning); adaptation = recent-intent context + 👍/👎 bias; a build is on-device/template unless boost is installed (then a governed network call)",

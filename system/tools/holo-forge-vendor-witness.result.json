@@ -1,0 +1,16 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Holo Forge vendored esbuild-wasm toolchain — the bundler's build tool is content-addressed + re-derivable, no trusted CDN (ADR-0093, Law L5)",
+  "passed": 6,
+  "failed": 0,
+  "vendoredPresent": 2,
+  "checks": {
+    "the-pin-esbuild-wasm-pin-json-is-committed-1": true,
+    "pin-declares-the-toolchain-its-files-as-did-holo-s-2": true,
+    "vendored-browser-min-js-re-derives-to-its-pin-law-l5-3": true,
+    "vendored-esbuild-wasm-re-derives-to-its-pin-law-l5-4": true,
+    "every-present-vendored-byte-re-derives-host-untrusted-l5-5": true,
+    "tamper-would-be-refused-a-flipped-byte-the-pinned-6": true
+  }
+}

@@ -43,17 +43,16 @@ const MODEL_TINY = "onnx-community/whisper-tiny";
 
 // Agent brain (Phase 2): a small on-device instruct LLM. int8 ("_quantized") is single-file and runs on
 // both WASM (any browser) and WebGPU. Bound via HoloQVAC; conversation upgrades from the reference floor.
-// Two-tier agent brain. The WASM floor (Qwen2.5-0.5B int8) is ALWAYS vendored — it's the verified,
-// any-browser default. Pass --webgpu to ALSO vendor the quality tier (Qwen2.5-1.5B q4f16, ~1GB) for
-// WebGPU-capable browsers. WebGPU produced garbage in our headless test env (likely a software-GPU
-// issue, not transformers.js — q4f16 Qwen is reported fine on real GPUs); verify on real hardware
-// before relying on it (HOLO_VOICE_CONFIG.preferWebGPU=true).
-const WANT_WEBGPU = process.argv.includes("--webgpu");
+// Agent brain (ADR-0096): ONE any-browser model that covers conversation AND agentic coding —
+// Qwen2.5-Coder-1.5B-Instruct at q8 (model_quantized, single-file, runs on WASM any-browser + WebGPU).
+// The light Qwen2.5-0.5B (int8) stays vendored as the responsive FALLBACK floor. The old WebGPU-only
+// Qwen2.5-1.5B q4f16 tier is REMOVED (it aborted onnxruntime-web's WebGPU EP on real HW; superseded).
 const LLM_BASE = ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json",
   "special_tokens_map.json", "added_tokens.json", "merges.txt", "vocab.json"];
 const LLMS = [
-  { repo: "onnx-community/Qwen2.5-0.5B-Instruct", files: [...LLM_BASE, "onnx/model_quantized.onnx"] },   // WASM floor (int8)
-  ...(WANT_WEBGPU ? [{ repo: "onnx-community/Qwen2.5-1.5B-Instruct", files: [...LLM_BASE, "onnx/model_q4f16.onnx"] }] : []), // WebGPU tier
+  { repo: "onnx-community/Qwen2.5-Coder-1.5B-Instruct", files: [...LLM_BASE, "onnx/model_quantized.onnx"] },   // brain + coder (q8, ~1.8GB)
+  { repo: "onnx-community/Qwen2.5-0.5B-Instruct", files: [...LLM_BASE, "onnx/model_quantized.onnx"] },         // responsive fallback floor (int8)
+  { repo: "HuggingFaceTB/SmolLM2-360M-Instruct", files: [...LLM_BASE, "onnx/model_quantized.onnx"] },          // fast base for cheap tasks (q8, ~376MB, ADR-0096)
 ];
 
 // Q's natural voice — Kokoro-82M (best-in-class on-device TTS). Needs its own transformers (3.5.1) +
@@ -69,6 +68,28 @@ const KOKORO_FILES = ["config.json", "tokenizer.json", "tokenizer_config.json", 
 const WANT_TURN = process.argv.includes("--turn");
 const TURN = "onnx-community/turn-detector-ONNX";
 const TURN_FILES = ["config.json", "tokenizer.json", "tokenizer_config.json", "special_tokens_map.json", "onnx/model_q4f16.onnx"];
+
+// Sovereign stage-1 WAKE GATE — Silero VAD (MIT), pure ONNX. It runs on the onnxruntime-web that
+// transformers.js ALREADY bundles (loaded via AutoModel with config:{model_type:'custom'} — there's no
+// config.json in the repo), so there's no new runtime and no emscripten build. Tiny (~2 MB fp32 / ~639 KB
+// q8). Vendored BY DEFAULT (small + broadly useful). holo-voice-vad.mjs gates Whisper on real speech, so a
+// slammed door / music never wakes the recognizer. Bootstrap: no PINS yet → downloads unpinned + prints
+// the sha256 to paste back below. (Replaced the sherpa-onnx KWS path, which needed an emscripten wasm
+// runtime we can't vendor in-browser — see the holo-voice memory.)
+const VAD_REPO = "onnx-community/silero-vad";
+const VAD_FILES = ["onnx/model.onnx", "onnx/model_quantized.onnx"];   // fp32 (default) + q8 (optional smaller)
+
+// semantic embeddings — EmbeddingGemma-300m q8 (Q's semantic memory: recall · skills · RAG; ADR-0096).
+// model_quantized.onnx carries its weights in the sibling .onnx_data (external-data ONNX).
+const EMBED_REPO = "onnx-community/embeddinggemma-300m-ONNX";
+const EMBED_FILES = ["config.json", "generation_config.json", "tokenizer.json", "tokenizer.model", "tokenizer_config.json", "special_tokens_map.json", "onnx/model_quantized.onnx", "onnx/model_quantized.onnx_data"];
+
+// sight — SmolVLM-256M-Instruct q8 (Q's vision: describe / answer about an image; ADR-0096). A 3-part VLM
+// (vision_encoder · embed_tokens · decoder_model_merged), each its own _quantized session. Rides the same
+// isolated transformers.js 3.8.1 as the embedder (Idefics3/SmolVLM isn't in the main 3.0.2). ~254MB total.
+const VISION_REPO = "HuggingFaceTB/SmolVLM-256M-Instruct";
+const VISION_FILES = ["config.json", "generation_config.json", "preprocessor_config.json", "processor_config.json", "tokenizer.json", "tokenizer_config.json", "special_tokens_map.json", "added_tokens.json", "chat_template.json", "merges.txt", "vocab.json",
+  "onnx/vision_encoder_quantized.onnx", "onnx/embed_tokens_quantized.onnx", "onnx/decoder_model_merged_quantized.onnx"];
 
 // ── pinned sha256 (Law L5). Keyed by logical name; empty/missing → printed, not enforced (bootstrap). ──
 const PINS = {
@@ -112,16 +133,54 @@ const PINS = {
   "onnx-community/Qwen2.5-0.5B-Instruct/merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
   "onnx-community/Qwen2.5-0.5B-Instruct/vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
   "onnx-community/Qwen2.5-0.5B-Instruct/onnx/model_quantized.onnx": "41834041ab1b29eff9fc592f1a29a1844133aea35832ea9fa91682be13016100",
-  // LLM — WebGPU quality tier (Qwen2.5-1.5B-Instruct, q4f16). model_q4f16 bootstraps on first --webgpu run.
-  "onnx-community/Qwen2.5-1.5B-Instruct/config.json": "215eb99c4955b0c42ea9f6e0980d922c228950c5dbc09bde6dc451fbba4d21f3",
-  "onnx-community/Qwen2.5-1.5B-Instruct/generation_config.json": "f7e7ce458658b2d40d9eb213b91b77a8bf698845ab89360976722d7ac46928a3",
-  "onnx-community/Qwen2.5-1.5B-Instruct/tokenizer.json": "a8506e7111b80c6d8635951a02eab0f4e1a8e4e5772da83846579e97b16f61bf",
-  "onnx-community/Qwen2.5-1.5B-Instruct/tokenizer_config.json": "7e88129d9769a0b14b1587a7d5e829fe93ac0e1511636471fdfc0811951418e6",
-  "onnx-community/Qwen2.5-1.5B-Instruct/special_tokens_map.json": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd",
-  "onnx-community/Qwen2.5-1.5B-Instruct/added_tokens.json": "58b54bbe36fc752f79a24a271ef66a0a0830054b4dfad94bde757d851968060b",
-  "onnx-community/Qwen2.5-1.5B-Instruct/merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
-  "onnx-community/Qwen2.5-1.5B-Instruct/vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
-  "onnx-community/Qwen2.5-1.5B-Instruct/onnx/model_q4f16.onnx": "19dec9f63488016185ba997d5e4492b5ac5b4f7ef1abb45243a91de958838dcd",
+  // fast base — SmolLM2-360M-Instruct q8 (cheap tasks: routing·titling·compression·approval·curation)
+  "HuggingFaceTB/SmolLM2-360M-Instruct/config.json": "224f72354f10d617a359cc82ad15a3c96e866b9b2ffadb81997eeea9e88e22ee",
+  "HuggingFaceTB/SmolLM2-360M-Instruct/generation_config.json": "87b916edaaab66b3899b9d0dd0752727dff6666686da0504d89ae0a6e055a013",
+  "HuggingFaceTB/SmolLM2-360M-Instruct/tokenizer.json": "9ca9acddb6525a194ec8ac7a87f24fbba7232a9a15ffa1af0c1224fcd888e47c",
+  "HuggingFaceTB/SmolLM2-360M-Instruct/tokenizer_config.json": "4ec77d44f62efeb38d7e044a1db318f6a939438425312dfa333b8382dbad98df",
+  "HuggingFaceTB/SmolLM2-360M-Instruct/special_tokens_map.json": "2b7379f3ae813529281a5c602bc5a11c1d4e0a99107aaa597fe936c1e813ca52",
+  "HuggingFaceTB/SmolLM2-360M-Instruct/added_tokens.json": "f36668ddf22403a332f978057d527cf285b01468bc3431b04094a7bafa6aba59",
+  "HuggingFaceTB/SmolLM2-360M-Instruct/merges.txt": "0b54e8aa4e53d5383e2e4bc635a56b43f9647f7b13832d5d9ecd8f82dac4f510",
+  "HuggingFaceTB/SmolLM2-360M-Instruct/vocab.json": "82b84012e3add4d01d12ba14442026e49b8cbbaead1f79ecf3d919784f82dc79",
+  "HuggingFaceTB/SmolLM2-360M-Instruct/onnx/model_quantized.onnx": "57987a3a24dc34ad2cb5e7e566840ccaece095e35a24ae4fc5b3086c7ddd6918",
+  // LLM — brain + agentic coder (Qwen2.5-Coder-1.5B-Instruct, q8 model_quantized, ADR-0096)
+  "onnx-community/Qwen2.5-Coder-1.5B-Instruct/config.json": "debf0b90deaf6cbcb066fc26e048d4f14414828114a206b09f263730b1ad7f3c",
+  "onnx-community/Qwen2.5-Coder-1.5B-Instruct/generation_config.json": "0dc30d5b7f022dcbfaaef3e55340642208a3b0436214346caf1c522c009f699d",
+  "onnx-community/Qwen2.5-Coder-1.5B-Instruct/tokenizer.json": "9c5ae00e602b8860cbd784ba82a8aa14e8feecec692e7076590d014d7b7fdafa",
+  "onnx-community/Qwen2.5-Coder-1.5B-Instruct/tokenizer_config.json": "7e88129d9769a0b14b1587a7d5e829fe93ac0e1511636471fdfc0811951418e6",
+  "onnx-community/Qwen2.5-Coder-1.5B-Instruct/special_tokens_map.json": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd",
+  "onnx-community/Qwen2.5-Coder-1.5B-Instruct/added_tokens.json": "58b54bbe36fc752f79a24a271ef66a0a0830054b4dfad94bde757d851968060b",
+  "onnx-community/Qwen2.5-Coder-1.5B-Instruct/merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+  "onnx-community/Qwen2.5-Coder-1.5B-Instruct/vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+  "onnx-community/Qwen2.5-Coder-1.5B-Instruct/onnx/model_quantized.onnx": "92f3b69db6c85669db5ed18d501a6e47f8aaf849b847a3c27a2014905db1cc17",
+  // Embeddings — EmbeddingGemma-300m q8 (Q's semantic memory, ADR-0096); model_quantized carries weights in .onnx_data
+  "onnx-community/embeddinggemma-300m-ONNX/config.json": "6e1f06404b7163e0325ed2ea3e6781cde50f4a50b31780a95ad0d30e8404d77b",
+  "onnx-community/embeddinggemma-300m-ONNX/generation_config.json": "1fb1efd221c1ca88a736d1b36cb47d754c177677e222acb3b1e5424c5d664870",
+  "onnx-community/embeddinggemma-300m-ONNX/tokenizer.json": "4dda02faaf32bc91031dc8c88457ac272b00c1016cc679757d1c441b248b9c47",
+  "onnx-community/embeddinggemma-300m-ONNX/tokenizer.model": "1299c11d7cf632ef3b4e11937501358ada021bbdf7c47638d13c0ee982f2e79c",
+  "onnx-community/embeddinggemma-300m-ONNX/tokenizer_config.json": "3ca953eea6c3c9fcda9cf3df22949ff18b216f7c74bd6459230f3f1013953f3a",
+  "onnx-community/embeddinggemma-300m-ONNX/special_tokens_map.json": "2f7b0adf4fb469770bb1490e3e35df87b1dc578246c5e7e6fc76ecf33213a397",
+  "onnx-community/embeddinggemma-300m-ONNX/onnx/model_quantized.onnx": "172efde319fe1542dc41f31be6154910b05b78f7a861c265c4600eec906bd6d8",
+  "onnx-community/embeddinggemma-300m-ONNX/onnx/model_quantized.onnx_data": "705626e28e4c23c82ade34566b4197d97f534c12275fa406dfb71e9937d388c0",
+  // sight — SmolVLM-256M-Instruct q8 (3-part VLM)
+  "HuggingFaceTB/SmolVLM-256M-Instruct/config.json": "b70fb4bfde88df9eeebc9d8ff523733b8bf70d6c9b06c610325960e06ae9db52",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/generation_config.json": "067a2a54e5f87162ecac6e0e911cc4665fc8f7f3324794ecbac0f76badb56636",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/preprocessor_config.json": "6cb6e36d6fcb88ca1502c4a26750715dc3e7dedddc9a8f17b27d8d167d1457e7",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/processor_config.json": "e7bff42da73ae9eec9042ef20e066e11f1ee20f025358ff79131e3c0fb549b46",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/tokenizer.json": "5ece781dc8d2b2f3e2f289ca0ae50b17cfc27dd27bfe7971bb8241e0b964331a",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/tokenizer_config.json": "36c6fd44d07d10fd8180ee6b46dcccf69fb7c06753968ff0d7e17b8bfe17b777",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/special_tokens_map.json": "aa0ff906077086dfa9734a7f97f68c825877a48f9468807be65504495cdeef09",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/added_tokens.json": "74135b8664b56088c0006f1c8e848d79a8eba003411f72ebf1dc2ee96227be3a",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/chat_template.json": "a68ad1a42681ae44eacd109ff8dd56a840f761c03d72f4ff4c515d092f882168",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/merges.txt": "0b54e8aa4e53d5383e2e4bc635a56b43f9647f7b13832d5d9ecd8f82dac4f510",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/vocab.json": "82b84012e3add4d01d12ba14442026e49b8cbbaead1f79ecf3d919784f82dc79",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/onnx/vision_encoder_quantized.onnx": "f82adc84246fbfe8651038470166385452682cc889538f5106544e622e5f1595",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/onnx/embed_tokens_quantized.onnx": "4b919b829fe2bf225e42431230c56891116f0149e5170e36c99bcc0cfae0d2ef",
+  "HuggingFaceTB/SmolVLM-256M-Instruct/onnx/decoder_model_merged_quantized.onnx": "33f14f3bca52699d733d86fcc9c5a0ec6f57afffa1dc9596abde53cde9df81aa",
+  // the embedder's isolated transformers.js 3.8.1 (Gemma3-aware) + its ORT wasm — vendor/transformers-embed/
+  "embed/transformers.js": "ca697cc102b304de065fbbbd7f3714084d18531509741066ea0bb0326a8ac815",
+  "embed/ort-wasm-simd-threaded.jsep.mjs": "08fb86ec433c78bfb032c5d84a68b8e8e5a8d81268fa39e24314179a5767a5b9",
+  "embed/ort-wasm-simd-threaded.jsep.wasm": "c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39",
   // TTS — Kokoro-82M (Q's natural voice)
   "onnx-community/Kokoro-82M-v1.0-ONNX/config.json": "df34b4f930b23447cd4dc410fabfb42eb3f24e803e6c3f97d618fb359380a36f",
   "onnx-community/Kokoro-82M-v1.0-ONNX/tokenizer.json": "77a02c8e164413299b4b4c403b14f8e0e1c1b727db4d46a09d6327b861060a34",
@@ -135,6 +194,9 @@ const PINS = {
   "onnx-community/Kokoro-82M-v1.0-ONNX/voices/am_puck.bin": "fcf73c989033e9233e0b98713eca600c8c74dcc1614b37009d5450ff4a2274a0",
   "onnx-community/Kokoro-82M-v1.0-ONNX/voices/bf_emma.bin": "669fe0647f9dd04fcab92f1439a40eeb4c8b4ab1f82e4996fe3d918ce4a63b73",
   "onnx-community/Kokoro-82M-v1.0-ONNX/voices/bm_george.bin": "c4b235a4c1f2cd3b939fed08b899ce9385638b763f7b73a59616c4fc9bd6c9bc",
+  // sovereign wake gate — Silero VAD (MIT), pure ONNX on the bundled ORT
+  "onnx-community/silero-vad/onnx/model.onnx": "a4a068cd6cf1ea8355b84327595838ca748ec29a25bc91fc82e6c299ccdc5808",
+  "onnx-community/silero-vad/onnx/model_quantized.onnx": "982c96dc518784fb9d19bc7f56cc8252473b020e4f2099f32049e4ad0b3b43e7",
 };
 const _seen = {};
 function verify(name, buf) {
@@ -219,6 +281,25 @@ async function vendorLibs() {
   } finally { await rm(tmp, { recursive: true, force: true }); }
 }
 
+// The EMBEDDER's ISOLATED transformers.js — 3.8.1 (knows Gemma3 / EmbeddingGemma, which the main 3.0.2
+// does not), kept in vendor/transformers-embed/ so the proven ASR/LLM/TTS stack stays on 3.0.2. Fetched
+// from the npm dist on jsDelivr (the bundled ESM + its ORT wasm + the .jsep.mjs loader), sha256-pinned.
+const EMBED_TF_VER = "3.8.1";
+async function vendorEmbedLib() {
+  const out = path.join(VENDOR, "transformers-embed");
+  await mkdir(out, { recursive: true });
+  const base = `https://cdn.jsdelivr.net/npm/@huggingface/transformers@${EMBED_TF_VER}/dist/`;
+  for (const f of ["transformers.js", "ort-wasm-simd-threaded.jsep.mjs", "ort-wasm-simd-threaded.jsep.wasm"]) {
+    const key = "embed/" + f, fp = path.join(out, f);
+    if (PINS[key] && existsSync(fp) && createHash("sha256").update(readFileSync(fp)).digest("hex") === PINS[key]) { _seen[key] = PINS[key]; console.log(`  · ${f} … cached ✓`); continue; }
+    process.stdout.write(`  · ${f} … `);
+    const buf = await get(base + f);
+    const v = verify(key, buf);
+    await writeFile(fp, buf);
+    console.log(mb(buf.length), v);
+  }
+}
+
 // Kokoro's libs into vendor/kokoro/: its OWN transformers (3.5.1, kokoro needs >=3.5) + bundled ORT wasm,
 // the phonemizer (espeak inlined), kokoro-js itself, and a stub for the node built-ins kokoro imports.
 async function vendorKokoroLibs() {
@@ -255,17 +336,24 @@ async function vendorKokoroLibs() {
 (async () => {
   console.log("Vendoring Holo Voice recognizer →", VENDOR);
   await mkdir(VENDOR, { recursive: true });
-  console.log("[1/4] libraries (transformers.js + onnxruntime-web wasm)");
+  console.log("[1/5] libraries (transformers.js + onnxruntime-web wasm)");
   await vendorLibs();
-  console.log("[2/4] ASR weights (" + MODEL + " + " + MODEL_TINY + ", quantized)");
+  console.log("[2/5] ASR weights (" + MODEL + " + " + MODEL_TINY + ", quantized)");
   await vendorRepo(MODEL, MODEL_FILES);
   await vendorRepo(MODEL_TINY, MODEL_FILES);                            // fast listen tier (same layout; pins bootstrap)
-  console.log("[3/4] agent LLM weights (" + LLMS.map((l) => l.repo.split("/").pop()).join(" + ") + ")");
+  console.log("[3/5] agent LLM weights (" + LLMS.map((l) => l.repo.split("/").pop()).join(" + ") + ")");
   for (const l of LLMS) await vendorRepo(l.repo, l.files);
-  console.log("[4/4] Q's natural voice — Kokoro-82M (TTS)");
+  console.log("[4/5] Q's natural voice — Kokoro-82M (TTS)");
   await vendorKokoroLibs();
   await vendorRepo(KOKORO, KOKORO_FILES);
   if (WANT_TURN) { console.log("[+] semantic turn-detector (" + TURN + ", --turn)"); await vendorRepo(TURN, TURN_FILES); }
+  console.log("[5/6] sovereign wake gate — Silero VAD (" + VAD_REPO + ", pure ONNX on the bundled ORT)");
+  await vendorRepo(VAD_REPO, VAD_FILES);
+  console.log("[6/6] semantic memory — EmbeddingGemma-300m q8 (" + EMBED_REPO + ") + its isolated transformers " + EMBED_TF_VER);
+  await vendorEmbedLib();
+  await vendorRepo(EMBED_REPO, EMBED_FILES);
+  console.log("[7/7] sight — SmolVLM-256M-Instruct q8 (" + VISION_REPO + ") on the isolated transformers " + EMBED_TF_VER);
+  await vendorRepo(VISION_REPO, VISION_FILES);
   await writeFile(path.join(VENDOR, "README.md"),
     `# Holo Voice vendored recognizer (serverless, .gitignored)\n\n` +
     `Generated + sha256-verified by tools/vendor-voice-model.mjs (run it after clone). NOT committed —\n` +

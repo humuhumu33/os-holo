@@ -17,6 +17,8 @@
 // `pipeline` is the Hugging Face pipeline_tag the job maps to; `need` the engine capability that runs
 // it; `maxParams` the size ceiling that keeps it browser-fast. These nine are the helper-task router.
 export const TASKS = [
+  { id: "create",         label: "Create",        job: "Build a holospace",    pipeline: "text-generation",   need: "generative", maxParams: "8B" },
+  { id: "ask",            label: "Ask",           job: "Answer about a holospace", pipeline: "text-generation", need: "generative", maxParams: "8B" },
   { id: "vision",         label: "Vision",        job: "Image analysis",       pipeline: "image-to-text",     need: "vlm",        maxParams: "2B" },
   { id: "web-extract",    label: "Web extract",   job: "Page summarization",   pipeline: "summarization",     need: "generative", maxParams: "1B" },
   { id: "compression",    label: "Compression",   job: "Context compaction",   pipeline: "summarization",     need: "generative", maxParams: "1B" },
@@ -26,6 +28,10 @@ export const TASKS = [
   { id: "mcp",            label: "MCP",           job: "MCP tool routing",     pipeline: "zero-shot-classification", need: "classifier", maxParams: "500M" },
   { id: "title-gen",      label: "Title gen",     job: "Session titles",       pipeline: "summarization",     need: "generative", maxParams: "500M" },
   { id: "curator",        label: "Curator",       job: "Skill-usage review",   pipeline: "text-classification",need: "classifier",maxParams: "500M" },
+  // DETERMINISTIC tasks — routed like any other, but NOT model-discovered: their specialist is a pure
+  // encoder (no HF model, no weights, no maxParams). `deterministic:true` makes discovery SKIP them, so
+  // they ride the same per-task registry + κ-memo spine without ever pretending to pick a model (honest).
+  { id: "import",         label: "Import",        job: "Encode a GitHub repo as a Holo app", deterministic: true },
 ];
 
 // markers (in a model's tags/library) that say "this can run IN A TAB" — the hard gate on selection.
@@ -97,6 +103,8 @@ export async function discover(task, { fetch = globalThis.fetch, limit = 20 } = 
 export async function pickSpecialist(taskId, opts = {}) {
   const task = TASKS.find((t) => t.id === taskId);
   if (!task) throw new Error(`holo-q-mux: unknown task "${taskId}"`);
+  // deterministic tasks (e.g. import) have NO model to discover — return an honest plan, never an HF call.
+  if (task.deterministic) return { task: taskId, specialist: null, deterministic: true, fallback: null, reason: "deterministic task — a pure encoder is bound, no model is discovered" };
   const ranked = await discover(task, opts);
   if (!ranked.length) return { task: taskId, specialist: null, fallback: "main", reason: "no browser-runnable specialist found — using the main model" };
   return { task: taskId, specialist: ranked[0], alternatives: ranked.slice(1, 4), fallback: null };

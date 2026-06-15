@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Omni Resolve — one content-addressed space</title>
+<title>Omni Resolve one content-addressed space</title>
 <!--
   omni.html — a LIVE lab for the omni-resolve seam (sbin/holo-omni.mjs). Type any address from the four
   namespaces — https:// · did:holo: · ipfs:// · bare CID — and watch it resolve into the SAME content-
@@ -75,7 +75,7 @@
 <body>
 <div class="wrap">
   <h1>Omni Resolve</h1>
-  <p class="sub">One box. Paste a <b>https://</b> url, a <b>did:holo:</b> κ, an <b>ipfs://</b> link, or a bare <b>CID</b> — it resolves into one content-addressed space, every byte re-derived to its address before it's admitted (Law&nbsp;L5).</p>
+  <p class="sub">One box. Paste a <b>https://</b> url, a <b>did:holo:</b> κ, an <b>ipfs://</b> link, or a bare <b>CID</b> it resolves into one content-addressed space, every byte re-derived to its address before it's admitted (Law&nbsp;L5).</p>
 
   <div class="bar">
     <span class="ic">⌕</span>
@@ -94,21 +94,21 @@
 
   <div class="card" id="card">
     <div class="hd">
-      <span class="badge" id="kind">—</span>
+      <span class="badge" id="kind"></span>
       <span id="title" style="font:13px var(--mono);color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
       <span class="verify" id="verify"></span>
     </div>
     <div class="rows">
-      <div class="row"><div class="k">κ (did:holo)</div><div class="v" id="kappa">—</div></div>
-      <div class="row"><div class="k">CID (v1)</div><div class="v" id="cid">—</div></div>
+      <div class="row"><div class="k">κ (did:holo)</div><div class="v" id="kappa"></div></div>
+      <div class="row"><div class="k">CID (v1)</div><div class="v" id="cid"></div></div>
       <div class="row"><div class="k">resolved via</div><div class="v"><div class="prov" id="prov"></div></div></div>
-      <div class="row"><div class="k">size · time</div><div class="v" id="meta">—</div></div>
+      <div class="row"><div class="k">size · time</div><div class="v" id="meta"></div></div>
     </div>
     <div class="preview" id="preview"></div>
   </div>
 
   <div class="foot">
-    The <code>https://</code> leg <b>imports</b> any web object and mints its κ — the reverse bridge. The <code>ipfs://</code>/CID leg fetches the verifiable IPLD <em>block</em>; multi-block UnixFS file assembly is the next layer up. "via dev proxy" routes fetches through the host so the lab works despite cross-origin CORS — turn it off to see raw browser CORS behaviour.<br>
+    The <code>https://</code> leg <b>imports</b> any web object and mints its κ the reverse bridge. The <code>ipfs://</code>/CID leg fetches the verifiable IPLD <em>block</em>; multi-block UnixFS file assembly is the next layer up. "via dev proxy" routes fetches through the host so the lab works despite cross-origin CORS turn it off to see raw browser CORS behaviour.<br>
     Backed by <code>/sbin/holo-omni.mjs</code> + <code>/sbin/holo-routing.mjs</code> (Delegated Routing V1). Nothing here is trusted: the hash is.
   </div>
 </div>
@@ -181,7 +181,7 @@ function renderPreview(out) {
 
   // a UnixFS directory → a clickable listing (each entry re-resolves by its own CID)
   if (c && c.type === "directory") {
-    head.innerHTML = `directory · <span style='color:#4a5573'>${c.entries.length} entries — click to resolve</span>`;
+    head.innerHTML = `directory · <span style='color:#4a5573'>${c.entries.length} entries click to resolve</span>`;
     const list = document.createElement("div"); list.className = "dir";
     for (const e of c.entries) {
       const row = document.createElement("button"); row.className = "direntry";
@@ -195,7 +195,7 @@ function renderPreview(out) {
 
   // assembly failed → show the raw root block so nothing is hidden
   if (c && c.type === "error") {
-    head.className = "pt err"; head.textContent = "assembly: " + c.reason + " — raw root block:";
+    head.className = "pt err"; head.textContent = "assembly: " + c.reason + " raw root block:";
     const pre = document.createElement("pre"); pre.textContent = hexdump(out.bytes);
     pv.append(head, pre); return;
   }
@@ -228,7 +228,7 @@ async function resolve(v) {
   const r = parseRef(v);
   step(`parsed → <b style="color:#e8eef9">${r.kind}</b>${r.kind === "cid" ? "  " + r.cidStr.slice(0, 20) + "…" : ""}`);
   if (r.kind === "unknown") { step("unrecognized address", "x"); busy = false; $("go").disabled = false; return; }
-  step(r.kind === "web" ? "importing — fetch the object, derive its content address…" : "resolving by content address — cache · gateways · open-web edges…");
+  step(r.kind === "web" ? "importing fetch the object, derive its content address…" : "resolving by content address cache · gateways · open-web edges…");
 
   const fetchImpl = $("proxy").checked ? proxyFetch : fetch;
   let out;
@@ -236,24 +236,24 @@ async function resolve(v) {
   catch (e) { out = { ok: false, kind: r.kind, reason: String(e && e.message || e) }; }
 
   if (!out.ok) {
-    step("unresolved — " + (out.reason || "no source served it"), "x");
-    if (!$("proxy").checked && r.kind === "web") step("tip: arbitrary origins block cross-origin reads — enable “via dev proxy”.", "x");
+    step("unresolved " + (out.reason || "no source served it"), "x");
+    if (!$("proxy").checked && r.kind === "web") step("tip: arbitrary origins block cross-origin reads enable “via dev proxy”.", "x");
     busy = false; $("go").disabled = false; return;
   }
 
   if (/discovered/.test(out.via)) step("static gateways missed → <b style='color:#fbbf24'>Delegated Routing V1</b> found a provider", "find");
-  step(`verified — re-derived to its address ✓  <b style='color:#34d399'>${out.via}</b> · ${out.ms}ms`, "ok");
+  step(`verified re-derived to its address ✓  <b style='color:#34d399'>${out.via}</b> · ${out.ms}ms`, "ok");
   const c = out.content;
-  if (c && c.type === "directory") step(`assembled — <b style='color:#e8eef9'>directory</b>, ${c.entries.length} entries`, "ok");
-  else if (c && (c.type === "file" || c.type === "raw")) step(`assembled — <b style='color:#e8eef9'>file</b>, ${c.bytes.length.toLocaleString()} B from verified blocks`, "ok");
-  else if (c && c.type === "error") step("assembly incomplete — " + c.reason + " (showing the root block)", "x");
+  if (c && c.type === "directory") step(`assembled <b style='color:#e8eef9'>directory</b>, ${c.entries.length} entries`, "ok");
+  else if (c && (c.type === "file" || c.type === "raw")) step(`assembled <b style='color:#e8eef9'>file</b>, ${c.bytes.length.toLocaleString()} B from verified blocks`, "ok");
+  else if (c && c.type === "error") step("assembly incomplete " + c.reason + " (showing the root block)", "x");
 
   // fill the card
   $("kind").textContent = out.kind; $("kind").className = "badge " + out.kind;
   $("title").textContent = v;
   $("verify").textContent = "✓ L5 verified"; $("verify").className = "verify ok";
-  $("kappa").textContent = out.kappa || "—";
-  $("cid").textContent = out.cid || "—";
+  $("kappa").textContent = out.kappa || "";
+  $("cid").textContent = out.cid || "";
   const prov = $("prov"); prov.innerHTML = "";
   for (const p of provChain(out.via, out.kind)) { const s = document.createElement("span"); s.className = p.c; s.textContent = p.t; prov.appendChild(s); }
   const fileBytes = c && (c.type === "file" || c.type === "raw") ? c.bytes.length : null;

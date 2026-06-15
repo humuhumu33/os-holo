@@ -1,0 +1,18 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Q cross-frame bridge — the one Q reachable from inside a sandboxed app, governed, app holds nothing",
+  "passed": 9,
+  "failed": 0,
+  "checks": {
+    "app-can-summon-the-shell-q-1": true,
+    "summon-reaches-the-host-with-the-app-s-context-2": true,
+    "summon-is-attributed-to-the-host-asserted-app-id-3": true,
+    "app-can-ask-q-answer-about-the-app-s-content-4": true,
+    "app-create-rides-the-governed-door-ok-receipt-5": true,
+    "create-receipt-is-the-host-asserted-app-not-clie-6": true,
+    "app-create-refused-when-the-conscience-blocks-7": true,
+    "the-app-frame-holds-nothing-only-intents-cross-t-8": true,
+    "unknown-q-method-is-refused-9": true
+  }
+}

@@ -11,8 +11,8 @@
     "ratchet"
   ],
   "floor": 16,
-  "appsScanned": 40,
-  "baselinedTotal": 43,
+  "appsScanned": 42,
+  "baselinedTotal": 45,
   "regressions": [
     {
       "app": "cosmos",
@@ -29,6 +29,32 @@
           "line": 14,
           "px": 12,
           "snippet": ".hud .k { display: block; margin-top: 4px; font: 12px ui-monospace, monospace; color: #6fd"
+        }
+      ]
+    },
+    {
+      "app": "files",
+      "was": 0,
+      "now": 1,
+      "added": 1,
+      "sample": [
+        {
+          "line": 733,
+          "px": 11,
+          "snippet": "document.head.insertAdjacentHTML(\"beforeend\",`<style>#cmdp{position:fixed;inset:0;z-index:"
+        }
+      ]
+    },
+    {
+      "app": "ipfs",
+      "was": 0,
+      "now": 1,
+      "added": 1,
+      "sample": [
+        {
+          "line": 159,
+          "px": 13,
+          "snippet": "#siteVeil .sv { display: flex; align-items: center; gap: 10px; color: var(--holo-ink-dim, "
         }
       ]
     }

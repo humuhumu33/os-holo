@@ -13,7 +13,7 @@
     "sacred-resources",
     "strict-conformance"
   ],
-  "appsScanned": 41,
+  "appsScanned": 42,
   "doctrineKappa": "did:holo:sha256:3216467f8b36f76889c53ab26860ecad0c67099cb2ba1e2b51c4f2adee0b5721",
   "checks": {
     "the carrier is intact — holo-theme.js bootstraps holo-ux.js (every engine-loading app inherits the doctrine)": true,
@@ -25,7 +25,8 @@
     "the inherited runtime offers the data-holo-shortcut rewriter so apps adapt the modifier with no per-app branch": true
   },
   "unwired": [
-    "cosmos"
+    "cosmos",
+    "hub"
   ],
   "jargonApps": [],
   "reducedMotion": {

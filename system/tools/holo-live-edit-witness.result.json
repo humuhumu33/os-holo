@@ -1,0 +1,21 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "liveEdit — the one κ-anchored primitive the chat sidecar, Holo DevTools, and AI agents edit a holospace through (humans + agents, one act, one κ, one live surface)",
+  "passed": 12,
+  "failed": 0,
+  "checks": {
+    "edit-seals-the-source-to-a-re-renders-the-live-surface-1": true,
+    "the-edit-repo-publishsource-one-content-address-everywhere-2": true,
+    "identical-source-same-o-1-no-op-live-surface-not-re-rendered-3": true,
+    "a-changed-source-a-new-re-render-4": true,
+    "the-edited-object-re-derives-verify-by-content-law-l5-5": true,
+    "edit-of-an-unknown-surface-refused-no-fake-6": true,
+    "agentedit-with-no-conscience-refused-fail-closed-exposure-au-7": true,
+    "agentedit-blocked-by-a-red-line-verdict-no-edit-applied-8": true,
+    "agentedit-accepted-edits-the-same-live-surface-a-human-would-9": true,
+    "an-accepted-agent-edit-mints-a-re-derivable-hosc-edit-receip-10": true,
+    "the-agent-s-edit-a-human-edit-for-the-same-source-one-act-on-11": true,
+    "resolve-on-demand-a-live-window-edits-without-pre-registrati-12": true
+  }
+}

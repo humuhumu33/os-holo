@@ -1,0 +1,33 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Holo DevTools transport binding (ADR-0095 Bet A) — the vendored Chrome devtools-frontend embedder contract drives the κ-CDP backend over the Q cross-frame bus, no UI fork",
+  "covers": [
+    "the binding targets the REAL vendored seam — Connections.ts sendMessageToBackend (out) + the DispatchMessage event (in); a version bump that moves the seam turns this RED",
+    "the host shim installs as the embedder (globalThis.InspectorFrontendHost) with sendMessageToBackend + an events emitter; isHostedMode()===false ⇒ MainConnection (our seam), not ?ws=",
+    "a reconstruction of MainConnection's exact contract (Connections.ts:47 send · :52-53 receive event.data) drives CDP frames through the shim",
+    "DOM.getDocument round-trips the scene tree BY κ across the bridge (the human door reaches the κ substrate)",
+    "request-id multiplexing — concurrent CDP frames resolve to their own replies (the protocol works over the bus)",
+    "the Network κ-stream verify badge survives the transport (Law L5)",
+    "Runtime.evaluate is FAIL-CLOSED end-to-end with no conscience (Law L4) and ROUTES through Q + seals a receipt when the shell is governed",
+    "a malformed CDP frame is refused and carried back as an error, not a crash (the holo-gov.js / ungoverned-frame discipline)"
+  ],
+  "vendored": {
+    "version": "1.0.1645245",
+    "front_end": true
+  },
+  "checks": {
+    "vendored-front_end-present": true,
+    "seam-out-sendMessageToBackend": true,
+    "seam-in-DispatchMessage-event": true,
+    "host-installs-as-embedder": true,
+    "dom-getDocument-roundtrips-the-scene-tree": true,
+    "concurrent-frames-multiplex-by-id": true,
+    "network-verify-badge-over-bridge": true,
+    "eval-fail-closed-over-bridge": true,
+    "governed-eval-routes-and-receipts-over-bridge": true,
+    "malformed-frame-refused": true
+  },
+  "failed": [],
+  "authority": "the vendored chrome-devtools-frontend embedder API (Connections.ts · InspectorFrontendHostAPI.ts, pinned by tarball integrity) · the Q cross-frame protocol (ADR-0091 holo-q-app.js) · W3C DID Core · holospaces Law L1/L4/L5"
+}

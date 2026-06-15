@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Hologram OS — Sign in</title>
+<title>Hologram OS Sign in</title>
 <!-- AI agents: machine-readable sign-in instructions live in <script id="holo-agent-login"> (JSON) and on
      window.HoloLogin. Guest = act now (or load ?guest=1). Ask Human = request the person to approve. -->
 <meta name="ai-agent-login" content="See script#holo-agent-login (JSON) or window.HoloLogin. Options: guest (act now, ?guest=1) · ask-human (request the person)." />
@@ -14,25 +14,27 @@
      center. Auth is the unchanged self-sovereign unlock (unlockDevice biometric · unlockPass · access · guest). -->
 <style>
   /* ── GOLDEN-RATIO DESIGN SYSTEM ───────────────────────────────────────────────────────────────
-     One fluid unit --u (the rhythm + label size) and powers of φ govern every size, gap and control,
-     so the lock screen is one self-similar golden composition at any screen size.
-       type   · name = u·φ   label = u   meta = u·.8
+     One fluid unit --u and powers of φ govern every size, gap and control, so the lock screen is one
+     self-similar golden composition at any screen size. --u is also the readability FLOOR: it never
+     drops below 16px, so no word is ever too small to read on any display.
+       type   · name = u·φ    label = meta = u    (one golden step — nothing smaller than the base)
        layout · avatar = u·φ⁴   field = avatar·φ²   gaps = u·φⁿ
      Clarity first: a centred avatar → name → one action, nothing else competing. */
   :root {
     color-scheme: dark;
     --phi: 1.618;
     --ease: cubic-bezier(.4, 0, .2, 1);            /* the one shared boot easing (gateway · splash · login · shell) */
-    --u: clamp(14px, 1.9vmin, 18px);
+    --u: clamp(16px, 1.7vmin, 19px);               /* base rhythm AND the smallest text we ever render (≥16px) */
     --g1: calc(var(--u) * 1.618);                  /* φ¹ */
     --g2: calc(var(--u) * 2.618);                  /* φ² */
-    --avatar: clamp(94px, calc(var(--u) * 6.854), 132px);   /* φ⁴ */
+    --g3: calc(var(--u) * 4.236);                  /* φ³ */
+    --avatar: clamp(96px, calc(var(--u) * 6.854), 128px);   /* φ⁴ */
     --field: min(86vw, calc(var(--avatar) * 2.618));        /* avatar·φ² */
-    --fs-name: calc(var(--u) * 1.618);
+    --fs-name: calc(var(--u) * 1.618);             /* φ — the single step in the type scale */
     --fs-label: var(--u);
-    --fs-meta: calc(var(--u) * .8);
+    --fs-meta: var(--u);                           /* nothing below the base — every word stays legible */
     --accent: #7defc9; --accent-2: #34d3a6;
-    --ink: #f4f7fc; --ink-dim: rgba(228,234,247,.74); --ink-faint: rgba(228,234,247,.5);
+    --ink: #f4f7fc; --ink-dim: rgba(231,237,250,.82); --ink-faint: rgba(231,237,250,.58);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; -webkit-font-smoothing: antialiased;
@@ -61,9 +63,6 @@
   @keyframes avp { 0%,100% { box-shadow: 0 .85em 2.6em rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,255,255,.7), 0 0 0 6px rgba(52,211,166,.18); }
                    50% { box-shadow: 0 .85em 2.6em rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,255,255,.7), 0 0 0 16px rgba(52,211,166,0); } }
   .name { margin: var(--g1) 0 0; font-size: var(--fs-name); font-weight: 300; letter-spacing: .005em; line-height: 1.1; text-shadow: 0 2px 18px rgba(0,0,0,.45); }
-  /* the operator's sovereign identity, alive but quiet: did:holo κ as streaming braille (hover to read) */
-  .kid { margin: calc(var(--u) * .45) 0 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: var(--fs-meta);
-    letter-spacing: 1px; opacity: .6; --holo-accent: var(--accent); --holo-text: #e7f6ef; }
   .sub { margin: var(--u) 0 0; font-size: var(--fs-meta); color: var(--ink-dim); text-shadow: 0 1px 8px rgba(0,0,0,.4); }
 
   /* the sign-in box (Windows lock vocabulary) */
@@ -88,10 +87,11 @@
   .bio svg { width: 1.18em; height: 1.18em; }
   .alt { background: none; border: 0; color: var(--ink-dim); font-size: var(--fs-meta); font-family: inherit; cursor: pointer; padding: calc(var(--u) * .25) calc(var(--u) * .5); border-radius: calc(var(--u) * .4); transition: color .15s; }
   .alt:hover { color: #fff; }
-  .status { min-height: calc(var(--u) * 1.25); font-size: var(--fs-meta); color: #b6f0db; text-shadow: 0 1px 8px rgba(0,0,0,.4); }
-  .status.err { color: #ffb4b4; }
-  .status .hfx-load { justify-content: center; }
-  .status .hfx-load .hfx-s { color: var(--accent); } .status .hfx-load .hfx-t { color: #b6f0db; }
+  .status { min-height: calc(var(--u) * 1.5); font-size: var(--fs-meta); color: #c4f3e2; text-shadow: 0 1px 8px rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * .5); }
+  .status.err { color: #ffc0c0; }
+  /* a crisp ring that turns while a sign-in step runs — pure motion, no glyphs (reduced-motion-safe) */
+  .spin { width: 1em; height: 1em; border-radius: 50%; border: 2px solid rgba(125,239,201,.28); border-top-color: var(--accent); animation: spin .7s linear infinite; flex: 0 0 auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   /* bottom-left account switcher */
   .users { position: fixed; left: var(--g1); bottom: var(--g1); z-index: 3; display: flex; flex-direction: column; gap: calc(var(--u) * .3); max-width: min(40vw, 280px); }
@@ -173,7 +173,7 @@
   @keyframes liftRM { to { opacity: 0; } }
 
   @media (prefers-reduced-motion: reduce) {
-    .wall i, .avatar.pulse { animation: none; }
+    .wall i, .avatar.pulse, .spin { animation: none; }
     .wall, .frost, .panel, .users, .controls, .agentlink, .session { animation: none; }   /* no power-on motion */
     body.unfog .frost { animation: defogRM .45s ease forwards; }
     body.unfog .panel, body.unfog .users, body.unfog .controls, body.unfog .agentlink, body.unfog .agentpanel, body.unfog .pop, body.unfog .agentcall, body.unfog .session { animation: liftRM .45s ease forwards; }
@@ -230,9 +230,6 @@
 }
 </script>
 
-<!-- Holo FX (faithful unicode-animations): the operator's did:holo identity as streaming braille +
-     a sharp `scan` spinner during the sign-in ceremony. Classic script → window.HoloFX ready first. -->
-<script src="_shared/holo-fx.js"></script>
 <script type="module">
 import { createGreeter } from "./_shared/holo-sddm.js";
 import { teeReason, teeName } from "./_shared/holo-webauthn.mjs";
@@ -266,14 +263,12 @@ try {
     const users = (ctx.userModel.users || []);
     const reason = await teeReason();
     const st = { users, hasBio: !reason, bioName: teeName(), selected: users[0] || null };
-    let busyFx = null;
-    const stopBusy = () => { if (busyFx) { try { busyFx.stop(""); } catch (e) {} busyFx = null; } };
-    const setStatus = (t, err) => { stopBusy(); const el = $("panel").querySelector(".status"); if (el) { el.textContent = t || ""; el.className = "status" + (err ? " err" : ""); } if (err) window.__lastErr = t; };
-    // a sign-in step in progress → a sharp `scan` braille sweep beside the message (Holo FX)
-    const setBusy = (m) => { stopBusy(); const el = $("panel").querySelector(".status"); if (!el) return; el.className = "status"; if (window.HoloFX) busyFx = window.HoloFX.loader(el, { name: "scan", label: m || "" }); else el.textContent = m || ""; };
+    const setStatus = (t, err) => { const el = $("panel").querySelector(".status"); if (el) { el.textContent = t || ""; el.className = "status" + (err ? " err" : ""); } if (err) window.__lastErr = t; };
+    // a sign-in step in progress → a crisp turning ring beside the message (no glyphs, low-latency CSS)
+    const setBusy = (m) => { const el = $("panel").querySelector(".status"); if (!el) return; el.className = "status"; el.innerHTML = `<span class="spin"></span><span>${esc(m || "")}</span>`; };
     sddm.connect("informationMessage", (m) => setBusy(m));
     sddm.connect("loginFailed", () => setStatus(window.__lastErr || "Try again", true));
-    sddm.connect("loginSucceeded", () => { setStatus("Welcome — opening your space…"); document.body.classList.add("unfog"); });
+    sddm.connect("loginSucceeded", () => { setStatus("Opening my space…"); document.body.classList.add("unfog"); });
 
     // window.HoloLogin — the agent-facing API (mirrors script#holo-agent-login)
     window.HoloLogin = {
@@ -282,7 +277,7 @@ try {
       askHuman() {
         $("agentpanel").classList.remove("on"); $("agentcall").classList.add("on");
         const av = $("panel").querySelector(".avatar"); if (av) av.classList.add("pulse");
-        setStatus("An AI agent asked you to sign in — approve above.");
+        setStatus("An AI agent asked you to sign in approve above.");
         return "Requested. Ask the human to approve sign-in with their device biometric; you cannot complete this alone.";
       },
     };
@@ -311,7 +306,7 @@ function renderCenter(st, sddm) {
     p.innerHTML = `${avatarHtml(null, true)}
       <h1 class="name">Set up this device</h1>
       <div class="auth">
-        <div class="box"><input id="namein" type="text" autocomplete="name" placeholder="Your name" /><button class="submit" id="go" title="Create">${I.arrow}</button></div>
+        <div class="box"><input id="namein" type="text" autocomplete="name" placeholder="My name" /><button class="submit" id="go" title="Create">${I.arrow}</button></div>
         <div class="sub">${st.hasBio ? "Secured by " + esc(st.bioName) : "You’ll set a passphrase"}</div>
         <div class="status"></div>
       </div>`;
@@ -324,13 +319,11 @@ function renderCenter(st, sddm) {
   const u = st.selected;
   p.innerHTML = `${avatarHtml(u, true)}
     <h1 class="name">${esc(u.label || "Welcome")}</h1>
-    ${u.kappa ? `<div class="kid" data-holo-kappa="${esc(u.kappa)}" title="${esc(u.kappa)}"></div>` : ``}
     <div class="auth">
-      ${st.hasBio && u.cred ? `<button class="bio" id="bio">${I.fp}Unlock with ${esc(st.bioName)}</button><button class="alt" id="altpass">Use passphrase</button>` : ``}
+      ${st.hasBio && u.cred ? `<button class="bio" id="bio">${I.fp}It’s me</button><button class="alt" id="altpass">Use passphrase</button>` : ``}
       <div class="box" id="passbox" ${st.hasBio && u.cred ? 'style="display:none"' : ''}><input id="passin" type="password" autocomplete="current-password" placeholder="Passphrase" /><button class="submit" id="go" title="Sign in">${I.arrow}</button></div>
       <div class="status"></div>
     </div>`;
-  const kid = p.querySelector(".kid"); if (kid && window.HoloFX) window.HoloFX.kappa(kid, undefined, { width: 12 });   // identity κ → a short streaming-braille window (hover for the full did:holo)
   const bio = p.querySelector("#bio"), passbox = p.querySelector("#passbox"), passin = p.querySelector("#passin"), go = p.querySelector("#go"), alt = p.querySelector("#altpass");
   if (bio) bio.onclick = () => { bio.disabled = true; sddm.unlockDevice(); };
   if (alt) alt.onclick = () => { passbox.style.display = ""; alt.style.display = "none"; if (bio) bio.style.display = "none"; passin.focus(); };
@@ -380,15 +373,15 @@ function renderAgent(sddm) {
   $("agentbtn").innerHTML = `${I.robot}AI agent`;
   $("agentpanel").innerHTML = `
     <h2>Signing in as an AI agent</h2>
-    <p class="ap-lead">Two ways to proceed — you can do <b>Guest</b> yourself; <b>Ask Human</b> needs the person.</p>
+    <p class="ap-lead">Two ways to proceed you can do <b>Guest</b> yourself; <b>Ask Human</b> needs the person.</p>
     <div class="ap-opt"><div class="ap-h">${I.ghost} Guest</div>
-      <p>Instant, private, throwaway identity. No human and no biometric needed — nothing is saved after the session.</p>
+      <p>Instant, private, throwaway identity. No human and no biometric needed nothing is saved after the session.</p>
       <button id="agent-guest">Continue as Guest</button>
       <code>or load this page with ?guest=1</code></div>
     <div class="ap-opt secondary"><div class="ap-h">${I.person} Ask Human</div>
-      <p>A saved, sovereign identity needs the person’s device biometric (Windows Hello / Touch ID) — you can’t do that yourself. Ask them to approve.</p>
+      <p>A saved, sovereign identity needs the person’s device biometric (Windows Hello / Touch ID) you can’t do that yourself. Ask them to approve.</p>
       <button id="agent-askhuman">Ask the human to sign in</button></div>`;
-  $("agentcall").innerHTML = `${I.robot}<span>An AI agent is requesting access — sign in below to approve.</span>`;
+  $("agentcall").innerHTML = `${I.robot}<span>An AI agent is requesting access sign in below to approve.</span>`;
   $("agentbtn").onclick = (e) => { e.stopPropagation(); $("agentpanel").classList.toggle("on"); };
   $("agentpanel").addEventListener("click", (e) => e.stopPropagation());
   document.addEventListener("click", () => $("agentpanel").classList.remove("on"));

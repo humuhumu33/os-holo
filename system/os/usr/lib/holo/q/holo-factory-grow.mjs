@@ -13,7 +13,8 @@
 // no proposal; a failing gate seals a revision that is honestly NOT in force. The behavior-change projection
 // (an in-force revision → the live propose strategy, holo-mind-evolve.projectSkill) is the consumption seam.
 
-import { failures, evolve, isInForce } from "../holo-mind-evolve.mjs";
+import { failures, evolve, isInForce, projectSkill } from "../holo-mind-evolve.mjs";
+import { resolve } from "../holo-mind.mjs";
 
 // growFromFailures(store, corpusHead, opts) → { grew, revision?, inForce?, failures, reason? }.
 // opts: { parentKappa?, parentBytes, optimizerKappa?, sampler, gate, minFailures? }.
@@ -26,4 +27,28 @@ export async function growFromFailures(store, corpusHead, { parentKappa = null, 
   return { grew: true, failures: fails.length, revision: rev.id, inForce: isInForce(rev), gate: rev["holo:gate"], proposalBytes: rev["holo:proposalBytes"] };
 }
 
-export default { growFromFailures };
+// growSkill(store, corpusHead, opts) → the FULL evolving-skill step as ONE pure transform over the κ-store:
+//   read failures → evolve (propose + seal a κ revision) → if (and ONLY if) the revision is IN FORCE,
+//   project it to a live agentskills.io skill AND advance the lineage head to its κ.
+// This is what makes a skill EVOLVE rather than be re-minted from scratch: pass the prior generation's κ +
+// bytes as { skillHead, skillBytes }; a verified child links prov:wasRevisionOf its parent (the chain), and
+// the returned skillHead is the κ the caller persists as the new generation. HONEST: a not-in-force
+// revision NEVER advances the head (the lineage only grows by verified generations) and projects to null,
+// so a failing gate cannot silently change behaviour (L5). Pure given the sampler + gate; re-derivable.
+//   opts: { skillHead?, skillBytes?, sampler, gate, optimizerKappa?, minFailures? }
+//   → { ...growFromFailures result, projected, skillHead, skillBytes, advanced }
+export async function growSkill(store, corpusHead, { skillHead = null, skillBytes = "", sampler = null, gate = {}, optimizerKappa = null, minFailures = 2 } = {}) {
+  const res = await growFromFailures(store, corpusHead, { parentKappa: skillHead, parentBytes: skillBytes, optimizerKappa, sampler, gate, minFailures });
+  if (!res.grew || !res.revision) return { ...res, projected: null, skillHead, skillBytes, advanced: false };
+  const rev = resolve(store, res.revision);
+  const skill = rev && isInForce(rev) ? projectSkill(rev) : null;   // project ONLY a verified, in-force generation
+  return {
+    ...res,
+    projected: skill,                                               // the live skill descriptor (or null: not in force / no frontmatter)
+    skillHead: skill ? res.revision : skillHead,                    // the κ-addressed lineage head advances ONLY on a verified generation
+    skillBytes: skill ? (rev["holo:proposalBytes"] || skillBytes) : skillBytes,
+    advanced: !!skill,                                              // did this step lawfully advance the evolving skill?
+  };
+}
+
+export default { growFromFailures, growSkill };

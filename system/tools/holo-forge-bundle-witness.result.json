@@ -1,0 +1,21 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Holo Forge bundler class — a client-bundle GitHub repo → one self-contained, content-addressed, agent-wired Holo app via a real esbuild κ-transform (ADR-0093)",
+  "passed": 12,
+  "failed": 0,
+  "checks": {
+    "classify-client-bundle-forge-1": true,
+    "forge-without-a-bundler-runnable-false-honest-staged-never-f-2": true,
+    "forge-with-esbuild-runnable-3": true,
+    "the-relative-module-is-bundled-in-no-src-main-js-ref-remains-4": true,
+    "the-bare-dep-resolved-via-resolvebare-the-cdn-ingest-boundar-5": true,
+    "the-bundle-is-self-contained-no-unresolved-deps-0-network-at-6": true,
+    "a-forge-build-receipt-is-minted-transform-adr-0051-7": true,
+    "re-import-bundles-to-the-same-app-deterministic-re-derivable-8": true,
+    "forge-app-repo-publishsource-a-bundled-app-is-first-class-9": true,
+    "the-bundled-app-exposes-its-over-mcp-agent-accessible-10": true,
+    "a-bare-dep-with-no-resolver-runnable-false-with-the-dep-name-11": true,
+    "a-jsx-react-style-entry-compiles-bundles-into-one-app-12": true
+  }
+}

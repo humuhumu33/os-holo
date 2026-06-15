@@ -1,0 +1,71 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": false,
+  "subject": "Holo Widgets desktop modes (Focused · Learn · Work · Play) — golden-ratio layouts wired to real widgets + app launch tiles, non-destructive, first-boot Focused",
+  "covers": [
+    "the φ width ladder re-derives golden (hero:secondary:header = φ:φ) and the golden cuts 0.382/0.618 are complementary with ratio φ",
+    "every tile in all four modes is a REAL holo-native widget/app (no mockups, no dead tiles)",
+    "Focused is a bare desktop — zero widgets, nothing competing (the sticky Q orb lives outside the mode board and remains)",
+    "Learn is a φ:1 two-column study space (reading surface + resources) with Q as a copilot launch tile, distinct from Work",
+    "Work wires real app launch tiles (Files · Code · Wallet by org.hologram id) and keeps the bottom-right clear for the Q orb",
+    "Play makes the vinyl disc the hero on the focal point with roomier (φ-stepped) margins",
+    "the launch widget opens real apps via window.HoloShell (openApp) + summons Q; its label holds the 16px readability floor (ADR-0057)",
+    "the mode switch stays non-destructive (each mode saves its own board; the sticky orb survives) and first boot lands in Focused"
+  ],
+  "ladder": {
+    "hero": 400,
+    "sec": 247,
+    "head": 153
+  },
+  "modes": {
+    "focused": [],
+    "learn": [
+      "clock",
+      "note",
+      "focus",
+      "links",
+      "launch"
+    ],
+    "work": [
+      "clock",
+      "system",
+      "weather",
+      "tasks",
+      "calendar",
+      "launch",
+      "launch",
+      "launch"
+    ],
+    "play": [
+      "clock",
+      "weather",
+      "vinyl",
+      "now-playing",
+      "quote"
+    ]
+  },
+  "checks": {
+    "phi-width-ladder-is-golden": true,
+    "golden-cuts-complementary": true,
+    "all-four-modes-defined": true,
+    "every-tile-is-a-real-widget": true,
+    "focused-is-bare": true,
+    "learn-golden-two-column": true,
+    "learn-has-Q-copilot": true,
+    "work-golden": true,
+    "work-launches-real-apps": true,
+    "work-leaves-orb-corner-free": true,
+    "play-golden": true,
+    "play-vinyl-is-hero": true,
+    "launch-widget-defined": true,
+    "launch-opens-real-apps": true,
+    "launch-label-respects-readability-floor": true,
+    "shell-exposes-openApp": true,
+    "switch-is-non-destructive": true,
+    "first-boot-is-focused": false
+  },
+  "failed": [
+    "first-boot-is-focused"
+  ],
+  "authority": "φ = golden ratio (1.618) · holospaces Law L1/L2/L3/L5 · ADR-0057 (16px readability floor) · ADR-0088/0089 (scene manifest / per-holospace boards)"
+}

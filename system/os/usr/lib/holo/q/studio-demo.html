@@ -1,21 +1,18 @@
 <!doctype html>
-<!-- studio-demo.html — a self-contained showcase of the Holo Q specialist stack in CREATOR MODE:
-     type a prompt → the Mixture-of-Specialists fabric (ADR-0085) computes it (κ-memoized, O(1) on a
-     repeat) → the κ-addressed renderer (holo-q-render.js) paints the preview LIVE, reusing identical
-     fragments by content κ. 100% serverless + on-device: imports only the two dependency-free modules,
-     makes ZERO network calls (a fetch guard proves it). The "builder" specialist is a deterministic
-     local stand-in for an on-device generative model — the SAME provider seam a real LLM binds to. -->
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- studio-demo.html — Holo Q in CREATOR MODE, the full self-improving stack end to end:
+     type a prompt → the Mixture-of-Specialists fabric (ADR-0085) computes it (κ-memoized, O(1)) →
+     the κ-addressed renderer paints it live → Holo Perception (ADR-0086) tracks every object's CODE
+     and VISUAL face → the autonomous loop (ADR-0086/0081) heals DRIFT and records the improvement.
+     "Restyle" moves every object's code (accent change) so the screen goes stale; the orchestrator
+     notices the drift and re-renders the whole holospace itself. 100% serverless (a fetch guard
+     proves 0 network calls), low-latency (O(1) replay + render reuse). -->
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Holo Q · Create</title>
 <style>
-  :root { color-scheme: dark; }
-  * { box-sizing: border-box; }
-  body { margin:0; font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; color:#e8eaf0;
-         background:#0a0c12; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+  :root { color-scheme: dark; } * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; color:#e8eaf0; background:#0a0c12; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
   header { display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid #1b1f2a; }
-  .dot { width:22px; height:22px; border-radius:6px; background:#6c5cff; }
-  header b { font-weight:600; } header span { color:#6b7280; font-size:13px; }
+  .dot { width:22px; height:22px; border-radius:6px; background:#6c5cff; } header b { font-weight:600; } header span { color:#6b7280; font-size:13px; }
   main { flex:1; display:flex; min-height:0; }
   .left { width:42%; max-width:520px; border-right:1px solid #1b1f2a; padding:20px; display:flex; flex-direction:column; gap:14px; }
   .right { flex:1; padding:24px; overflow:auto; background:#0c0f16; }
@@ -26,109 +23,135 @@
   .promptbar { display:flex; gap:8px; margin-top:auto; }
   input { flex:1; padding:13px 15px; border-radius:12px; border:1px solid #2a3042; background:#11141d; color:#fff; font-size:15px; outline:none; }
   input:focus { border-color:#6c5cff; }
-  button.go { padding:0 18px; border:0; border-radius:12px; background:#3a6df0; color:#fff; font-weight:600; cursor:pointer; }
+  button { border:0; border-radius:12px; font-weight:600; cursor:pointer; padding:0 16px; }
+  button.go { background:#3a6df0; color:#fff; } button.alt { background:#1a1f2e; color:#cdd3e0; border:1px solid #2a3042; }
   .hud { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .stat { background:#0e1119; border:1px solid #1b1f2a; border-radius:10px; padding:9px 11px; }
-  .stat .k { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#6b7280; }
-  .stat .v { font-size:15px; font-weight:600; margin-top:2px; font-variant-numeric:tabular-nums; }
-  .v.good { color:#34d399; } .v.hot { color:#fbbf24; } .v.cold { color:#7c93ff; }
-  .kappa { font-family:ui-monospace,Menlo,monospace; font-size:12px; color:#7c93ff; word-break:break-all; }
-  .preview-empty { color:#3a4150; font-size:15px; text-align:center; margin-top:18%; }
+  .stat .k { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#6b7280; } .stat .v { font-size:15px; font-weight:600; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .v.good { color:#34d399; } .v.hot { color:#fbbf24; } .v.cold { color:#7c93ff; } .v.warn { color:#f87171; }
+  .loopline { background:#0e1119; border:1px solid #1b1f2a; border-left:3px solid #34d399; border-radius:10px; padding:9px 11px; font-size:13px; color:#9aa7bd; min-height:38px; }
+  .grid { display:flex; flex-wrap:wrap; gap:16px; }
+  .grid > div { flex:1 1 280px; }
+  .preview-empty { color:#3a4150; font-size:15px; text-align:center; margin-top:14%; width:100%; }
   .holo-q-live { color:#8a93a6; font-style:italic; padding:8px 0; }
 </style>
-
-<header>
-  <div class="dot"></div><b>Holo Q · Create</b><span id="addr">untitled — content-addressed</span>
-  <span style="margin-left:auto" id="server">● serverless · on-device</span>
-</header>
+<header><div class="dot"></div><b>Holo Q · Create</b><span id="server">● serverless · on-device</span></header>
 <main>
   <div class="left">
-    <div><h2>Ask Holo to build</h2>
-      <div class="chips" id="chips"></div></div>
-    <div><h2>What just happened</h2>
+    <div><h2>Ask Holo to build</h2><div class="chips" id="chips"></div></div>
+    <div><h2>Perception · what the orchestrator sees</h2>
       <div class="hud">
-        <div class="stat"><div class="k">compute</div><div class="v cold" id="s-state">—</div></div>
-        <div class="stat"><div class="k">latency</div><div class="v" id="s-ms">—</div></div>
-        <div class="stat"><div class="k">render</div><div class="v" id="s-render">—</div></div>
+        <div class="stat"><div class="k">κ-objects</div><div class="v" id="s-objs">0</div></div>
+        <div class="stat"><div class="k">coherent</div><div class="v good" id="s-coh">0</div></div>
+        <div class="stat"><div class="k">drift</div><div class="v" id="s-drift">0</div></div>
         <div class="stat"><div class="k">network calls</div><div class="v good" id="s-net">0</div></div>
       </div>
-      <div class="stat" style="margin-top:8px"><div class="k">content address (κ)</div><div class="v kappa" id="s-k">—</div></div>
+      <div class="loopline" id="loopline" style="margin-top:8px">Build something, then Restyle to watch it heal.</div>
     </div>
     <div class="promptbar">
-      <input id="prompt" placeholder="e.g. a blue welcome hero for my app" autocomplete="off">
+      <input id="prompt" placeholder="e.g. a blue welcome hero" autocomplete="off">
       <button class="go" id="go">Build ↑</button>
+      <button class="alt" id="restyle" title="change the accent → every object's code moves, screens go stale → the loop heals">Restyle ✨</button>
     </div>
   </div>
-  <div class="right"><div id="preview"><div class="preview-empty">Type a prompt — the preview builds here, live.</div></div></div>
+  <div class="right"><div class="grid" id="preview"><div class="preview-empty">Describe it. Watch it build. Change one thing, and the rest heals itself.</div></div></div>
 </main>
 
 <script type="module">
   import { createFabric } from "./holo-q-fabric.js";
   import { createRenderer } from "./holo-q-render.js";
   import { createScene } from "./holo-q-perception.js";
+  import { createLoop } from "./holo-q-loop.js";
 
-  // ── serverless proof: count (and forbid) any network call ──
   let netCalls = 0; const realFetch = window.fetch;
   window.fetch = (...a) => { netCalls++; document.getElementById("s-net").textContent = netCalls; return realFetch(...a); };
 
+  const FAST = new URLSearchParams(location.search).has("fast");
   const fabric = createFabric();
   const preview = document.getElementById("preview");
-  const renderer = createRenderer({ target: preview });
-  const scene = createScene();            // Holo Perception: the orchestrator's view of every κ-object
-  scene.attachRenderer(renderer);         // the VISUAL face auto-registers on every paint
-  window.__holoScene = scene;             // for verification
-
-  // ── the on-device "builder" specialist — deterministic (same prompt → same κ), the seam a real LLM binds to ──
-  const COLORS = { blue:"#5b8cff", green:"#34d399", red:"#f87171", purple:"#a78bfa", gold:"#fbbf24", pink:"#f472b6", teal:"#2dd4bf" };
-  const pickColor = (p) => { const k = Object.keys(COLORS).find(c => p.toLowerCase().includes(c)); if (k) return COLORS[k];
-    let h = 0; for (const c of p) h = (h * 31 + c.charCodeAt(0)) >>> 0; return Object.values(COLORS)[h % 7]; };
-  const titleFrom = (p) => (p.replace(/[^a-z0-9 ]/gi, " ").trim().split(/\s+/).slice(0, 5).map(w => w[0].toUpperCase() + w.slice(1)).join(" ") || "Your Holospace");
-  function specFromPrompt(p) {
-    const color = pickColor(p);
-    return { tag:"section", style:`padding:42px;border-radius:18px;background:#0f1320;border:1px solid #1c2233`, children:[
-      { tag:"div", style:`font-size:12px;letter-spacing:2px;color:${color}`, text:"HOLO · BUILT ON-DEVICE" },
-      { tag:"h1", style:"font-size:40px;margin:14px 0 8px;color:#ffffff", text: titleFrom(p) },
-      { tag:"p", style:"color:#8a93a6;font-size:16px;margin:0", text: p },
-      { tag:"div", style:`height:6px;width:84px;border-radius:3px;margin-top:22px;background:${color}` },
-    ]};
-  }
-  // the specialist: a fabric-memoized compute (embed-shaped → returns the structured spec).
-  const builder = { id:"holo-builder", embed: (prompt) => specFromPrompt(prompt) };
+  const scene = createScene();
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const narrate = (p) => ("Holo is composing " + titleFrom(p) + " …").match(/\S+\s*/g);
 
-  // ── build(prompt): stream narration live, compute the spec through the fabric (O(1) on repeat),
-  //    then κ-render the result (reused if identical) — the whole prompt→live-preview loop. ──
-  const FAST = new URLSearchParams(location.search).has("fast");   // instant mode: no timers (for capture)
-  let building = false;
+  // ── the on-device "builder" specialist — deterministic (same prompt+accent → same κ) ──
+  const COLORS = { blue:"#5b8cff", green:"#34d399", red:"#f87171", purple:"#a78bfa", gold:"#fbbf24", pink:"#f472b6", teal:"#2dd4bf" };
+  const PALETTE = Object.values(COLORS);
+  let accent = null;                                  // global accent; null → per-prompt color
+  const pickColor = (p) => { if (accent) return accent; const k = Object.keys(COLORS).find(c => p.toLowerCase().includes(c)); if (k) return COLORS[k];
+    let h = 0; for (const c of p) h = (h * 31 + c.charCodeAt(0)) >>> 0; return PALETTE[h % 7]; };
+  const titleFrom = (p) => (p.replace(/[^a-z0-9 ]/gi, " ").trim().split(/\s+/).slice(0, 5).map(w => w[0].toUpperCase() + w.slice(1)).join(" ") || "Holospace");
+  const specFromPrompt = (p) => { const color = pickColor(p); return { tag:"section", style:`padding:30px;border-radius:16px;background:#0f1320;border:1px solid #1c2233`, children:[
+    { tag:"div", style:`font-size:11px;letter-spacing:2px;color:${color}`, text:"HOLO · ON-DEVICE" },
+    { tag:"h1", style:"font-size:28px;margin:10px 0 6px;color:#ffffff", text: titleFrom(p) },
+    { tag:"p", style:"color:#8a93a6;font-size:14px;margin:0", text: p },
+    { tag:"div", style:`height:6px;width:70px;border-radius:3px;margin-top:18px;background:${color}` } ]}; };
+  const builder = { id:"holo-builder", embed: (prompt) => specFromPrompt(prompt) };
+
+  // a renderer PER object (so healing one doesn't wipe the others); each feeds the scene's visual face.
+  const built = new Map();                            // id → { prompt, renderer, host }
+  function ensureObject(id, prompt) {
+    if (built.has(id)) return built.get(id);
+    document.querySelector(".preview-empty")?.remove();
+    const host = document.createElement("div"); preview.appendChild(host);
+    const renderer = createRenderer({ target: host });
+    scene.attachRenderer(renderer);                  // VISUAL face auto-registers on paint
+    const rec = { prompt, renderer, host }; built.set(id, rec); return rec;
+  }
+
+  // build(prompt) — compute (code face) + render (visual face) one object; same id → both faces coherent.
+  let busy = false;
   async function build(prompt) {
-    if (building || !prompt.trim()) return; building = true;
-    renderer.clearView();                                          // clear the view but KEEP the κ cache (so a repeat reuses)
+    if (!prompt || !prompt.trim()) return; const id = prompt.trim();
+    const rec = ensureObject(id, id);
     async function* events() {
-      let acc = ""; for (const w of narrate(prompt)) { if (!FAST) await sleep(55); acc += w; yield { phase:"delta", partial: acc }; }
-      const final = await fabric.compute({ provider: builder, task:"create", input: prompt });   // κ-memoized
-      scene.observeCode(prompt, final.kappa, { source:"holo-builder", kind:"create" });          // CODE face
+      const final = await fabric.compute({ provider: builder, task:"create", input: id });   // κ-memoized
+      scene.observeCode(id, final.kappa, { source:"holo-builder", kind:"create" });           // CODE face
       yield { phase:"final", value: final.value, kappa: final.kappa, cached: final.cached, ms: final.ms };
     }
-    const out = await renderer.paintStream(events(), { id: prompt });        // VISUAL face (via onFinal) — same id
-    // HUD
-    const cold = out.cached === false;
-    const st = document.getElementById("s-state");
-    st.textContent = cold ? "computed" : "cache hit"; st.className = "v " + (cold ? "cold" : "hot");
-    document.getElementById("s-ms").innerHTML = `<span class="${cold ? "cold" : "hot"}">${out.ms}</span> ms`;
-    document.getElementById("s-render").textContent = out.renderReused ? "reused (O(1))" : "painted";
-    document.getElementById("s-k").textContent = (out.kappa || "").slice(0, 24) + "…";
-    document.getElementById("addr").textContent = "holo://" + (out.kappa || "").slice(0, 12) + "…";
-    const fb = scene.feedback();           // perception: every object seen, code+visual joined
-    document.getElementById("server").textContent = `● serverless · ${fb.total} κ-object${fb.total===1?"":"s"} · ${fb.coherent} coherent${fb.drift.length?` · ${fb.drift.length} drift`:""}`;
-    building = false;
+    rec.renderer.clearView();
+    await rec.renderer.paintStream(events(), { id });   // VISUAL face via onFinal (same id)
+    refresh();
   }
 
-  const examples = ["a blue welcome hero for my app","a purple pricing card","a teal launch banner","a blue welcome hero for my app"];
-  const chips = document.getElementById("chips");
-  examples.slice(0,3).forEach(x => { const c = document.createElement("div"); c.className="chip"; c.textContent=x;
-    c.onclick = () => { document.getElementById("prompt").value = x; build(x); }; chips.appendChild(c); });
+  // restyle() — change the accent: every object's CODE κ moves (re-computed) but the screen is NOT
+  // repainted → DRIFT across the whole holospace. The orchestrator's loop then heals it.
+  async function restyle() {
+    accent = PALETTE[(PALETTE.indexOf(accent) + 1) % PALETTE.length];
+    for (const [id, rec] of built) {
+      const final = await fabric.compute({ provider: builder, task:"create", input: id });   // new code κ (new accent), NO render
+      scene.observeCode(id, final.kappa, { source:"holo-builder", kind:"restyle" });          // → drift
+    }
+    refresh();
+    document.getElementById("loopline").innerHTML = `<span class="v warn">something changed</span> — healing everything to match…`;
+    await sleep(FAST ? 0 : 250);
+    await selfImprove();
+  }
+
+  // the autonomous self-improvement loop: observe drift → heal (re-render) → re-observe → record.
+  const loop = createLoop({ scene, fabric, heal: async (id) => { await build(built.get(id).prompt); } });
+  async function selfImprove() {
+    const r = await loop.run({ maxTicks: 8 });
+    const ll = document.getElementById("loopline");
+    ll.innerHTML = r.converged
+      ? `<span class="v good">✓ self-healed</span> · cleared ${r.driftCleared} drift in ${r.ticks} tick${r.ticks===1?"":"s"} · avg ${r.latency.avgColdMs} ms · hit-rate ${r.latency.hitRate} · <span style="color:#6b7280">${r.traces.length} trace${r.traces.length===1?"":"s"} recorded</span>`
+      : `<span class="v warn">partial</span> · ${r.driftCleared} cleared, ${r.end.drift.length} unhealed`;
+    refresh();
+  }
+
+  function refresh() {
+    const fb = scene.feedback();
+    document.getElementById("s-objs").textContent = fb.total;
+    document.getElementById("s-coh").textContent = fb.coherent;
+    const dr = document.getElementById("s-drift"); dr.textContent = fb.drift.length; dr.className = "v " + (fb.drift.length ? "warn" : "good");
+    document.getElementById("server").textContent = `● serverless · ${fb.total} κ-object${fb.total===1?"":"s"} · ${fb.coherent} coherent${fb.drift.length?` · ${fb.drift.length} drift`:""}`;
+  }
+
+  ["a blue welcome hero","a purple pricing card","a teal launch banner"].forEach(x => {
+    const c = document.createElement("div"); c.className="chip"; c.textContent=x; c.onclick = () => build(x);
+    document.getElementById("chips").appendChild(c);
+  });
   document.getElementById("go").onclick = () => build(document.getElementById("prompt").value);
+  document.getElementById("restyle").onclick = restyle;
   document.getElementById("prompt").addEventListener("keydown", e => { if (e.key === "Enter") build(e.target.value); });
-  window.__holoBuild = build;   // for automated verification
+  // verification hooks
+  window.__holo = { build, restyle, selfImprove, scene, loop, state: () => scene.feedback(), traces: () => loop.traces(), net: () => netCalls };
 </script>

@@ -19,8 +19,8 @@
   if (W.HoloWidgets) return;
   try { if (W.top !== W.self) return; } catch (e) { return; }     // top shell only — survive app frames
 
-  var LS = "holo-widgets.v2";          // v2: reseed onto the golden-ratio layouts (tidy, balanced, non-overlapping)
-  var SEED_LS = "holo-widgets.seeded.v2";
+  var LS = "holo-widgets.v5";          // v5: split the combined Welcome widget into independent dayring + greeting (reseeds cleanly)
+  var SEED_LS = "holo-widgets.seeded.v5";
   var TYPES = {};                                                 // type id → spec
   var PROVIDERS = {};                                            // provider name → factory()
   var live = [];                                                 // mounted instances {id,type,x,y,w,h,config,el,body,_subs}
@@ -40,13 +40,19 @@
 
   // ── keep every floating object INSIDE the desktop — clear of the dock rail (shared with vinyl/desk) ──
   var EDGE = 8;
+  // cached ~120ms + keyed to viewport size: deskBounds reads getComputedStyle, which forces a style
+  // recalc — calling it on EVERY pointer-move (clampPos · snap targets · guides) is the main drag-jank.
+  var _db = null, _dbT = 0;
   function deskBounds() {
+    var t = Date.now();
+    if (_db && (t - _dbT) < 120 && _db._vw === innerWidth && _db._vh === innerHeight) return _db;
     var gs = getComputedStyle(DOC.documentElement);
     var dW = parseFloat(gs.getPropertyValue("--holo-dock-w")) || 0;
     var dH = parseFloat(gs.getPropertyValue("--holo-dock-h")) || 0;
-    var aW = parseFloat(gs.getPropertyValue("--holo-aside-w")) || 0;   // a right-edge aside carrier (Wallet) squeezes the canvas — keep widgets clear of it too
-    var top = parseFloat(gs.getPropertyValue("--holo-top-inset")) || 0;   // shells with top chrome (tab strip + toolbar) set this so widgets clear it
-    return { minX: EDGE + dW, minY: EDGE + top, maxX: innerWidth - EDGE - aW, maxY: innerHeight - EDGE - dH };
+    var aW = parseFloat(gs.getPropertyValue("--holo-aside-w")) || 0;   // a right-edge aside carrier (Wallet) squeezes the canvas
+    var top = parseFloat(gs.getPropertyValue("--holo-top-inset")) || 0;   // shells with top chrome set this so widgets clear it
+    _db = { minX: EDGE + dW, minY: EDGE + top, maxX: innerWidth - EDGE - aW, maxY: innerHeight - EDGE - dH, _vw: innerWidth, _vh: innerHeight };
+    _dbT = t; return _db;
   }
   function clampPos(w, x, y) {
     var b = deskBounds(), ww = w.el.offsetWidth, hh = w.el.offsetHeight;
@@ -171,7 +177,16 @@
       ".hw-gal-card holo-icon{font-size:26px;width:1em;height:1em;color:var(--holo-accent,#7aa2ff)}",
       ".hw-gal-card .nm{font-weight:650;font-size:14.5px}",
       ".hw-gal-card .bl{font-size:12px;line-height:1.35;color:var(--holo-ink-dim,#9aa3ad)}",
-      "@media (prefers-reduced-motion: reduce){.hw-widget *{animation:none!important;transition:none!important} .hw-gallery,.hw-gallery-scrim{animation:none!important}}",
+      // selection (shift-click) — a glowing accent frame marks objects chosen for bundling
+      ".hw-widget.hw-sel .hw-frame{opacity:1;border-color:var(--holo-accent,#3b82f6);box-shadow:0 0 0 2px color-mix(in srgb,var(--holo-accent,#3b82f6) 65%,transparent),0 20px 54px rgba(0,0,0,.4)}",
+      // the floating Bundle bar — appears when ≥2 objects are shift-selected
+      ".hw-bundlebar{position:fixed;left:50%;bottom:max(22px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:130;display:flex;align-items:center;gap:6px;padding:6px;border-radius:999px;",
+        "background:color-mix(in srgb,var(--holo-surface,#14161b) 88%,transparent);border:1px solid var(--holo-border,#23272f);box-shadow:0 16px 44px rgba(0,0,0,.5);backdrop-filter:blur(10px);animation:hw-pop .18s cubic-bezier(.34,1.4,.5,1)}",
+      ".hw-bundlebar .b-go{background:var(--holo-accent,#3b82f6);color:#fff;border:0;border-radius:999px;padding:9px 17px;cursor:pointer;font:600 14px ui-sans-serif,system-ui,sans-serif}",
+      ".hw-bundlebar .b-go:hover{filter:brightness(1.08)}",
+      ".hw-bundlebar .b-x{background:rgba(255,255,255,.08);color:var(--holo-ink,#eef2f6);border:0;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1}",
+      ".hw-bundlebar .b-x:hover{background:rgba(255,255,255,.16)}",
+      "@media (prefers-reduced-motion: reduce){.hw-widget *{animation:none!important;transition:none!important} .hw-gallery,.hw-gallery-scrim,.hw-bundlebar{animation:none!important}}",
     ].join("");
     (DOC.head || DOC.documentElement).appendChild(s);
   }
@@ -195,6 +210,8 @@
     w.el = root; w.body = root.querySelector(".hw-body"); w._subs = [];
     render(w);
     wireResize(w); wireInteract(w); wireTools(w);
+    root.addEventListener("click", function (e) { if (e.shiftKey) { e.preventDefault(); e.stopPropagation(); selToggle(w); } }, true);   // shift-click selects for bundling
+    if (W.interact) wireSnapEngine(w);                                   // interact already loaded → snap from the first frame
     return w;
   }
   function render(w) {
@@ -224,7 +241,7 @@
   function wireResize(w) {
     var grip = w.el.querySelector(".hw-grip"); if (!grip) return;
     var sp = spec(w.type), min = (sp && sp.minW) || 90, max = (sp && sp.maxW) || 760, rz = null;
-    grip.addEventListener("pointerdown", function (e) { e.stopPropagation(); e.preventDefault(); rz = { x: e.clientX, w: w.w || w.el.offsetWidth }; w.el.classList.add("resizing"); try { grip.setPointerCapture(e.pointerId); } catch (x) {} });
+    grip.addEventListener("pointerdown", function (e) { if (w._snap) return; e.stopPropagation(); e.preventDefault(); rz = { x: e.clientX, w: w.w || w.el.offsetWidth }; w.el.classList.add("resizing"); try { grip.setPointerCapture(e.pointerId); } catch (x) {} });
     grip.addEventListener("pointermove", function (e) { if (!rz) return; w.w = clamp(Math.round(rz.w + (e.clientX - rz.x)), min, max); w.el.style.setProperty("--hw-w", w.w + "px"); });
     grip.addEventListener("pointerup", function (e) { if (!rz) return; rz = null; w.el.classList.remove("resizing"); try { grip.releasePointerCapture(e.pointerId); } catch (x) {} var p = clampPos(w, w.x, w.y); w.x = p.x; w.y = p.y; w.el.style.left = w.x + "px"; w.el.style.top = w.y + "px"; save(); });
   }
@@ -234,17 +251,18 @@
     var down = null, moved = false, lastTap = 0, tapTimer = 0;
     w.el.addEventListener("pointerdown", function (e) {
       if (e.button !== 0) return;
+      if (w._snap) return;                                                          // interact.js owns drag/tap when the snap engine is active
       if (e.target.closest(".hw-tools,.hw-grip,.hw-edit,.hw-interactive")) return;  // chrome + opted-in widget controls handle their own pointers
       down = { x: e.clientX, y: e.clientY, ox: w.x, oy: w.y }; moved = false;
       try { w.el.setPointerCapture(e.pointerId); } catch (x) {}
     });
     w.el.addEventListener("pointermove", function (e) {
       if (!down) return; var dx = e.clientX - down.x, dy = e.clientY - down.y;
-      if (!moved && dx * dx + dy * dy > 25) { moved = true; w.el.classList.add("dragging"); }
-      if (moved) { var p = clampPos(w, down.ox + dx, down.oy + dy); w.x = p.x; w.y = p.y; w.el.style.left = w.x + "px"; w.el.style.top = w.y + "px"; }
+      if (!moved && dx * dx + dy * dy > 25) { moved = true; w.el.classList.add("dragging"); showGrid(); }
+      if (moved) { var p = clampPos(w, down.ox + dx, down.oy + dy); w.x = p.x; w.y = p.y; w.el.style.left = w.x + "px"; w.el.style.top = w.y + "px"; var gg = guidesFor({ left: w.x, top: w.y, width: w.el.offsetWidth, height: w.el.offsetHeight }, w.el); showGuides(gg.v, gg.h); }
     });
     w.el.addEventListener("pointerup", function (e) {
-      if (!down) return; var wasMoved = moved; w.el.classList.remove("dragging"); down = null;
+      if (!down) return; var wasMoved = moved; w.el.classList.remove("dragging"); down = null; if (wasMoved) clearGuides();
       if (wasMoved) { save(); return; }
       var sp = spec(w.type), now = Date.now();
       if (now - lastTap < 280) { lastTap = 0; if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; }   // double → type override, else edit
@@ -253,6 +271,145 @@
     });
     w.el.addEventListener("contextmenu", function (e) { e.preventDefault(); openMenu(w, e.clientX, e.clientY); });
   }
+  // ── the SNAP ENGINE (interact.js, MIT — vendored at /_shared/interactjs, SW-content-verified) ─────────
+  // Seamless, delightful position anchoring for every object on a holospace tab: drag/resize MAGNETICALLY
+  // snap to (1) sibling edges + centres (Figma-style alignment), (2) the canvas golden anchors — the φ
+  // gridlines 0.382/0.618, the margins, the centre — and (3) a fine pixel grid. Graceful: absent interact
+  // (no vendor / offline) → the hand-rolled drag above stays (gated by w._snap), so it always works.
+  var SNAP_RANGE = 9, SNAP_GRID = 8;                                     // magnetic radius (px) · fine grid step
+  // ── shared snap LINES, scanned from EVERY object on the tab (widgets + app windows + icons) in VIEWPORT
+  //    coords + the canvas golden anchors. Cached ~80ms so a 60fps drag does not thrash layout. ──
+  var _lc = null, _lcT = 0;
+  function objRects() {
+    var t = Date.now(); if (_lc && (t - _lcT) < 80) return _lc;
+    var rects = [];
+    try {
+      var els = DOC.querySelectorAll(".hw-widget, holo-window");
+      for (var i = 0; i < els.length; i++) { var el = els[i]; if (el.hasAttribute && el.hasAttribute("hidden")) continue; var r = el.getBoundingClientRect(); if (!r.width || !r.height) continue; rects.push({ el: el, l: r.left, cx: r.left + r.width / 2, r: r.right, t: r.top, cy: r.top + r.height / 2, b: r.bottom }); }
+    } catch (e) {}
+    _lc = rects; _lcT = t; return rects;
+  }
+  function collectLines(excludeEl) {
+    var b = deskBounds(), m = MARGIN(innerWidth, innerHeight), Wu = b.maxX - b.minX, Hu = b.maxY - b.minY;
+    var v = [b.minX + m, b.maxX - m, (b.minX + b.maxX) / 2, b.minX + Wu * 0.382, b.minX + Wu * 0.618];   // margins · centre · golden lines
+    var h = [b.minY + m, b.maxY - m, (b.minY + b.maxY) / 2, b.minY + Hu * 0.382, b.minY + Hu * 0.618];
+    var rs = objRects(); for (var i = 0; i < rs.length; i++) { var o = rs[i]; if (o.el === excludeEl) continue; v.push(o.l, o.cx, o.r); h.push(o.t, o.cy, o.b); }
+    return { v: v, h: h };
+  }
+  function nearestLine(lines, c) { var best = null, bd = SNAP_RANGE + 1; for (var i = 0; i < lines.length; i++) { var d = Math.abs(c - lines[i]); if (d < bd) { bd = d; best = Math.round(lines[i]); } } return best; }
+
+  // ── visual SNAP GUIDE LINES (Figma-style) — drawn while a drag aligns to a line; cleared on drop. ──
+  var guideEl = null;
+  function guideLayer() { if (guideEl && guideEl.isConnected) return guideEl; guideEl = DOC.createElement("div"); guideEl.id = "hw-guides"; guideEl.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147481000"; DOC.body.appendChild(guideEl); return guideEl; }
+  // ── the SNAPPABLE GRID — a faint dot field + the golden anchor lines, shown while ANY object is being
+  //    dragged so you SEE where it will land. Fades in on drag-start, out on drop. Shared by every
+  //    draggable object (widgets · app windows · icons) since it rides the same show/clear guide calls. ──
+  var gridEl = null;
+  function gridLayer() { if (gridEl && gridEl.isConnected) return gridEl; gridEl = DOC.createElement("div"); gridEl.id = "hw-grid"; gridEl.style.cssText = "position:fixed;pointer-events:none;z-index:2147480999;opacity:0;transition:opacity .2s ease"; DOC.body.appendChild(gridEl); return gridEl; }
+  function showGrid() {
+    var g = gridLayer(); if (g._on) return; g._on = true;
+    var b = deskBounds(), Wu = b.maxX - b.minX, Hu = b.maxY - b.minY, m = MARGIN(innerWidth, innerHeight), step = SNAP_GRID * 3;   // 24px — a finer, more precise lattice
+    g.style.left = b.minX + "px"; g.style.top = b.minY + "px"; g.style.width = Wu + "px"; g.style.height = Hu + "px"; g.style.willChange = "opacity";
+    // an ENCLOSED lattice (the holo dot-mark language): thin lines forming cells, with a hollow RING node
+    // at every intersection. One static CSS-painted layer → its OWN compositor layer, so it costs nothing
+    // per move (the lag was never the grid; it was the per-frame getComputedStyle + guide DOM rebuild).
+    var line = "color-mix(in srgb,var(--holo-accent,#5b8cff) 15%,transparent)";
+    var node = "color-mix(in srgb,var(--holo-accent,#5b8cff) 52%,transparent)";
+    g.style.backgroundImage =
+      "radial-gradient(circle at 0 0, transparent 0 1.7px, " + node + " 1.7px 2.6px, transparent 2.7px)," +
+      "linear-gradient(0deg, " + line + " 1px, transparent 1px)," +
+      "linear-gradient(90deg, " + line + " 1px, transparent 1px)";
+    g.style.backgroundSize = step + "px " + step + "px"; g.style.backgroundPosition = "0 0";
+    var ln = "", vs = [m, Wu - m, Wu / 2, Wu * 0.382, Wu * 0.618], hs = [m, Hu - m, Hu / 2, Hu * 0.382, Hu * 0.618];
+    vs.forEach(function (x) { ln += '<div style="position:absolute;top:0;bottom:0;width:1px;left:' + Math.round(x) + 'px;background:color-mix(in srgb,var(--holo-accent,#3b82f6) 28%,transparent)"></div>'; });
+    hs.forEach(function (y) { ln += '<div style="position:absolute;left:0;right:0;height:1px;top:' + Math.round(y) + 'px;background:color-mix(in srgb,var(--holo-accent,#3b82f6) 28%,transparent)"></div>'; });
+    g.innerHTML = ln; g.style.opacity = "1";   // set directly (no rAF/timeout — those throttle in a backgrounded tab); the .2s transition still eases on subsequent shows
+  }
+  function hideGrid() { if (gridEl) { gridEl._on = false; gridEl.style.opacity = "0"; } }
+  var _gk = null;   // last drawn guide-line signature — skip the rebuild when nothing changed this frame
+  function clearGuides() { if (guideEl) guideEl.innerHTML = ""; _gk = null; hideGrid(); }
+  function showGuides(vx, hy) {
+    showGrid();
+    var key = (vx || []).join(",") + "|" + (hy || []).join(",");
+    if (key === _gk) return;            // unchanged since last frame → no DOM work (kills the guide-rebuild jank)
+    _gk = key;
+    var g = guideLayer(); g.innerHTML = ""; var b = deskBounds();
+    var line = "position:absolute;background:var(--holo-accent,#3b82f6);box-shadow:0 0 6px var(--holo-accent,#3b82f6);opacity:.85;border-radius:1px";
+    (vx || []).forEach(function (x) { var d = DOC.createElement("div"); d.style.cssText = line + ";top:" + Math.round(b.minY) + "px;height:" + Math.round(b.maxY - b.minY) + "px;left:" + Math.round(x) + "px;width:1px"; g.appendChild(d); });
+    (hy || []).forEach(function (y) { var d = DOC.createElement("div"); d.style.cssText = line + ";left:" + Math.round(b.minX) + "px;width:" + Math.round(b.maxX - b.minX) + "px;top:" + Math.round(y) + "px;height:1px"; g.appendChild(d); });
+  }
+  // which lines a rect's edges/centre sit ON (post-snap) — what to draw as guides.
+  function guidesFor(rect, excludeEl) {
+    var L = collectLines(excludeEl), TOL = 1.5, vg = [], hg = [];
+    var vs = [rect.left, rect.left + rect.width / 2, rect.left + rect.width], hs = [rect.top, rect.top + rect.height / 2, rect.top + rect.height];
+    L.v.forEach(function (x) { for (var i = 0; i < vs.length; i++) if (Math.abs(vs[i] - x) <= TOL) { if (vg.indexOf(x) < 0) vg.push(x); break; } });
+    L.h.forEach(function (y) { for (var i = 0; i < hs.length; i++) if (Math.abs(hs[i] - y) <= TOL) { if (hg.indexOf(y) < 0) hg.push(y); break; } });
+    return { v: vg, h: hg };
+  }
+  // snap a VIEWPORT rect to the nearest lines (for hand-rolled draggers: app windows + desktop icons).
+  // Returns snapped {left,top} + the guide lines it landed on. Pure + defensive — never throws on the caller.
+  function snapRect(rect, excludeEl) {
+    var L = collectLines(excludeEl);
+    var va = [rect.left, rect.left + rect.width / 2, rect.left + rect.width], bestV = null;
+    va.forEach(function (c) { var s = nearestLine(L.v, c); if (s != null) { var d = Math.abs(c - s); if (!bestV || d < bestV.d) bestV = { d: d, off: s - c, line: s }; } });
+    var ha = [rect.top, rect.top + rect.height / 2, rect.top + rect.height], bestH = null;
+    ha.forEach(function (c) { var s = nearestLine(L.h, c); if (s != null) { var d = Math.abs(c - s); if (!bestH || d < bestH.d) bestH = { d: d, off: s - c, line: s }; } });
+    return { left: Math.round(rect.left + (bestV ? bestV.off : 0)), top: Math.round(rect.top + (bestH ? bestH.off : 0)), v: bestV ? [bestV.line] : [], h: bestH ? [bestH.line] : [] };
+  }
+  // the SHARED engine — app windows + desktop icons (shell) snap to the SAME lines + show the SAME guides.
+  if (typeof window !== "undefined") W.HoloSnap = { collectLines: collectLines, snapRect: snapRect, guidesFor: guidesFor, showGuides: showGuides, clearGuides: clearGuides, showGrid: showGrid, hideGrid: hideGrid, RANGE: SNAP_RANGE };
+
+  function wireSnapEngine(w) {
+    var I = W.interact; if (!I || w._snap || !w.el) return; w._snap = true;
+    var sp = spec(w.type), min = (sp && sp.minW) || 90, max = (sp && sp.maxW) || 760;
+    var vT = function (x) { var s = nearestLine(collectLines(w.el).v, x); return s == null ? {} : { x: s, range: SNAP_RANGE }; };   // x-only target (vertical line)
+    var hT = function (x, y) { var s = nearestLine(collectLines(w.el).h, y); return s == null ? {} : { y: s, range: SNAP_RANGE }; }; // y-only target (horizontal line)
+    I(w.el).draggable({
+      ignoreFrom: ".hw-tools,.hw-grip,.hw-edit,.hw-interactive",
+      listeners: {
+        start: function () { w.el.classList.add("dragging"); w._dw = w.el.offsetWidth; w._dh = w.el.offsetHeight; showGrid(); },   // measure ONCE; grid up immediately
+        move: function (ev) {
+          w.x = Math.round(w.x + ev.dx); w.y = Math.round(w.y + ev.dy);
+          var b = deskBounds();   // cached → no getComputedStyle per move; size cached → no offsetWidth read
+          w.x = Math.max(b.minX, Math.min(w.x, Math.max(b.minX, b.maxX - w._dw)));
+          w.y = Math.max(b.minY, Math.min(w.y, Math.max(b.minY, b.maxY - w._dh)));
+          w.el.style.left = w.x + "px"; w.el.style.top = w.y + "px";
+          var g = guidesFor({ left: w.x, top: w.y, width: w._dw, height: w._dh }, w.el); showGuides(g.v, g.h);
+        },
+        end: function () { w.el.classList.remove("dragging"); clearGuides(); save(); },
+      },
+      modifiers: [
+        I.modifiers.snap({ targets: [vT, hT, I.snappers.grid({ x: SNAP_GRID, y: SNAP_GRID })], range: SNAP_RANGE, relativePoints: [{ x: 0, y: 0 }, { x: 0.5, y: 0.5 }, { x: 1, y: 1 }] }),
+      ],
+      inertia: false,
+    });
+    I(w.el).resizable({
+      edges: { right: ".hw-grip", bottom: ".hw-grip" },
+      listeners: {
+        start: function () { w.el.classList.add("resizing"); },
+        move: function (ev) { w.w = clamp(Math.round(ev.rect.width), min, max); w.el.style.setProperty("--hw-w", w.w + "px"); },
+        end: function () { w.el.classList.remove("resizing"); var p = clampPos(w, w.x, w.y); w.x = p.x; w.y = p.y; w.el.style.left = w.x + "px"; w.el.style.top = w.y + "px"; save(); },
+      },
+      modifiers: [
+        I.modifiers.restrictSize({ min: { width: min, height: 1 }, max: { width: max, height: 1e6 } }),
+        I.modifiers.snapSize({ targets: [I.snappers.grid({ width: SNAP_GRID, height: SNAP_GRID })], range: SNAP_RANGE }),
+      ],
+    });
+    // tap / double-tap preserved (interact distinguishes tap from drag) — single defers, double cancels it.
+    var tapT = 0;
+    I(w.el).on("tap", function () { if (tapT) { clearTimeout(tapT); tapT = 0; } tapT = setTimeout(function () { tapT = 0; var s = spec(w.type); if (s && s.onTap) try { s.onTap(host(w)); } catch (x) {} }, 260); });
+    I(w.el).on("doubletap", function () { if (tapT) { clearTimeout(tapT); tapT = 0; } var s = spec(w.type); if (s && s.onDouble) { try { s.onDouble(host(w)); } catch (x) {} } else openEdit(w); });
+  }
+  // load interact.js once (same-origin, SW-verified); on load upgrade every live widget to the snap engine.
+  function ensureInteract() {
+    if (W.interact) { live.forEach(wireSnapEngine); return; }
+    if (DOC.getElementById("holo-interactjs")) return;
+    var s = DOC.createElement("script"); s.id = "holo-interactjs"; s.src = "/_shared/interactjs/interact.min.js";
+    s.onload = function () { try { live.forEach(wireSnapEngine); } catch (e) {} };
+    s.onerror = function () { /* no vendor / offline → the hand-rolled drag stays active (graceful) */ };
+    (DOC.head || DOC.documentElement).appendChild(s);
+  }
+
   function wireTools(w) {
     var tools = w.el.querySelector(".hw-tools"); if (!tools) return;
     tools.querySelector(".edit").addEventListener("click", function (e) { e.stopPropagation(); openEdit(w); });
@@ -301,6 +458,7 @@
     var items = [];
     // a type may contribute its own verbs at the top (e.g. Start/Pause/Reset) — then a separator.
     try { if (sp && sp.menuItems) { sp.menuItems(host(w)).forEach(function (it) { items.push([it.label, it.fn]); }); if (items.length) items.push(["—"]); } } catch (e) {}
+    if (SEL.length >= 2) { items.push(["⛓  Bundle " + SEL.length + " selected", groupSelected]); items.push(["—"]); }   // ≥2 shift-selected → fuse into one κ
     items = items.concat([
       ["✎  Edit…", function () { openEdit(w); }],
       ["⛎  Copy widget κ", function () { sealOne(w).then(function (k) { clip("holo://" + k, "Copied this widget’s κ"); }); }],
@@ -346,7 +504,7 @@
   // ── lifecycle ───────────────────────────────────────────────────────────────────────────
   function hide(w) { w.hidden = true; if (w.el) w.el.setAttribute("hidden", ""); teardown(w); save(); toast("Widget hidden · add it again from the desktop’s New menu"); }
   function showW(w) { w.hidden = false; if (w.el) { w.el.removeAttribute("hidden"); render(w); try { w.el.animate([{ transform: "scale(.7)", opacity: 0 }, { transform: "scale(1)", opacity: 1 }], { duration: 260, easing: "cubic-bezier(.34,1.4,.5,1)" }); } catch (e) {} } save(); }
-  function remove(w) { teardown(w); if (w.el) w.el.remove(); var i = live.indexOf(w); if (i >= 0) live.splice(i, 1); save(); toast("Widget removed"); }
+  function remove(w) { teardown(w); if (w.el) w.el.remove(); var i = live.indexOf(w); if (i >= 0) live.splice(i, 1); selDrop(w.id); save(); toast("Widget removed"); }
   function duplicate(w) { add(w.type, JSON.parse(JSON.stringify(w.config)), { x: w.x + 24, y: w.y + 24 }); }
 
   function add(type, config, pos) {
@@ -365,6 +523,55 @@
     return w;
   }
 
+  // ── bundle / unbundle — fuse ANY on-screen objects into ONE κ object, and split them back ──────────
+  function byId(id) { for (var i = 0; i < live.length; i++) if (live[i].id === id) return live[i]; return null; }
+  // a lightweight host for a CHILD rendered inside a bundle: its OWN config + transient state, but its
+  // provider subscriptions + cleanup ride the GROUP (so they tear down with it). No own drag / edit frame.
+  function childHost(groupHost, item, cell) {
+    var sp = TYPES[item.type] || {}, cfg = {}, dc = sp.defaultConfig || {}, ic = item.config || {};
+    for (var k in dc) cfg[k] = dc[k]; for (var k2 in ic) cfg[k2] = ic[k2];
+    item._state = item._state || {};
+    return { id: groupHost.id + ":" + item.type, type: item.type, config: cfg, el: groupHost.el, body: cell,
+      subscribe: groupHost.subscribe, get: groupHost.get, setConfig: function (p) { for (var k in p) cfg[k] = p[k]; },
+      save: groupHost.save, refresh: function () {}, state: item._state, cleanup: groupHost.cleanup, kappa: groupHost.kappa };
+  }
+  // SELECTION (shift-click) — the on-screen "what to bundle" set; a floating bar offers the action.
+  var SEL = [];
+  function selToggle(w) { var i = SEL.indexOf(w.id); if (i >= 0) { SEL.splice(i, 1); if (w.el) w.el.classList.remove("hw-sel"); } else { SEL.push(w.id); if (w.el) w.el.classList.add("hw-sel"); } bundleBar(); }
+  function selDrop(id) { var i = SEL.indexOf(id); if (i >= 0) { SEL.splice(i, 1); bundleBar(); } }
+  function selClear() { SEL.forEach(function (id) { var w = byId(id); if (w && w.el) w.el.classList.remove("hw-sel"); }); SEL = []; bundleBar(); }
+  function bundleBar() {
+    var bar = DOC.getElementById("hw-bundlebar");
+    if (SEL.length < 2) { if (bar) bar.remove(); return; }
+    if (!bar) { bar = DOC.createElement("div"); bar.id = "hw-bundlebar"; bar.className = "hw-bundlebar"; DOC.body.appendChild(bar); }
+    bar.innerHTML = '<button class="b-go" title="Fuse the selected objects into one κ">⛓ Bundle ' + SEL.length + '</button><button class="b-x" title="Clear selection">×</button>';
+    bar.querySelector(".b-go").onclick = groupSelected;
+    bar.querySelector(".b-x").onclick = selClear;
+  }
+  function groupSelected() {
+    var ws = SEL.map(byId).filter(Boolean); if (ws.length < 2) { selClear(); return; }
+    ws.sort(function (a, b) { return (a.y - b.y) || (a.x - b.x); });                 // natural top→bottom stack order
+    var minX = Math.min.apply(null, ws.map(function (w) { return w.x; }));
+    var minY = Math.min.apply(null, ws.map(function (w) { return w.y; }));
+    var gw = Math.max.apply(null, ws.map(function (w) { return w.w || 260; }));
+    var items = ws.map(function (w) { return { type: w.type, config: JSON.parse(JSON.stringify(w.config || {})) }; });
+    ws.forEach(function (w) { teardown(w); if (w.el) w.el.remove(); var i = live.indexOf(w); if (i >= 0) live.splice(i, 1); });
+    SEL = []; bundleBar();
+    var g = add("group", { items: items }, { x: minX, y: minY, w: gw });
+    if (g) toast("Bundled " + items.length + " objects into one");
+  }
+  function ungroup(w) {
+    var items = (w.config && w.config.items) || [], x = w.x, y = w.y, gw = w.w || 360;
+    teardown(w); if (w.el) w.el.remove(); var i = live.indexOf(w); if (i >= 0) live.splice(i, 1);
+    var cy = y;
+    items.forEach(function (it) {
+      var sp = TYPES[it.type] || {}, iw = sp.defaultW || 260;
+      var nw = add(it.type, JSON.parse(JSON.stringify(it.config || {})), { x: Math.round(x + (gw - iw) / 2), y: cy });
+      cy += ((nw && nw.el && nw.el.offsetHeight) || 140) + 26;
+    });
+    save(); toast("Unbundled");
+  }
+
   function reflowAll() { live.forEach(function (w) { if (w.el && !w.hidden) { var p = clampPos(w, w.x, w.y); w.x = p.x; w.y = p.y; w.el.style.left = w.x + "px"; w.el.style.top = w.y + "px"; } }); }
 
   // ── centre-anchored reflow — keep every floating object fixed RELATIVE TO THE HOLOSPACE CENTRE as the
@@ -378,8 +585,9 @@
   function anchorOrb() {
     for (var i = 0; i < live.length; i++) {
       var w = live[i]; if (w.type !== "q" || w.hidden || !w.el) continue;
-      var b = deskBounds(), ww = w.el.offsetWidth || 120, hh = w.el.offsetHeight || 120, gap = 20;
-      w.x = Math.round(b.maxX - ww - gap); w.y = Math.round(b.maxY - hh - gap);
+      var b = deskBounds(), ww = w.el.offsetWidth || 120, hh = w.el.offsetHeight || 120, gap = 30;
+      var gb = parseFloat(getComputedStyle(DOC.documentElement).getPropertyValue("--gap-b")) || 0;   // clear the bottom "Powered by" credit gutter
+      w.x = Math.round(b.maxX - ww - gap); w.y = Math.round(b.maxY - hh - gap - gb);
       w.el.classList.add("hw-gliding"); w.el.style.left = w.x + "px"; w.el.style.top = w.y + "px";
     }
   }
@@ -475,7 +683,7 @@
   // A mode is just a scene flagged {mode:true}. Switching REPLACES the board, but each mode REMEMBERS its
   // own layout (per-mode localStorage), so flipping between them is non-destructive — your customised Work
   // board is still there when you come back from Play. Active only on a persisting board (the Home desktop).
-  var MODE_LS = "holo-widgets.mode.v2", MODES_LS = "holo-widgets.modeboards.v2", currentMode = null;
+  var MODE_LS = "holo-widgets.mode.v5", MODES_LS = "holo-widgets.modeboards.v5", currentMode = null;
   function modeBoardsLoad() { try { return JSON.parse(W.localStorage.getItem(MODES_LS) || "{}"); } catch (e) { return {}; } }
   function modeBoardsSave(m) { try { W.localStorage.setItem(MODES_LS, JSON.stringify(m)); } catch (e) {} }
   function currentModeName() { if (currentMode) return currentMode; try { return W.localStorage.getItem(MODE_LS) || null; } catch (e) { return null; } }
@@ -484,8 +692,11 @@
     if (!SCENES[name]) { toast("Unknown mode: " + name); return; }
     var prev = currentModeName(), boards = modeBoardsLoad();
     if (persistScope && prev && prev !== name) { boards[prev] = modeSnapshot(); modeBoardsSave(boards); }   // remember the mode we're leaving (minus sticky system widgets)
+    if (prev && prev !== name && SCENES[prev] && typeof SCENES[prev].onLeave === "function") { try { SCENES[prev].onLeave(); } catch (e) {} }   // let a special mode (e.g. Clarity) undo its chrome treatment
     currentMode = name;
     try { if (persistScope) W.localStorage.setItem(MODE_LS, name); } catch (e) {}
+    try { DOC.documentElement.setAttribute("data-holo-mode", name); } catch (e) {}   // expose the active mode to the shell so its chrome can dress itself (e.g. Clarity glass)
+    if (typeof SCENES[name].onEnter === "function") { try { SCENES[name].onEnter(); } catch (e) {} }   // a special mode hook — runs inside this user-gesture call stack (Clarity asks for fullscreen here)
     closeEdit(); closeMenu();
     for (var i = live.length - 1; i >= 0; i--) { if (!isStickyType(live[i].type)) { teardown(live[i]); if (live[i].el) live[i].el.remove(); live.splice(i, 1); } }   // drop the mode widgets, keep system orbs (sticky)
     var saved = persistScope ? boards[name] : null;
@@ -500,6 +711,8 @@
   // ── boot ────────────────────────────────────────────────────────────────────────────────
   function boot() {
     W.addEventListener("resize", recenter);
+    DOC.addEventListener("keydown", function (e) { if (e.key === "Escape" && SEL.length) selClear(); });   // Escape clears a bundling selection
+    ensureInteract();                                                    // load the interact.js snap engine (graceful if absent)
     var saved = load();
     saved.forEach(function (s) {
       if (!spec(s.type)) return;                                  // type not registered (yet) — skip, keep the record
@@ -507,18 +720,20 @@
       if (mount(w)) { live.push(w); if (!w.hidden) { var p = clampPos(w, w.x, w.y); w.x = p.x; w.y = p.y; w.el.style.left = w.x + "px"; w.el.style.top = w.y + "px"; } }
     });
     seedFirstRun(saved);
+    try { var cm = currentModeName(); if (cm) DOC.documentElement.setAttribute("data-holo-mode", cm); } catch (e) {}   // reflect the restored mode so the shell re-dresses its chrome after reload (Clarity glass persists; fullscreen needs a fresh gesture)
     if (saved.length) settleMode();                               // a restored board → re-fit it to the CURRENT viewport (heals positions saved at a narrower boot size)
   }
-  // first run (or after a layout-version reset): seed the curated, golden-ratio "Focused" scene so the Home
-  // opens tidy and balanced — clock, today's one goal, a focus timer and a quote — not an empty desktop. The
-  // desk mounts asynchronously (after its deps load), so wait briefly for it before seeding; never on apps.
+  // first run (no prior board): seed the "Welcome" scene so every NEW user lands on a warm, time-aware
+  // greeting over the day-progress ring — the first face of the desktop — rather than an empty surface.
+  // (Existing users keep their own board: the guard returns once anything is saved or the seed flag is set.)
+  // The desk mounts asynchronously (after its deps load), so wait briefly for it before seeding; never on apps.
   function seedFirstRun(saved) {
-    try { if (saved.length || W.localStorage.getItem(SEED_LS) || !SCENES.focused) return; } catch (e) { return; }
+    try { if (saved.length || W.localStorage.getItem(SEED_LS) || !SCENES.welcome) return; } catch (e) { return; }
     var tries = 0;
     (function attempt() {
       if (++tries > 60) return;                                    // gave up — no desktop surface present here
       if (!DOC.getElementById("holo-desk") && !DOC.getElementById("world")) { setTimeout(attempt, 120); return; }   // wait for the desktop (holo-desk) OR the shell holospace card (#world)
-      try { W.localStorage.setItem(SEED_LS, "1"); setMode("focused"); } catch (e) {}
+      try { W.localStorage.setItem(SEED_LS, "1"); setMode("welcome"); } catch (e) {}
     })();
   }
 
@@ -560,7 +775,7 @@
       { key: "h24", label: "24-hour time", type: "toggle" },
       { key: "seconds", label: "Show seconds", type: "toggle" },
       { key: "greet", label: "Show greeting", type: "toggle" },
-      { key: "name", label: "Your name", type: "text" },
+      { key: "name", label: "My name", type: "text" },
     ],
     render: function (host) {
       var c = host.config;
@@ -579,10 +794,91 @@
     },
   });
 
+  // ── Day ring — a calm circle that FILLS as the day passes (local time = your time zone). Tap it to
+  //    flip the centre between "% of the day" and the local time + date. A standalone, movable object. ──
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function monthDay(d) { return MON[d.getMonth()] + " " + d.getDate(); }
+  W.HoloWidgets.define("dayring", {
+    name: "Day ring", icon: "circle-dashed", blurb: "How much of the day has passed — tap for the time & date.",
+    defaultW: 190, minW: 120, maxW: 460,
+    defaultConfig: { h24: true },
+    fields: [{ key: "h24", label: "24-hour time", type: "toggle" }],
+    // tap flips %↔time/date via the RUNTIME's tap-vs-drag (NOT an .hw-interactive button) — so grabbing
+    // the ring anywhere DRAGS the widget, and a clean tap flips it. (Inside a bundle it just shows %.)
+    onTap: function (host) { host.state.showTime = !host.state.showTime; if (host.state._paint) host.state._paint(); },
+    render: function (host) {
+      var c = host.config, st = host.state;
+      if (st.showTime == null) st.showTime = false;                    // default face: % of the day; tap → time + date
+      var R = 46, CIRC = 2 * Math.PI * R;
+      var ring = DOC.createElement("div");
+      ring.style.cssText = "position:relative;width:100%;aspect-ratio:1;display:grid;place-items:center;margin:0 auto;color:inherit";
+      ring.innerHTML =
+        '<svg viewBox="0 0 100 100" style="width:100%;height:100%;display:block">' +
+          '<circle cx="50" cy="50" r="' + R + '" fill="none" stroke="currentColor" stroke-opacity=".13" stroke-width="3"></circle>' +
+          '<circle class="prog" cx="50" cy="50" r="' + R + '" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width="3" stroke-linecap="round" transform="rotate(-90 50 50)" stroke-dasharray="' + CIRC.toFixed(1) + '" stroke-dashoffset="' + CIRC.toFixed(1) + '" style="transition:stroke-dashoffset .5s ease"></circle>' +
+        '</svg>' +
+        '<div class="lab" style="position:absolute;text-align:center;line-height:1.05;pointer-events:none">' +
+          '<div class="big" style="font-weight:200;font-variant-numeric:tabular-nums;letter-spacing:-.01em;font-size:clamp(22px,calc(var(--hw-w,190px)*.2),60px)"></div>' +
+          '<div class="sub" style="margin-top:.5em;font-size:clamp(11px,calc(var(--hw-w,190px)*.062),15px);letter-spacing:.06em;opacity:.6"></div>' +
+        '</div>';
+      host.body.appendChild(ring);
+      var prog = ring.querySelector(".prog"), big = ring.querySelector(".big"), sub = ring.querySelector(".sub");
+      function paint(d) {
+        d = d || new Date();                                           // local → the user's own time zone
+        var H = d.getHours(), frac = (H * 3600 + d.getMinutes() * 60 + d.getSeconds()) / 86400;
+        prog.setAttribute("stroke-dashoffset", (CIRC * (1 - frac)).toFixed(1));
+        if (st.showTime) { var hh = c.h24 ? String(H).padStart(2, "0") : String(((H % 12) || 12)); big.textContent = hh + ":" + String(d.getMinutes()).padStart(2, "0"); sub.textContent = monthDay(d); }
+        else { big.textContent = Math.round(frac * 100) + "%"; sub.textContent = "of your day"; }
+      }
+      st._paint = paint; host.subscribe("time", paint); paint();
+    },
+  });
+
+  // ── Greeting — a warm, time-aware line ("Good evening, Explorer.") in the user's local time zone; the
+  //    name is yours (HoloIdentity), or "Explorer" for a guest. A standalone, movable, resizable object. ──
+  W.HoloWidgets.define("greeting", {
+    name: "Greeting", icon: "message", blurb: "A time-aware greeting, by name (or “Explorer” as a guest).",
+    defaultW: 560, minW: 240, maxW: 920,
+    defaultConfig: { name: "" },
+    fields: [{ key: "name", label: "My name", type: "text" }],
+    render: function (host) {
+      var c = host.config;
+      var hi = DOC.createElement("div");
+      hi.style.cssText = "text-align:center;font-weight:300;letter-spacing:-.012em;font-size:clamp(26px,calc(var(--hw-w,560px)*.092),64px);line-height:1.1;opacity:.97";
+      host.body.appendChild(hi);
+      host.subscribe("time", function (d) {
+        d = d || new Date();
+        var nm = (c.name || whoAmI() || "Explorer").trim();
+        hi.textContent = greetWord(d.getHours()) + ", " + nm + ".";
+      });
+    },
+  });
+
+  // ── Bundle (group) — two or more on-screen objects fused into ONE κ-addressed object you move, resize
+  //    and share TOGETHER. Shift-click objects to select, then "Bundle"; right-click a bundle → "Unbundle"
+  //    to split them back into independent widgets. Children stack, centred, on a golden-ratio rhythm. ──
+  W.HoloWidgets.define("group", {
+    name: "Bundle", icon: "stack-2", blurb: "Several objects bundled into one — move, resize and share as one κ.",
+    defaultW: 380, minW: 160, maxW: 900,
+    defaultConfig: { items: [] },
+    menuItems: function (h) { return [{ label: "⛓  Unbundle", fn: function () { var w = byId(h.id); if (w) ungroup(w); } }]; },
+    render: function (host) {
+      var items = (host.config && host.config.items) || [];
+      var col = DOC.createElement("div");
+      col.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:clamp(16px,calc(var(--hw-w,380px)*.075),48px);text-align:center";
+      items.forEach(function (it) {
+        var sp = TYPES[it.type]; if (!sp || !sp.render) return;
+        var cell = DOC.createElement("div"); cell.style.cssText = "width:100%"; col.appendChild(cell);
+        try { sp.render(childHost(host, it, cell)); } catch (e) {}
+      });
+      host.body.appendChild(col);
+    },
+  });
+
   // ── Note / intention (static, editable in place) ──────────────────────────────────────────────
   W.HoloWidgets.define("note", {
     name: "Note", icon: "note", blurb: "A line of text or a daily intention.", defaultW: 360, minW: 160, maxW: 640,
-    defaultConfig: { text: "What is your main goal for today?", accent: "#ffffff", rule: true },
+    defaultConfig: { text: "What matters most today?", accent: "#ffffff", rule: true },
     fields: [
       { key: "text", label: "Text", type: "textarea" },
       { key: "rule", label: "Underline", type: "toggle" },
@@ -910,71 +1206,160 @@
   function HX(b, m) { return Math.round((b.minX || 0) + (m != null ? m : 44)); }   // left column x (clear of the dock), one margin in
   function RX(W_, w, m) { return Math.round(W_ - (m != null ? m : 44) - w); }      // right-aligned x, same margin from the right
   function CX(W_, w) { var b = deskBounds(); return Math.round((b.minX + b.maxX) / 2 - w / 2); }   // centred on the CANVAS centre (dock + aside aware), not the raw viewport
-  // golden vertical placement inside the usable height [top..bottom]: f∈[0,1] eased onto the φ rhythm
+  // golden vertical placement inside the usable height [top..bottom]: f∈[0,1] eased onto the φ rhythm.
+  // The two GOLDEN BANDS (a tile's TOP) are GY(.,0.382)=upper golden line and GY(.,0.618)=lower — the real
+  // golden cuts that replace the former ad-hoc fractions; the header band sits at the margin (GY 0).
   function GY(top, H_, m, f) { var a = top + m, b = H_ - m; return Math.round(a + (b - a) * f); }
+  var PHI_INV = 0.618;                                                              // 1/φ — the golden cut
+  // golden HORIZONTAL focal placement: centre a tile of width w on the golden gridline f∈{0.382,0.618} of
+  // the usable width (dock + aside aware) — the focal point, never dead-centre.
+  function GPX(b, w, f) { var a = (b.minX || 0), z = (b.maxX || innerWidth); return Math.round(a + (z - a) * f - w / 2); }
+  // φ width ladder from ONE hero width: hero : secondary : header = φ² : φ¹ : φ⁰ (each the prior ÷ φ), so
+  // every tile shares one golden progression and the primary:secondary split is φ:1 (≈1.618:1).
+  function LAD(hero) { var sec = Math.round(hero / PHI), head = Math.round(sec / PHI); return { hero: hero, sec: sec, head: head }; }
 
-  // Focused — distraction-free deep work: the time, today's one goal, a timer, a line to think on.
+  // ── launch — a crisp, φ-proportioned APP tile (Files · Code · Wallet · Ask Q): one tap opens the real
+  //    holospace through the shell's own launcher (window.HoloShell) or summons Q. The only "app" surface
+  //    on the calm board — no iframe, no mockup, it just opens the live app. ──
+  function openTarget(c) {
+    try {
+      var S = W.HoloShell;
+      if (c.app === "q") { if (W.Q && W.Q.summon) return W.Q.summon(); if (S && S.q) return S.q(); }
+      if (S) {
+        var map = { files: "files", forge: "tools", code: "tools", control: "settings", settings: "settings", docs: "resources", apps: "apps", home: "home", search: "search" };
+        if (c.app && map[c.app] && typeof S[map[c.app]] === "function") return S[map[c.app]]();
+        if (c.appId && typeof S.openApp === "function") return S.openApp(c.appId, c.label);
+      }
+      if (c.url) W.open(c.url, "_blank", "noopener");
+    } catch (e) {}
+  }
+  W.HoloWidgets.define("launch", {
+    name: "Launcher", icon: "rocket", blurb: "Open a holospace app in one tap.",
+    defaultW: 128, minW: 96, maxW: 240,
+    defaultConfig: { label: "Open", icon: "rocket", appId: "", app: "" },
+    fields: [{ key: "label", label: "Label", type: "text" }, { key: "icon", label: "Icon (tabler name)", type: "text" }, { key: "appId", label: "App id (org.hologram.…)", type: "text" }],
+    render: function (host) {
+      var c = host.config, btn = DOC.createElement("button"); btn.type = "button"; btn.className = "hw-interactive";
+      btn.title = "Open " + (c.label || "app");
+      btn.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:.5em;width:100%;background:rgba(255,255,255,.05);border:1px solid var(--holo-border,#2a2f3a);border-radius:14px;padding:.95em .6em;cursor:pointer;color:inherit;font:inherit;transition:background .14s,transform .14s";
+      var ic = DOC.createElement("holo-icon"); ic.setAttribute("set", "tabler"); ic.setAttribute("name", c.icon || "rocket"); ic.style.cssText = "font-size:clamp(24px,calc(var(--hw-w,128px)*.22),36px);width:1em;height:1em;opacity:.95";
+      var nm = DOC.createElement("div"); nm.textContent = c.label || "Open"; nm.style.cssText = "font-size:max(var(--holo-font-min,16px),clamp(16px,calc(var(--hw-w,128px)*.12),18px));font-weight:550;letter-spacing:.01em";
+      btn.appendChild(ic); btn.appendChild(nm);
+      btn.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
+      btn.addEventListener("mouseenter", function () { btn.style.background = "color-mix(in srgb,var(--holo-accent,#3b82f6) 20%,transparent)"; btn.style.transform = "translateY(-1px)"; });
+      btn.addEventListener("mouseleave", function () { btn.style.background = "rgba(255,255,255,.05)"; btn.style.transform = "none"; });
+      btn.addEventListener("click", function () { openTarget(c); });
+      host.body.appendChild(btn);
+    },
+  });
+
+  // Welcome — the first face of the desktop: a calm, time-aware greeting centred over a ring that fills
+  // as the day passes. Tap the ring to flip to the local time and date. Defined FIRST so it sits at the
+  // top of the desktop-modes list (above Focused). One centred widget; the Q orb stays (sticky).
+  W.HoloWidgets.defineScene("welcome", {
+    name: "Welcome", icon: "sparkles", mode: true,
+    blurb: "A warm welcome: a greeting in your time zone, over a ring that shows how much of the day has passed.",
+    layout: function (W_, H_, b) {
+      var m = MARGIN(W_, H_), top = (b.minY || 0);
+      var ringW = Math.round(clamp(Math.min(W_, H_) * 0.22, 150, 250));        // the circle, smaller
+      var greetW = Math.round(clamp(Math.min(W_, H_) * 0.62, 340, 640));       // wide → larger greeting type
+      var gap = Math.round(ringW * 0.3);                                       // a tighter gap → greeting sits a little higher
+      var total = ringW + gap + Math.round(greetW * 0.12);                     // ring (≈square) + gap + one greeting line
+      var startY = Math.round(top + Math.max(m, ((H_ - top) - total) / 2));    // centre the pair vertically
+      return [
+        { type: "dayring",  config: {}, w: ringW,  x: CX(W_, ringW),  y: startY },
+        { type: "greeting", config: {}, w: greetW, x: CX(W_, greetW), y: startY + ringW + gap },
+      ];
+    },
+  });
+
+  // Focused — nothing competing: a bare desktop. No widgets at all, only the wallpaper and the calm.
+  // (The Q voice orb is sticky and lives outside the mode board, so it remains as a system affordance.)
   W.HoloWidgets.defineScene("focused", {
     name: "Focused", icon: "target", mode: true,
-    blurb: "Distraction-free: clock, your one goal, a focus timer and a quote.",
+    blurb: "Nothing competing — a bare desktop, only the wallpaper and the calm.",
     layout: function (W_, H_, b) {
-      var m = MARGIN(W_, H_), top = (b.minY || 0);
-      return [
-        { type: "clock", config: { greet: true }, w: 380, x: CX(W_, 380), y: GY(top, H_, m, 0.12) },
-        { type: "note",  config: { text: "What is your main goal for today?", rule: true }, w: 460, x: CX(W_, 460), y: GY(top, H_, m, 0.44) },
-        { type: "focus", config: { minutes: 25 }, w: 200, x: HX(b, m), y: Math.round(top + m) },
-        { type: "quote", config: { text: "" }, w: 480, x: CX(W_, 480), y: GY(top, H_, m, 0.84) },
-      ];
+      return [];
     },
   });
 
-  // Learn — study session: a pomodoro timer, a study plan, your resources, a schedule, a thought.
+  // Learn — a φ:1 two-column study space: LEFT a reading/notes surface (hero) over a sprint timer; RIGHT
+  // your resources and Q as copilot. Distinct from Work — reading + thinking, not a productivity grid.
   W.HoloWidgets.defineScene("learn", {
     name: "Learn", icon: "school", mode: true,
-    blurb: "Study mode: focus timer, study plan, resource links, calendar and a quote.",
+    blurb: "Study: a reading/notes surface, a sprint timer, your resources, and Q as your copilot.",
     layout: function (W_, H_, b) {
-      var m = MARGIN(W_, H_), top = (b.minY || 0);
+      var m = MARGIN(W_, H_), top = (b.minY || 0), L = LAD(400);
       return [
-        { type: "clock",    config: { greet: false }, w: 300, x: CX(W_, 300), y: GY(top, H_, m, 0.04) },
-        { type: "focus",    config: { minutes: 25 }, w: 200, x: HX(b, m), y: GY(top, H_, m, 0.04) },
-        { type: "calendar", config: {}, w: 300, x: HX(b, m), y: GY(top, H_, m, 0.36) },
-        { type: "tasks",    config: { title: "Study plan" }, w: 300, x: RX(W_, 300, m), y: GY(top, H_, m, 0.04) },
-        { type: "links",    config: { title: "Resources" }, w: 300, x: RX(W_, 300, m), y: GY(top, H_, m, 0.46) },
-        { type: "quote",    config: { text: "" }, w: 480, x: CX(W_, 480), y: GY(top, H_, m, 0.84) },
+        { type: "clock",  config: { greet: false }, w: L.head, x: HX(b, m), y: GY(top, H_, m, 0) },
+        { type: "note",   config: { text: "What are you learning today?", rule: true }, w: L.hero, x: HX(b, m), y: GY(top, H_, m, 0.382) },
+        { type: "focus",  config: { minutes: 25 }, w: L.sec, x: HX(b, m), y: GY(top, H_, m, 0.618) },
+        { type: "links",  config: { title: "Resources" }, w: L.sec, x: RX(W_, L.sec, m), y: GY(top, H_, m, 0.382) },
+        { type: "launch", config: { app: "q", label: "Ask Q", icon: "sparkles" }, w: L.head, x: RX(W_, L.head, m), y: GY(top, H_, m, 0.618) },
       ];
     },
   });
 
-  // Work — a productivity dashboard: clock, weather, your day, your to-do, your tools, the machine.
+  // Work — a φ:1 workspace: LEFT your to-do (hero), RIGHT the schedule; the machine sits quietly in the
+  // header; a row of real APP tiles (Files · Code · Wallet) anchors the lower-left. The bottom-right stays
+  // clear for the Q orb. One-tap into the live apps — the calm board, now a launchpad.
   W.HoloWidgets.defineScene("work", {
     name: "Work", icon: "briefcase", mode: true,
-    blurb: "Productivity dashboard: clock, weather, calendar, to-do, tool links and system stats.",
+    blurb: "A workspace: your day, your to-do, the machine — and one-tap Files · Code · Wallet.",
     layout: function (W_, H_, b) {
-      var m = MARGIN(W_, H_), top = (b.minY || 0);
+      var m = MARGIN(W_, H_), top = (b.minY || 0), L = LAD(400), lw = 128, gap = lw + Math.round(m * PHI_INV);
       return [
-        { type: "clock",    config: { greet: true }, w: 300, x: HX(b, m), y: GY(top, H_, m, 0.04) },
-        { type: "weather",  config: { place: "" }, w: 200, x: RX(W_, 200, m), y: GY(top, H_, m, 0.04) },
-        { type: "calendar", config: {}, w: 300, x: HX(b, m), y: GY(top, H_, m, 0.4) },
-        { type: "tasks",    config: { title: "To-do" }, w: 300, x: RX(W_, 300, m), y: GY(top, H_, m, 0.4) },
-        { type: "links",    config: { title: "Tools" }, w: 300, x: HX(b, m), y: GY(top, H_, m, 0.78) },
-        { type: "system",   config: {}, w: 280, x: CX(W_, 280), y: GY(top, H_, m, 0.78) },   // bottom-CENTRE — leaves the bottom-right corner for the Q orb
+        { type: "clock",    config: { greet: true }, w: L.head, x: HX(b, m), y: GY(top, H_, m, 0) },
+        { type: "system",   config: {}, w: L.sec, x: CX(W_, L.sec), y: GY(top, H_, m, 0) },
+        { type: "weather",  config: { place: "" }, w: L.head, x: RX(W_, L.head, m), y: GY(top, H_, m, 0) },
+        { type: "tasks",    config: { title: "To-do" }, w: L.hero, x: HX(b, m), y: GY(top, H_, m, 0.382) },
+        { type: "calendar", config: {}, w: L.sec, x: RX(W_, L.sec, m), y: GY(top, H_, m, 0.382) },
+        { type: "launch", config: { appId: "org.hologram.HoloFiles",  label: "Files",  icon: "folder" }, w: lw, x: HX(b, m),           y: GY(top, H_, m, 0.618) },
+        { type: "launch", config: { appId: "org.hologram.HoloForge",  label: "Code",   icon: "code" },   w: lw, x: HX(b, m) + gap,     y: GY(top, H_, m, 0.618) },
+        { type: "launch", config: { appId: "org.hologram.HoloWallet", label: "Wallet", icon: "wallet" }, w: lw, x: HX(b, m) + gap * 2, y: GY(top, H_, m, 0.618) },
       ];
     },
   });
 
-  // Play — wind down: the clock, the music disc + what's playing, the weather, a thought.
+  // Play — wind down, roomy: the disc UP FRONT on the golden focal point (0.382), what's playing on the
+  // complementary line (0.618), the time held quietly above, a thought below. Margins relaxed one φ-step.
   W.HoloWidgets.defineScene("play", {
     name: "Play", icon: "player-play", mode: true,
-    blurb: "Wind down: clock, the music disc, now-playing, weather and a quote.",
+    blurb: "Wind down: the disc up front, what's playing, the time, a thought — relaxed and roomy.",
     layout: function (W_, H_, b) {
-      var m = MARGIN(W_, H_), top = (b.minY || 0);
+      var m = Math.round(MARGIN(W_, H_) * PHI), top = (b.minY || 0), L = LAD(400);   // one φ-step roomier margins
       return [
-        { type: "clock",       config: { greet: true }, w: 300, x: CX(W_, 300), y: GY(top, H_, m, 0.06) },
-        { type: "weather",     config: { place: "" }, w: 200, x: RX(W_, 200, m), y: GY(top, H_, m, 0.06) },
-        { type: "vinyl",       w: 240, x: HX(b, m), y: GY(top, H_, m, 0.42) },
-        { type: "now-playing", w: 300, x: RX(W_, 300, m), y: GY(top, H_, m, 0.42) },
-        { type: "quote",       config: { text: "" }, w: 480, x: CX(W_, 480), y: GY(top, H_, m, 0.84) },
+        { type: "clock",       config: { greet: true }, w: L.head, x: HX(b, m), y: GY(top, H_, m, 0) },
+        { type: "weather",     config: { place: "" }, w: L.head, x: RX(W_, L.head, m), y: GY(top, H_, m, 0) },
+        { type: "vinyl",       w: 372, x: GPX(b, 372, 0.382), y: GY(top, H_, m, 0.382) },
+        { type: "now-playing", w: L.sec, x: GPX(b, L.sec, 0.618), y: GY(top, H_, m, 0.382) },
+        { type: "quote",       config: { text: "" }, w: L.hero, x: CX(W_, L.hero), y: GY(top, H_, m, 0.618) },
       ];
+    },
+  });
+
+  // Clarity — the most immersive, most stripped-back face of the desktop: everything non-essential
+  // dissolves. A bare board (no widgets, like Focused) over the wallpaper, with the Q orb left sticky.
+  // On enter we ask for true fullscreen and stamp :root[data-holo-mode="clarity"]; the shell then dresses
+  // its OWN chrome down to faint translucent glass (the card goes full-bleed, the bars recede, a soft
+  // vignette and a slow breath bring the calm alive). On leave we release fullscreen. The chrome styling
+  // lives with the chrome (shell.html) — here we only own the board (empty) and the fullscreen request.
+  function fsEl() { return DOC.fullscreenElement || DOC.webkitFullscreenElement || null; }
+  W.HoloWidgets.defineScene("clarity", {
+    name: "Clarity", icon: "diamond", mode: true,
+    blurb: "Full-screen zen: the frame dissolves, the chrome turns to glass, only the calm remains.",
+    layout: function (W_, H_, b) { return []; },
+    onEnter: function () {
+      try {
+        var el = DOC.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+        if (req && !fsEl()) { var p = req.call(el); if (p && p.catch) p.catch(function () {}); }
+      } catch (e) {}
+    },
+    onLeave: function () {
+      try {
+        var exit = DOC.exitFullscreen || DOC.webkitExitFullscreen;
+        if (exit && fsEl()) { var p = exit.call(DOC); if (p && p.catch) p.catch(function () {}); }
+      } catch (e) {}
     },
   });
 

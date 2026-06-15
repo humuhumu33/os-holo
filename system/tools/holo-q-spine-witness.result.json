@@ -1,0 +1,21 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "holo-q spine (Create build rides trinity.create → mux → fabric κ-memo)",
+  "passed": 12,
+  "failed": 0,
+  "checks": {
+    "w3-routetask-create-the-bound-specialist-1": true,
+    "w1-first-build-computes-cold-2": true,
+    "w1-repeat-build-is-cached-hot-3": true,
+    "w1-repeat-did-not-regenerate-4": true,
+    "w1-same-input-same-5": true,
+    "w1-build-carries-the-value-html-6": true,
+    "w4-streaming-surface-delivered-a-partial-7": true,
+    "w4-human-stream-agent-await-8": true,
+    "w4b-cached-stream-paints-the-final-once-9": true,
+    "w4b-cached-stream-matches-10": true,
+    "w2-drift-was-detected-before-healing-11": true,
+    "w2-the-loop-fired-the-rebuild-thunk-healed-1-12": true
+  }
+}

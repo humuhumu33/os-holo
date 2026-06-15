@@ -39,7 +39,9 @@ export const UOR_CONTEXT = Object.freeze([
 // an object's hash to depend on itself — pre-image-impossible).
 export function address(obj) {
   const { id, alsoKnownAs, ...content } = obj;   // alsoKnownAs is a derived alias, never part of identity
-  return `did:holo:sha256:${sha256hex(Buffer.from(jcs(content), "utf8"))}`;
+  // sha256hex accepts a string (UTF-8-encoded internally) — byte-identical to Buffer.from(...,"utf8"),
+  // but Buffer-free so address()/verify() run in the browser + Service Worker too (the L4 serverless path).
+  return `did:holo:sha256:${sha256hex(jcs(content))}`;
 }
 export const seal = (obj) => ({ ...obj, id: address(obj) });        // stamp the derived id
 export const verify = (obj) => obj.id === address(obj);             // Law L5: re-derive, compare

@@ -1,0 +1,32 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Q — the unified hologram-native intelligence surface (one verb + fail-closed external door)",
+  "passed": 23,
+  "failed": 0,
+  "checks": {
+    "create-returns-a-sealed-value-1": true,
+    "repeat-is-o-1-cached-memo-2": true,
+    "repeat-did-not-regenerate-3": true,
+    "same-intent-same-4": true,
+    "ask-returns-a-text-answer-not-html-context-aware-5": true,
+    "agent-fail-closed-with-no-gate-6": true,
+    "agent-refused-when-conscience-blocks-7": true,
+    "agent-accepted-ok-receipt-8": true,
+    "agent-receipt-effectkappa-is-content-addressed-9": true,
+    "external-door-human-verb-one-spine-one-result-10": true,
+    "explicit-allowungoverned-lets-an-internal-caller-11": true,
+    "context-tracks-recent-intents-12": true,
+    "context-tracks-feedback-13": true,
+    "perceive-returns-scene-feedback-14": true,
+    "improve-runs-the-bounded-loop-15": true,
+    "act-human-open-files-executes-ungated-16": true,
+    "act-a-question-routes-to-ask-17": true,
+    "act-a-build-phrase-routes-to-build-18": true,
+    "act-agent-os-action-fail-closed-with-no-gate-19": true,
+    "act-agent-os-action-refused-when-conscience-bloc-20": true,
+    "act-agent-os-action-executes-under-an-accepting--21": true,
+    "route-create-the-bound-specialist-22": true,
+    "describe-states-the-fail-closed-governance-23": true
+  }
+}

@@ -32,7 +32,7 @@
   <body>
     <div id="titlebar">
       <span class="name" id="name">holospace</span>
-      <span class="k" id="hk">—</span>
+      <span class="k" id="hk"></span>
       <span class="status" id="status">starting…</span>
     </div>
     <div id="ide">
@@ -46,7 +46,7 @@
       </div>
       <div id="editor" style="display:none"></div>
       <div id="panel" style="display:none">
-        <div class="tab">Terminal — the running holospace</div>
+        <div class="tab">Terminal the running holospace</div>
         <div id="term"></div>
       </div>
     </div>
@@ -93,7 +93,7 @@
         const res = await fetch(path);
         const bytes = new Uint8Array(await res.arrayBuffer());
         if (!verify_kappa(bytes, K[path])) {
-          throw new Error(`κ mismatch importing ${path} — the gateway returned forged content (Law L5)`);
+          throw new Error(`κ mismatch importing ${path} the gateway returned forged content (Law L5)`);
         }
         return bytes;
       }
@@ -220,7 +220,7 @@
         };
         tick();
       });
-      setStatus("running — type in the terminal, edit files in the explorer");
+      setStatus("running type in the terminal, edit files in the explorer");
 
       // Drive the terminal: capture keystrokes, echo locally, send whole lines as
       // canonical events to the running holospace (the OS shell does not echo).
@@ -247,7 +247,7 @@
       // ── The editor / file tree — environment content addressed by κ ──
       // Seed a sample devcontainer project; each file is content, its κ its identity.
       const project = {
-        "/work/README.md": "# Welcome to your holospace\n\nThis is a real devcontainer running in your browser tab — the OS boots\non the κ-addressed system emulator, no Docker daemon and no cloud VM.\n\nThe **terminal** below drives the running OS; this **editor** is the real\nMonaco editor, and every file is content addressed by κ (Law L1).\n",
+        "/work/README.md": "# Welcome to your holospace\n\nThis is a real devcontainer running in your browser tab the OS boots\non the κ-addressed system emulator, no Docker daemon and no cloud VM.\n\nThe **terminal** below drives the running OS; this **editor** is the real\nMonaco editor, and every file is content addressed by κ (Law L1).\n",
         "/work/.devcontainer/devcontainer.json": '{\n  "name": "holospace",\n  "image": "debian:12",\n  "features": {}\n}\n',
         "/work/hello.sh": '#!/bin/sh\necho "hello from the devcontainer"\n',
       };

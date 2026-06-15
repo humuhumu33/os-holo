@@ -1,0 +1,21 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Holo Hub — own + pay through Holo Own + the Holo Wallet rail (ADR-0094 Stage 5)",
+  "passed": 11,
+  "failed": 0,
+  "productKappa": "blake3:d4e39ab581e3aa6a2aed9de1c804868536590a7264a9a0fd8d95fa77438deb3a",
+  "checks": {
+    "a-real-product-is-available-from-the-stage-2-catalog-dual-ax-1": true,
+    "listing-a-title-over-the-product-re-derives-self-verifies-l5-2": true,
+    "free-own-the-buyer-holds-a-title-over-the-product-owner-reso-3": true,
+    "buy-settles-against-the-proven-listing-pays-via-the-wallet-r-4": true,
+    "buy-the-payment-pays-the-seller-voucher-payee-the-listing-ow-5": true,
+    "buy-the-buyer-s-ownership-title-binds-the-paid-voucher-re-de-6": true,
+    "settlement-voucher-is-idempotent-identical-order-identical-v-7": true,
+    "tamper-refused-a-listing-that-does-not-re-derive-settles-not-8": true,
+    "default-deny-a-wallet-decline-throws-no-payment-no-ownership-9": true,
+    "value-moves-only-through-holo-wallet-no-rail-refused-law-l4-10": true,
+    "0-network-the-whole-own-pay-flow-made-no-fetch-11": true
+  }
+}

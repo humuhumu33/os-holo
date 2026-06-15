@@ -477,6 +477,14 @@ export function makeHandler(stats = { os2: 0, apps: 0, orig: new Set(), miss: ne
     // (Law L5). It is the default AND only shell: the greeter, deep-links and holospace.html all route
     // here. The web, a holo://κ, an IPFS CID and the native AI are all reached from its omnibar.
     if (route === "/" || route === "") {
+      // The marketing gateway (repo-root index.html, the "Power up" landing) is the canonical entry: it
+      // runs the cinematic boot (splash → SDDM greeter → this shell). Serve it at / when present so the
+      // FULL experience works on ONE flat origin; fall back to the frictionless shell redirect if absent.
+      const gw = join(here, "../../index.html");
+      if (existsSync(gw)) {
+        res.writeHead(200, { ...COI, "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
+        return res.end(readFileSync(gw));
+      }
       const qs = (req.url || "").includes("?") ? "?" + (req.url.split("?")[1] || "") : "";
       res.writeHead(302, { ...COI, Location: "/shell.html" + qs });
       return res.end();
@@ -487,8 +495,11 @@ export function makeHandler(stats = { os2: 0, apps: 0, orig: new Set(), miss: ne
     if (m) { rel = hexToPath.get(m[1].toLowerCase()); if (!rel) return serveByKappa(m[1].toLowerCase(), route, res, stats); }   // closure miss → the full-substrate κ-route, re-derived (Law L5)
     else if (mb) { rel = blakeToPath.get(mb[1].toLowerCase()); if (!rel) { stats.miss.add("blake3:" + mb[1].slice(0, 10)); res.writeHead(404, COI); return res.end("blake3 κ not in substrate index"); } }
     else if (/^\/\.holo\/sha256\/.+/i.test(route)) { const tail = route.replace(/^\/\.holo\/sha256\//i, ""); rel = tail.includes("/") ? tail : "_shared/" + tail; }  // gen-imports left a path/filename in the κ slot → resolve as a normal path
-    else { rel = route.replace(/^\/+/, "") || "home.html"; if (rel.endsWith("/")) rel += "index.html"; }
-    const got = readRel(rel, stats);
+    else { rel = route.replace(/^\/+/, "") || "home.html"; rel = rel.replace(/^(?:system\/)?os\//, ""); if (rel.endsWith("/")) rel += "index.html"; }   // tolerate nested-layout refs (the gateway boot uses a system/os/ or os/ prefix) → resolve them flat
+    let got = readRel(rel, stats);
+    // a bare directory ref (no extension, e.g. /apps/hub) → resolve its index.html, like any static
+    // host. Makes the shareable "open in one tap" URL work without a trailing slash or /index.html.
+    if (!got && !extname(rel) && !rel.endsWith("/index.html")) { const idx = rel.replace(/\/$/, "") + "/index.html"; got = readRel(idx, stats); if (got) rel = idx; }
     if (!got) { stats.miss.add(rel); res.writeHead(404, COI); return res.end("not found: " + rel); }
     const ext = extname(m ? rel : route).toLowerCase() || extname(rel).toLowerCase();
     // Vendored model artifacts (weights + ORT wasm) are pinned/content-addressed → safe to CACHE so the

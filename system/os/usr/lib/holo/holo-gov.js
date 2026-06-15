@@ -48,8 +48,38 @@
     const reply = (result, error) => { try { e.source && e.source.postMessage({ type: "holo-privacy:res", id: d.id, result: result == null ? null : result, error: error || null }, "*"); } catch (x) {} };
     const app = byWin.get(e.source);                       // host-asserted identity of the requester
     if (!app) return reply(null, "ungoverned frame");      // unknown frame ⇒ default-deny
-    if (!W.HoloPrivacy) return reply(null, "no privacy authority");
     try {
+      // ── the remote-model capability (ADR-0090): delegate to the host broker (W.HoloQRemoteServe),
+      // streaming text deltas back as they arrive. The host asserts the app id (above); the key/URL never
+      // leave the host. Fail-closed: no broker installed ⇒ refuse. Same un-forgeable shape as `gate`.
+      if (d.method && d.method.indexOf("q.remote.") === 0) {
+        if (typeof W.HoloQRemoteServe !== "function") return reply(null, "no remote authority");
+        const onDelta = (t) => { try { e.source && e.source.postMessage({ type: "holo-privacy:delta", id: d.id, delta: t }, "*"); } catch (x) {} };
+        const out = await W.HoloQRemoteServe({ app: app.did || app.id || app.name, method: d.method, args: d.args || {}, onDelta });
+        return reply((out && out.result != null) ? out.result : null, (out && out.error) || null);
+      }
+      // ── Ambient Q from INSIDE an app (ADR-0091 cross-frame): delegate q.summon/q.ask/q.create to the
+      // host Q server (W.HoloQServe). The host asserts the app id (byWin, above); q.create rides Q's
+      // GOVERNED door (fail-closed + receipted) so an app can't silently act as the user. Fail-closed:
+      // no Q authority installed ⇒ refuse.
+      if (d.method === "q.summon" || d.method === "q.ask" || d.method === "q.create" || d.method === "q.act") {
+        if (typeof W.HoloQServe !== "function") return reply(null, "no Q authority");
+        const onDelta = (t) => { try { e.source && e.source.postMessage({ type: "holo-privacy:delta", id: d.id, delta: t }, "*"); } catch (x) {} };
+        const out = await W.HoloQServe({ app: app.did || app.id || app.name, method: d.method, args: d.args || {}, onDelta });
+        return reply((out && out.result != null) ? out.result : null, (out && out.error) || null);
+      }
+      // ── Holo DevTools (ADR-0095): the human DevTools holospace frame speaks CDP over this same bus
+      // (method:"cdp"). Delegate to the host κ-CDP backend (W.HoloDevToolsServe), streaming CDP events
+      // back as deltas. The host asserts the app id (byWin, above) — CDP is the human door's PRIVATE
+      // transport, never reached by agents/Q (they use the W3C MCP/REST doors). Fail-closed: no DevTools
+      // authority installed ⇒ refuse. Same un-forgeable shape as q.summon/q.remote.*.
+      if (d.method === "cdp") {
+        if (typeof W.HoloDevToolsServe !== "function") return reply(null, "no devtools authority");
+        const onDelta = (t) => { try { e.source && e.source.postMessage({ type: "holo-privacy:delta", id: d.id, delta: t }, "*"); } catch (x) {} };
+        const out = await W.HoloDevToolsServe({ app: app.did || app.id || app.name, method: d.method, args: d.args || {}, onEvent: onDelta });
+        return reply((out && out.result != null) ? out.result : null, (out && out.error) || null);
+      }
+      if (!W.HoloPrivacy) return reply(null, "no privacy authority");
       if (d.method === "status") return reply(W.HoloPrivacy.status ? W.HoloPrivacy.status() : null);
       if (d.method === "gate") {
         // un-forgeable recipient: override whatever the app put in the request body.

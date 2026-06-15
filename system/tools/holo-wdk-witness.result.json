@@ -7,7 +7,7 @@
     {
       "n": "every chain derives an address (deterministic)",
       "ok": true,
-      "d": "14 chains"
+      "d": "16 chains"
     },
     {
       "n": "added EVM chains derive valid addresses (avalanche/gnosis/linea/scroll/celo/blast)",

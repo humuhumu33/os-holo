@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Holo DevTools — real debugger",
+  "version": "1.0.0",
+  "description": "Real V8 debugging (breakpoints · stepping · scope · heap snapshots) for Holo holospaces, bridged into the vendored Chrome DevTools frontend — the one capability pure-web reflection cannot synthesize. Attaches the real Chrome DevTools Protocol (chrome.debugger) only to your own Hologram tab, on explicit opt-in.",
+  "permissions": ["debugger"],
+  "background": { "service_worker": "bg.js", "type": "module" },
+  "content_scripts": [
+    {
+      "matches": ["http://localhost/*", "http://127.0.0.1/*", "http://holo.os/*", "https://holo.os/*", "https://*.github.io/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": ["http://localhost/*", "http://127.0.0.1/*", "http://holo.os/*", "https://holo.os/*", "https://*.github.io/*"],
+      "js": ["detect.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    }
+  ]
+}

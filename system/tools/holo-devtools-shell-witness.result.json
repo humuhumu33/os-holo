@@ -1,0 +1,35 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Holo DevTools shell install (ADR-0095) — the running shell serves CDP to a DevTools holospace, serverless + κ-anchored, vendored UI unmodified",
+  "covers": [
+    "browser/SW-safe resolve + verifyDeep (no Buffer) re-derive the address — identical Law-L5 semantics to the Node path (Law L2)",
+    "a tampered κ is refused by browser-safe re-derivation (the RED verify badge, Law L5)",
+    "installDevToolsServe projects sealed UOR objects → a string-valued κ-store (Map.get O(1), Law L3) and the κ-CDP backend answers a real CDP DOM.getDocument BY κ over it",
+    "the Network κ-stream verify badge is GREEN end-to-end over the serverless browser store",
+    "shell.html imports holo-devtools-ui.js so window.HoloDevToolsServe is installed in the live shell (holo-gov.js routes the DevTools frame's method:'cdp' to it)",
+    "the HoloDevTools holospace entry loads the VENDORED Chrome devtools entrypoint UNMODIFIED + installs the fake-WebSocket bridge that routes the frontend's WebSocketConnection to the κ backend over the bus (method:'cdp')",
+    "the entry is 100% SERVERLESS — same-origin /_shared only, no CDN (http(s)://) and no socket (ws(s)://)"
+  ],
+  "install": {
+    "authority": "window.HoloDevToolsServe",
+    "entry": "/_shared/devtools/holo-devtools.html",
+    "transport": "holo-privacy:rpc#cdp (no socket)"
+  },
+  "checks": {
+    "browser-resolve-roundtrips": true,
+    "browser-verifyDeep-green": true,
+    "browser-verifyDeep-red-on-tamper": true,
+    "install-serves-scene-tree-by-kappa": true,
+    "install-network-verify-green": true,
+    "shell-imports-devtools-installer": true,
+    "installer-installs-the-authority": true,
+    "entry-loads-vendored-devtools": true,
+    "entry-installs-host-shim-bound-to-bus": true,
+    "entry-is-serverless": true,
+    "bundle-has-default-locale": true,
+    "bundle-has-flattened-icons": true
+  },
+  "failed": [],
+  "authority": "Chrome DevTools Protocol (the human UI's private transport) · W3C DID Core · schema.org · IETF RFC 8785 (JCS) · ADR-0091 (the governed cross-frame bus) · holospaces Law L1/L2/L3/L5"
+}

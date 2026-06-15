@@ -1,0 +1,13 @@
+{
+  "@type": "holo:VendoredToolchain",
+  "tool": "esbuild-wasm",
+  "version": "0.21.5",
+  "files": {
+    "browser.min.js": "did:holo:sha256:6525467654c98b3cc9edcda44dd2fd6859bb9e00cd771cce85a431c5d2057ef3",
+    "esbuild.wasm": "did:holo:sha256:711d62484385c29d64ddcdc4c0beb3fb7903635a41bafffeb652938ee8480587"
+  },
+  "sizes": {
+    "browser.min.js": 50593,
+    "esbuild.wasm": 11655844
+  }
+}

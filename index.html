@@ -104,13 +104,28 @@
        a power of φ, so the page is one self-similar golden composition at any scale. The headline
        and sub get their own clamps (a far wider min↔max range than the UI) but stay φ-related. */
     --phi:1.618;
-    --u: clamp(13px, 2.15vmin, 30px);                          /* φ⁰ — UI rhythm unit */
+    /* The scale tracks the viewport's short side (vmin) BUT is capped at the largest comfortable
+       laptop value, so the composition reaches a ceiling and then holds: every laptop renders exactly
+       as before, while a big external monitor / 4K panel shows the SAME-sized composition (just more
+       sky around it) instead of an inflated one. The caps (u→20px, display→132px) are the measured
+       ~1440-short-side laptop register — the size that "looks great". */
+    --u: clamp(13px, 2.05vmin, 18px);                          /* φ⁰ — UI rhythm unit (capped at the laptop ceiling) */
     --u-phi:  calc(var(--u) * var(--phi));                     /* φ¹  ≈ 1.618·u */
     --u-phi2: calc(var(--u) * 2.618);                          /* φ²  */
     --u-phi3: calc(var(--u) * 4.236);                          /* φ³  */
     --u-phi4: calc(var(--u) * 6.854);                          /* φ⁴  */
-    --display: clamp(34px, min(13.7vmin, 12vw), 232px);        /* the headline register — matched to the reference; vw term keeps long single words (Supercomputer) inside the narrowest phone */
+    --display: clamp(34px, min(13.7vmin, 12vw), 114px);        /* the headline register — capped at the laptop ceiling; vw term keeps long single words (Supercomputer) inside the narrowest phone */
     --sub: clamp(15px, calc(var(--display) / var(--phi) / var(--phi) / var(--phi)), 34px); /* headline ÷ φ³ */
+
+    /* ── THE BEZEL ──────────────────────────────────────────────────────────────────────────────
+       This page is a self-certified, isolated, serverless holospace — so it presents as a CONTAINED
+       SCREEN floating in space, not an edge-to-edge web page. A small margin (--frame) rings the
+       viewport, the inner surface is rounded (--frame-r), and the margin is filled with --bezel
+       ("space"). Both track the viewport so the framing is identical on a phone and a 4K panel. */
+    --ease:cubic-bezier(.4,0,.2,1);                            /* the one shared boot easing (gateway · splash · login · shell) */
+    --frame: clamp(7px, 0.95vmin, 14px);                       /* the space margin around the screen */
+    --frame-r: clamp(16px, 1.9vmin, 28px);                     /* inner-screen corner radius */
+    --bezel:#050507;                                           /* the "space" the screen floats in */
     color-scheme:dark;
   }
   /* light theme — flipped by the sun/moon switch (persisted); a LibreChat-style inverse palette */
@@ -127,12 +142,18 @@
     --panel-hover:#ececef;
     --shadow:0 16px 50px rgba(15,15,20,.18);
     --btn-p-bg:#09090b; --btn-p-fg:#fff; --btn-p-hover:#27272a;
+    --bezel:#c7c7cd;                                           /* a soft light bezel in light mode */
     color-scheme:light;
   }
   html,:root{ transition:background-color .2s ease; }
   *{ box-sizing:border-box; }
   html,body{ margin:0; height:100%; width:100%; overflow:hidden; }
-  body{ background:var(--bg); color:var(--fg);
+  html{ background:var(--bezel); }                              /* the space behind the screen (also paints any overscroll) */
+  /* the inner SCREEN surface: the page's own background (--bg), inset by the bezel and rounded. It sits
+     under everything (z-index:-1); the immersive field, bar, hero and signature all live on top of it. */
+  body::before{ content:""; position:fixed; inset:var(--frame); border-radius:var(--frame-r);
+    background:var(--bg); z-index:-1; transition:background-color .2s ease; }
+  body{ background:var(--bezel); color:var(--fg);
     font:400 var(--u)/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,Helvetica,Arial,sans-serif;
     /* HiDPI/Retina/5K-8K crispness: grayscale smoothing on dark, real weights only (no faux-bold
        blur), optical sizing, legibility kerning, and stable text scale on mobile. */
@@ -148,7 +169,8 @@
      is part of the page's own bytes and therefore 100% encoded in the content-addressed object the
      gateway re-derives (did:holo:sha256 of itself). Vector → razor-sharp at any density. Three
      intensities (Minimal · Ambient · Immersive) are toggled via :root[data-immersive]. */
-  .bg{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; opacity:1; transition:opacity .45s ease; }
+  .bg{ position:fixed; inset:var(--frame); z-index:0; overflow:hidden; border-radius:var(--frame-r);
+    pointer-events:none; opacity:1; transition:opacity .45s ease; }
   .bg>div{ position:absolute; }
   .bg-neb{ inset:-12%;
     background:
@@ -195,9 +217,14 @@
   :root[data-theme="light"] .bg-scrim{ background:radial-gradient(95% 75% at 50% 44%, transparent 46%, rgba(255,255,255,.5) 100%); }
   /* Light & Dark are plain; only Immersive shows the holo-field (full + animated). */
   :root[data-immersive="off"] .bg{ opacity:0; }
+  /* PERF: when the genuine WebGL cloud sky is live (vanta-on), the CSS fallback layers below it are fully
+     occluded — so DROP them from the compositor entirely (especially .bg-aurora, a large 70px-blurred
+     layer that animates every frame). This frees real GPU/CPU on every device; the fallback returns the
+     instant WebGL is unavailable or the tab backgrounds (vanta-on is removed). */
+  body.vanta-on .bg-neb, body.vanta-on .bg-aurora, body.vanta-on .bg-stars{ display:none; }
 
   /* ── TOP BAR ─────────────────────────────────────────────────────────────────────────────── */
-  .bar{ position:fixed; inset:0 0 auto 0; z-index:5;
+  .bar{ position:fixed; inset:var(--frame) var(--frame) auto var(--frame); z-index:5;
     height:calc(var(--u) * 3.85);                              /* ≈ control-height · φ */
     display:flex; align-items:center; gap:var(--u);
     padding:0 var(--u-phi2); }
@@ -208,9 +235,9 @@
   .links a{ color:var(--muted); font-size:calc(var(--u) * 1.08); font-weight:450; transition:color .15s; } /* ≈ reference 22px */
   .links a:hover{ color:var(--fg); }
   .grow{ flex:1; }
-  .right{ display:flex; align-items:center; gap:calc(var(--u) * .65); }
+  .right{ display:flex; align-items:center; gap:calc(var(--u) * 1.05); }   /* roomier rhythm between search · toggle · github (scales with --u) */
 
-  .search{ position:relative; display:flex; align-items:center; gap:.6em;
+  .search{ position:relative; display:flex; align-items:center; gap:.72em;
     background:var(--panel); border:1px solid var(--line); border-radius:calc(var(--u) * .73);
     height:calc(var(--u) * 2.72); padding:0 .8em; color:var(--muted-2); cursor:text;   /* matched to reference */
     width:clamp(190px, 19vw, 380px); font-size:var(--u); transition:border-color .15s; }
@@ -219,7 +246,7 @@
   .search svg{ width:1.05em; height:1.05em; flex:none; }
   .search input{ all:unset; flex:1; min-width:0; color:var(--fg); font:inherit; line-height:1.2; }
   .search input::placeholder{ color:var(--muted-2); }
-  .kbd{ display:flex; gap:3px; }
+  .kbd{ display:flex; gap:calc(var(--u) * .22); margin-left:calc(var(--u) * .15); }
 
   /* ── SEARCH RESULTS — instant, local, golden-spaced. Anchored under the box; a full-width sheet
      on phones. Each row launches a native app in its own holospace tab. ──────────────────────── */
@@ -249,27 +276,31 @@
   .kbd kbd{ background:var(--panel-2); border:1px solid var(--line); border-radius:.38em;
     padding:.12em .5em; font:600 .82em/1.4 inherit; color:var(--muted); }
 
-  .toggle{ display:flex; align-items:center; gap:2px; background:var(--panel);
-    border:1px solid var(--line); border-radius:999px; padding:calc(var(--u) * .2); }
+  .toggle{ display:flex; align-items:center; gap:calc(var(--u) * .26); background:var(--panel);
+    border:1px solid var(--line); border-radius:999px; padding:calc(var(--u) * .28); }
   .toggle button{ -webkit-appearance:none; appearance:none; border:0; cursor:pointer; padding:0;
     width:calc(var(--u) * 2.05); height:calc(var(--u) * 2.05); border-radius:999px; display:grid; place-items:center;
-    background:none; color:var(--muted); transition:background .15s,color .15s; }
+    background:none; color:var(--muted); transition:background .14s ease, color .14s ease, transform .14s ease; }
   .toggle button svg{ width:calc(var(--u) * 1.18); height:calc(var(--u) * 1.18); }
+  .toggle button:not([aria-pressed="true"]):hover{ background:var(--panel-hover); color:var(--fg); }   /* live feedback on the inactive modes */
+  .toggle button:active{ transform:scale(.92); }                                                       /* crisp press */
   .toggle button[aria-pressed="true"]{ background:var(--panel-2); color:var(--fg); }
 
   .ghlink{ display:grid; place-items:center; width:calc(var(--u) * 2.05); height:calc(var(--u) * 2.05); border-radius:.5em;
     color:var(--muted); transition:color .15s,background .15s; }
+  .ghlink{ transition:color .14s ease, background .14s ease, transform .14s ease; }
   .ghlink:hover{ color:var(--fg); background:var(--panel); }
+  .ghlink:active{ transform:scale(.92); }
   .ghlink svg{ width:calc(var(--u) * 1.45); height:calc(var(--u) * 1.45); }
 
-  /* ── HERO — bottom-weighted, exactly like the reference: a large gap above the star pill, a tight
-     gap below the buttons. flex-end pins the cluster to a small bottom inset; the rest is open. ── */
-  /* HERO — bottom-weighted (big open gap above the pill, tight gap below the buttons). The vertical
-     rhythm is golden: section gap = u·φ², bottom inset = u·φ², top guard = u·φ³. */
-  .hero{ position:fixed; inset:0; z-index:2;
-    display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+  /* ── HERO — vertically CENTRED, so the cluster (star pill → headline → sub → CTAs) sits at the same
+     ~middle of the screen on every height: a short laptop and a tall 4K panel place it identically.
+     (A bottom-weighted flex-end inset looked right on a laptop but stranded the cluster low on a tall
+     monitor — the "hero shifted down" bug.) A tiny downward bias keeps the open sky above the pill. */
+  .hero{ position:fixed; inset:var(--frame); z-index:2;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
     text-align:center; gap:calc(var(--u) * 2.3);
-    padding:var(--u-phi3) 5vw calc(var(--u) * 5.6); }   /* bottom-weighted, lifted a little higher */
+    padding:var(--u-phi3) 5vw calc(var(--u) * 2); }   /* centred; slight bottom-lighter padding leaves sky above the pill */
 
   .pill-star{ display:inline-flex; align-items:center; gap:.7em;
     background:var(--panel); border:1px solid var(--line); border-radius:999px;
@@ -306,21 +337,25 @@
   .btn-ghost:hover{ background:var(--panel-hover); border-color:var(--line-strong); }
 
   /* ── Power-up in Immersive: a SOLID BLACK pill (the GitHub-pill ink, --panel) wearing the desktop
-     omnibox's spectrum ring — the colour lives ONLY in the 1px frame, never on the face. Two backgrounds:
-     the black fill clipped to the PADDING-box sits on top of a slowly-rotating conic spectrum clipped to
-     the BORDER-box, so only the border carries colour — exactly the technique #omni uses in
-     usr/share/frame/shell.html. (Light & Dark stay plain; only Immersive wears the holo-field.) ───────── */
+     omnibox's spectrum ring. The ring is a ::before carrying a full rotating conic spectrum, MASKED to just
+     the border band (mask-composite:exclude). The old version painted the ring via a padding-box/border-box
+     double background, whose 1px frame got subpixel-clipped at certain widths/zooms/DPRs — the "sometimes
+     the ring isn't visible" bug. The mask paints the WHOLE perimeter every time, at any size. A soft
+     two-hue drop-shadow gives the spectrum glow. (Light & Dark stay plain; only Immersive wears it.) ─── */
   @property --pwr-spin{ syntax:"<angle>"; inherits:false; initial-value:0deg; }
   @keyframes pwr-spin{ to{ --pwr-spin:360deg; } }
-  :root[data-immersive="full"] .btn-primary{ color:#fff; border:1px solid transparent;
-    background:linear-gradient(var(--panel), var(--panel)) padding-box,
-      conic-gradient(from var(--pwr-spin), #ff3b6b,#ff9e2c,#ffe24a,#46e08a,#2bd4ff,#5b8cff,#c77bff,#ff3b6b) border-box;
-    box-shadow:0 .35em 1.5em rgba(0,0,0,.42); animation:pwr-spin 7s linear infinite; }
-  :root[data-immersive="full"] .btn-primary:hover{
-    background:linear-gradient(var(--panel-hover), var(--panel-hover)) padding-box,
-      conic-gradient(from var(--pwr-spin), #ff3b6b,#ff9e2c,#ffe24a,#46e08a,#2bd4ff,#5b8cff,#c77bff,#ff3b6b) border-box;
-    box-shadow:0 0 24px -6px rgba(120,140,255,.5), 0 .45em 1.8em rgba(0,0,0,.5); }
-  @media (prefers-reduced-motion: reduce){ :root[data-immersive="full"] .btn-primary{ animation:none; } }
+  :root[data-immersive="full"] .btn-primary{ position:relative; color:#fff; border:0;
+    background:var(--panel); box-shadow:0 .35em 1.5em rgba(0,0,0,.45); }
+  :root[data-immersive="full"] .btn-primary::before{ content:""; position:absolute; inset:0; z-index:1;
+    border-radius:inherit; padding:1.6px; pointer-events:none;
+    background:conic-gradient(from var(--pwr-spin), #ff3b6b,#ff9e2c,#ffe24a,#46e08a,#2bd4ff,#5b8cff,#c77bff,#ff3b6b);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor;
+            mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);         mask-composite:exclude;
+    animation:pwr-spin 7s linear infinite;
+    filter:drop-shadow(0 0 4px rgba(255,80,140,.42)) drop-shadow(0 0 7px rgba(90,140,255,.42)); }   /* spectrum glow */
+  :root[data-immersive="full"] .btn-primary:hover{ background:var(--panel-hover);
+    box-shadow:0 0 26px -6px rgba(120,140,255,.55), 0 .45em 1.8em rgba(0,0,0,.5); }
+  @media (prefers-reduced-motion: reduce){ :root[data-immersive="full"] .btn-primary::before{ animation:none; } }
 
   /* the OS-detected download glyph sits like the power glyph — cap-height, optically centred */
   .btn .os-ic{ display:inline-flex; width:1.16em; height:1.16em; flex:none; margin-top:-0.04em; }
@@ -348,17 +383,25 @@
 
   /* the self-address signature: this gateway IS a content-addressed object; it re-derives its own
      κ and shows it — a quiet proof you are already inside the substrate, not on a normal website. */
-  .sig{ position:fixed; left:0; right:0; bottom:calc(var(--u) * .9); z-index:4; text-align:center;
+  .sig{ position:fixed; left:var(--frame); right:var(--frame); bottom:calc(var(--frame) + var(--u) * .9); z-index:4; text-align:center;
     padding:0 6vw; pointer-events:none; line-height:1.55; }
   .sig #kappa{ font-size:calc(var(--u) * 1.18); font-weight:600; letter-spacing:.01em; color:var(--fg); opacity:1; }
   .sig .dot{ display:inline-block; width:.55em; height:.55em; border-radius:50%; background:var(--fg);
     vertical-align:middle; margin-right:.55em; position:relative; top:-0.06em; }
   .sig .kx{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.95em; opacity:1; margin-left:.5em; white-space:nowrap;
-    pointer-events:auto; --holo-accent:currentColor; }   /* interactive (the .sig wrapper is pointer-events:none); braille in the same ink as the text */
+    pointer-events:auto; color:#000; --holo-accent:#000; }   /* braille is BLACK in EVERY theme — HoloFX paints it with --holo-accent (the colon below matches) */
   .sig .kx, .sig .kx.holo-k-rev{ border-bottom:0; }       /* drop HoloFX's dotted κ underline in the gateway signature */
+  /* the revealed full hash AND its copy icon take the SAME black ink as the braille (HoloFX would otherwise
+     fall back to its accent purple / a green "copied" flash) — so reveal-on-hover stays on-brand here. */
+  .sig .kx.holo-k-rev{ color:#000; }
+  .sig .holo-k-copy, .sig .holo-k-copy.copied{ color:#000; opacity:.75; }
+  .sig .holo-k-copy:hover{ opacity:1; }
   .sig .khint{ display:none; font-size:.78em; opacity:.5; letter-spacing:.02em; margin-left:.45em; white-space:nowrap; }
   .sig #kx[data-holo-k-upgraded] ~ .khint{ display:inline; }   /* the hint appears only once the live braille κ is mounted */
+  /* "UOR" + its trailing colon and the braille all share ONE fixed ink (#000) in light, dark AND immersive
+     — no theme override touches them, so the colour is identical across all three modes. */
   .sig .uor{ color:#000; text-decoration:none; pointer-events:auto; border-bottom:0; }
+  .sig .uor-colon{ color:#000; }
   body.leaving .sig{ opacity:0; transition:opacity .16s ease; }
 
   /* boot handoff — ONE continuous power-on, no intermediate beat: a solid #000 veil rises FAST (no
@@ -368,6 +411,51 @@
   body.leaving .bar, body.leaving .hero, body.leaving #vanta{ pointer-events:none; }
   body.leaving::after{ content:""; position:fixed; inset:0; background:#000; z-index:60; pointer-events:none; animation:bootToBlack .18s linear forwards; }  /* shared boot-veil timing (== splash) */
   @keyframes bootToBlack{ from{ opacity:0; } to{ opacity:1; } }
+
+  /* ── THE POWER-UP ─────────────────────────────────────────────────────────────────────────────
+     A cinematic power-on that GROWS OUT of the button and draws the whole gateway into a single
+     core, then hands off to the boot splash on the shared #000. Purely additive over the fail-closed
+     boot(): the self-cert + constitution gates still run FIRST — this is only the veil they wear.
+     Compositor-only (transform · opacity · filter) so it holds 60fps beside the live cloud sky.
+     Two beats: CHARGE (the core ignites under the button, the spectrum ring spins up, identity
+     flares) → IMPLODE (every element streams into the core, the sky recedes, the core collapses to
+     a hot point) → the existing #000 veil rises. Reduced-motion skips straight to the veil. */
+  .core{ position:fixed; left:50%; top:50%; z-index:55; width:3px; height:3px; border-radius:50%;
+    pointer-events:none; opacity:0; transform:translate(-50%,-50%) scale(1); mix-blend-mode:screen;
+    background:radial-gradient(circle, #fff 0%, #e8fff7 16%, rgba(125,239,201,.92) 34%, rgba(91,140,255,.55) 60%, transparent 74%); }
+  body.charging .core{ opacity:1; animation:coreCharge .56s var(--ease) forwards; }
+  body.imploding .core{ opacity:1; animation:coreCollapse .52s cubic-bezier(.72,0,.84,0) forwards; }
+  @keyframes coreCharge{ from{ transform:translate(-50%,-50%) scale(1); filter:blur(2px); }
+                         to{   transform:translate(-50%,-50%) scale(90);  filter:blur(20px); } }
+  @keyframes coreCollapse{ 0%{ transform:translate(-50%,-50%) scale(150); filter:blur(26px); }
+                          62%{ transform:translate(-50%,-50%) scale(34);  filter:blur(7px); }
+                          82%{ transform:translate(-50%,-50%) scale(9);   filter:blur(2px); }
+                          100%{ transform:translate(-50%,-50%) scale(0);  filter:blur(0); } }
+  /* CHARGE — the power button steadies and brightens; its spectrum ring spins up; identity flares */
+  body.charging .btn-primary{ transform:scale(1.05); transition:transform .5s var(--ease);
+    box-shadow:0 0 30px -2px rgba(125,239,201,.55), 0 0 60px -6px rgba(91,140,255,.5), 0 .35em 1.5em rgba(0,0,0,.45) !important; }
+  :root[data-immersive="full"] body.charging .btn-primary::before{ animation-duration:.7s !important; }
+  /* identity confirmed — the self-cert signature flares a calm teal halo as the page commits to boot */
+  body.charging .sig{ animation:sigFlare 1s var(--ease) forwards; }
+  @keyframes sigFlare{ 0%{ filter:none; } 30%{ filter:drop-shadow(0 0 10px rgba(125,239,201,.85)) drop-shadow(0 0 22px rgba(125,239,201,.45)); } 100%{ filter:drop-shadow(0 0 6px rgba(125,239,201,.4)); } }
+  /* IMPLODE — every element streams toward the core (per-element vector set in JS as --dx/--dy) */
+  body.imploding .bar, body.imploding .pill-star, body.imploding h1, body.imploding .sub,
+  body.imploding #download, body.imploding .sig{
+    transform:translate(var(--dx,0), var(--dy,0)) scale(.16); opacity:0; filter:blur(7px);
+    transition:transform .6s cubic-bezier(.6,0,.85,.2), opacity .52s ease, filter .6s ease; }
+  /* the primary button IS the core — it collapses to the point last */
+  body.imploding .btn-primary{ transform:scale(.08); opacity:0; filter:blur(3px);
+    transition:transform .5s cubic-bezier(.72,0,.84,0) .06s, opacity .42s ease .1s, filter .5s ease; }
+  /* the cloud sky recedes into the core (origin pinned to the button in JS) */
+  body.imploding .bg{ transform:scale(.5); opacity:0;
+    transition:transform .7s cubic-bezier(.6,0,.85,.2), opacity .6s ease; }
+  @media (prefers-reduced-motion: reduce){
+    .core{ display:none; }
+    body.charging .btn-primary, body.charging .sig,
+    body.imploding .bar, body.imploding .pill-star, body.imploding h1, body.imploding .sub,
+    body.imploding #download, body.imploding .sig, body.imploding .btn-primary, body.imploding .bg{
+      animation:none !important; transition:none !important; }
+  }
 
   /* ── RESPONSIVE: the golden tokens already fluidly resize everything; these only collapse the
      secondary bar items on small widths and re-center / gently shrink the unit on tight heights so
@@ -385,22 +473,134 @@
     /* keep search reachable on phones: a compact pill in the bar, results as a full-width sheet */
     .search{ width:auto; flex:1 1 auto; min-width:0; }
     .search .kbd{ display:none; }
-    .results{ position:fixed; left:3vw; right:3vw; width:auto; top:calc(var(--u) * 3.85 + .4em); }
+    .results{ position:fixed; left:calc(var(--frame) + 3vw); right:calc(var(--frame) + 3vw); width:auto; top:calc(var(--frame) + var(--u) * 3.85 + .4em); }
     .hero{ justify-content:center; padding-bottom:var(--u-phi); }
     .cta{ width:100%; }
     .btn{ flex:1; justify-content:center; }
   }
+  /* narrow phones: stack the two CTAs as full-width pills — big, thumb-friendly targets, and the
+     desktop min-width floor (≈11·u) can no longer push them past a 320–430px edge. */
+  @media (max-width: 430px){
+    .cta{ grid-auto-flow:row; }
+    .cta .btn{ min-width:0; width:100%; }
+  }
   @media (max-height: 640px){
-    :root{ --u: clamp(12px, 1.7vmin, 22px); --display: clamp(28px, 9.4vh, 120px); }
+    /* short viewports (landscape phones, split panes): height drives the headline — but keep the 12vw
+       width guard so a narrow-AND-short screen never lets a long word (Supercomputer) overflow. */
+    :root{ --u: clamp(12px, 1.7vmin, 20px); --display: clamp(28px, min(9.4vh, 12vw), 120px); }
     .hero{ justify-content:center; padding-top:var(--u-phi2); padding-bottom:var(--u-phi); }
   }
   @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
+
+  /* ════════════════════════════════════════════════════════════════════════════════════════════
+     THE LAUNCHER — a full-screen, Spotlight-grade search over the native app catalogue, with a LIVE
+     preview of the highlighted app running in its OWN self-verifying sealed holospace. Inherits the
+     gateway tokens + the bezel framing; frames the preview as a real computer window. ═════════════ */
+  .lx{ position:fixed; inset:var(--frame); z-index:40; border-radius:var(--frame-r); overflow:hidden;
+    display:flex; flex-direction:column; color:var(--fg);
+    background:color-mix(in srgb, var(--bg) 60%, transparent);
+    -webkit-backdrop-filter:blur(28px) saturate(1.2); backdrop-filter:blur(28px) saturate(1.2);
+    opacity:0; transform:scale(1.014); pointer-events:none;
+    transition:opacity .3s var(--ease), transform .36s var(--ease); }
+  .lx.open{ opacity:1; transform:none; pointer-events:auto; }
+  .lx[hidden]{ display:none; }
+  .lx-top{ flex:none; display:flex; align-items:center; gap:var(--u); padding:calc(var(--u)*1.05) var(--u-phi2); border-bottom:1px solid var(--line); }
+  .lx-find{ flex:1; display:flex; align-items:center; gap:.7em; background:var(--panel); border:1px solid var(--line);
+    border-radius:calc(var(--u)*.8); height:calc(var(--u)*3); padding:0 1em; transition:border-color .15s, box-shadow .25s; }
+  .lx-find:focus-within{ border-color:var(--line-strong); box-shadow:0 0 0 3px rgba(91,140,255,.18); }
+  .lx-find svg{ width:1.15em; height:1.15em; color:var(--muted); flex:none; }
+  .lx-find input{ all:unset; flex:1; min-width:0; color:var(--fg); font:500 calc(var(--u)*1.2)/1.3 inherit; }
+  .lx-find input::placeholder{ color:var(--muted-2); }
+  .lx-count{ flex:none; color:var(--muted-2); font-size:calc(var(--u)*.82); white-space:nowrap; }
+  .lx-esc{ flex:none; color:var(--muted); font-size:calc(var(--u)*.82); display:inline-flex; align-items:center; gap:.5em; cursor:pointer; transition:color .15s; }
+  .lx-esc:hover{ color:var(--fg); }
+  .lx-esc kbd{ background:var(--panel-2); border:1px solid var(--line); border-radius:.4em; padding:.16em .55em; font:600 .85em/1.4 inherit; color:var(--muted); }
+  .lx-body{ flex:1; min-height:0; display:flex; }
+  .lx-list{ flex:none; width:clamp(284px, 33%, 432px); overflow-y:auto; overscroll-behavior:contain; padding:calc(var(--u)*.65); border-right:1px solid var(--line); }
+  .lx-list::-webkit-scrollbar{ width:10px; } .lx-list::-webkit-scrollbar-thumb{ background:var(--line-strong); border:3px solid transparent; background-clip:padding-box; border-radius:999px; }
+  .lx-head{ padding:.7em .8em .45em; font-size:.72em; letter-spacing:.1em; text-transform:uppercase; color:var(--muted-2); }
+  .lx-item{ display:flex; align-items:center; gap:.8em; padding:.5em .7em; border-radius:calc(var(--u)*.7); cursor:pointer; user-select:none; transition:background .12s ease; }
+  .lx-item:hover{ background:color-mix(in srgb, var(--panel-hover) 55%, transparent); }
+  .lx-item[aria-selected="true"]{ background:var(--panel-hover); box-shadow:inset 0 0 0 1px var(--line-strong); }
+  /* clean app tile: a category-hued gradient square with a crisp white line glyph, razor-sharp at any DPI */
+  .lx-badge{ width:2.55em; height:2.55em; border-radius:31%; flex:none; display:grid; place-items:center; color:#fff; font-weight:700; font-size:.95em;
+    background:linear-gradient(145deg, hsl(var(--h,220) 64% 57%), hsl(calc(var(--h,220) + 26) 66% 45%));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 0 0 1px rgba(255,255,255,.08), 0 3px 8px -2px rgba(0,0,0,.5); }
+  .lx-badge svg{ width:56%; height:56%; display:block; }
+  .lx-item[aria-selected="true"] .lx-badge{ box-shadow:inset 0 1px 0 rgba(255,255,255,.32), inset 0 0 0 1px rgba(255,255,255,.1), 0 0 0 3px hsl(var(--h,220) 62% 52% / .3), 0 4px 12px -2px rgba(0,0,0,.55); }
+  .lx-main{ min-width:0; flex:1; display:flex; flex-direction:column; gap:1px; }   /* stack name OVER description */
+  .lx-name{ font-weight:600; font-size:1.02em; color:var(--fg); line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* readable description: a touch larger, wrapping to two lines (clamped) so it never hard-cuts mid-word */
+  .lx-desc{ color:var(--muted); font-size:.87em; line-height:1.42; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; }
+  .lx-item mark{ background:none; color:var(--fg); font-weight:700; }
+  .lx-empty{ padding:1.4em .9em; color:var(--muted); text-align:center; }
+  .lx-stage{ flex:1; min-width:0; display:flex; padding:clamp(14px,2.3vmin,30px); }
+  .lx-win{ position:relative; flex:1; display:flex; flex-direction:column; border-radius:calc(var(--u)*1.05); overflow:hidden;
+    border:1px solid var(--line-strong); background:var(--bg);
+    box-shadow:0 40px 110px -34px rgba(0,0,0,.78), inset 0 1px 0 rgba(255,255,255,.05); }
+  .lx-bar{ flex:none; display:flex; align-items:center; gap:.85em; height:calc(var(--u)*3); padding:0 1em; position:relative; overflow:hidden;
+    background:linear-gradient(180deg, rgba(27,27,31,.92), rgba(27,27,31,.7)); border-bottom:1px solid var(--line); }
+  .lx-bar::after{ content:""; position:absolute; inset:0; pointer-events:none; transform:translateX(-130%);
+    background:linear-gradient(105deg, transparent 30%, rgba(255,255,255,.1) 48%, transparent 66%); }
+  .lx-win.swept .lx-bar::after{ animation:sweep 1.4s var(--ease) 1; }
+  @keyframes sweep{ to{ transform:translateX(130%); } }
+  .lx-bar .lights{ display:flex; gap:.5em; flex:none; }
+  .lx-bar .lights i{ width:.82em; height:.82em; border-radius:50%; display:block; }
+  .lx-bar .lights i.c{ background:#ff5f57; cursor:pointer; } .lx-bar .lights i.m{ background:#febc2e; } .lx-bar .lights i.x{ background:#28c840; }
+  .lx-bar .lights i.c:hover{ filter:brightness(1.15); }
+  .lx-wtitle{ display:inline-flex; align-items:center; gap:.5em; color:var(--fg-soft); font-weight:600; font-size:calc(var(--u)*.92); white-space:nowrap; }
+  .lx-wtitle .mk{ width:1.05em; height:1.05em; color:var(--fg); }
+  .lx-kappa{ margin-left:auto; display:inline-flex; align-items:center; gap:.5em; cursor:pointer;
+    font:600 calc(var(--u)*.74)/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; color:var(--muted);
+    background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:.5em .8em; transition:border-color .15s, color .15s, box-shadow .3s; }
+  .lx-kappa:hover{ border-color:var(--line-strong); color:var(--fg-soft); }
+  .lx-kappa .tick{ width:1em; height:1em; color:#7defc9; opacity:0; transform:scale(.5); transition:opacity .3s, transform .35s cubic-bezier(.2,.9,.3,1.4); }
+  .lx-kappa.ok .tick{ opacity:1; transform:none; }
+  .lx-kappa.ok{ box-shadow:0 0 0 1px rgba(125,239,201,.4), 0 0 16px -4px rgba(125,239,201,.55); }
+  .lx-kappa .lx-kx{ color:var(--fg-soft); letter-spacing:.01em; }
+  .lx-kappa.copied .lx-kx, .lx-kappa.copied #lklbl{ color:#7defc9; }
+  .lx-framewrap{ position:relative; flex:1; min-height:0; background:var(--bg); }
+  .lx-frame{ position:absolute; inset:0; width:100%; height:100%; border:0; opacity:0; transition:opacity .35s ease; background:var(--bg); }
+  .lx-frame.in{ opacity:1; }
+  .lx-loading{ position:absolute; inset:0; display:grid; place-items:center; align-content:center; gap:1em; color:var(--muted); text-align:center; padding:1em; }
+  .lx-loading code{ color:var(--fg-soft); }
+  .lx-pulse{ color:var(--fg); animation:lpulse 1.5s ease-in-out infinite; }
+  @keyframes lpulse{ 0%,100%{ opacity:.28; transform:scale(.93); } 50%{ opacity:.85; transform:scale(1); } }
+  .lx-meta{ flex:none; display:flex; align-items:center; gap:.9em; padding:.85em 1.1em; border-top:1px solid var(--line); }
+  .lx-mtile{ width:calc(var(--u)*2.5); height:calc(var(--u)*2.5); border-radius:28%; flex:none; display:grid; place-items:center; color:#fff;
+    background:linear-gradient(145deg, hsl(var(--h,220) 64% 57%), hsl(calc(var(--h,220) + 26) 66% 45%));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 3px 8px -2px rgba(0,0,0,.5); }
+  .lx-mtile svg{ width:56%; height:56%; }
+  .lx-wic{ display:inline-grid; place-items:center; width:1.12em; height:1.12em; color:var(--fg-soft); }
+  .lx-wic svg{ width:100%; height:100%; }
+  .lx-meta .m-main{ min-width:0; flex:1; }
+  .lx-meta .m-name{ font-weight:700; font-size:calc(var(--u)*1.04); }
+  .lx-meta .m-cat{ margin-left:.6em; color:var(--muted-2); font-size:calc(var(--u)*.74); border:1px solid var(--line); border-radius:999px; padding:.16em .7em; white-space:nowrap; }
+  .lx-meta .m-desc{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; color:var(--muted); font-size:calc(var(--u)*.9); line-height:1.42; overflow:hidden; margin-top:.3em; }
+  .lx-ext{ flex:none; display:grid; place-items:center; width:calc(var(--u)*2.4); height:calc(var(--u)*2.4); border-radius:.55em; color:var(--muted); border:1px solid var(--line); background:var(--panel); font-size:1.15em; transition:color .14s, background .14s, border-color .14s; }
+  .lx-ext:hover{ color:var(--fg); border-color:var(--line-strong); background:var(--panel-hover); }
+  .lx-btn{ -webkit-appearance:none; appearance:none; cursor:pointer; flex:none; border:0; border-radius:999px;
+    font:600 var(--u)/1 inherit; padding:.95em 1.7em; background:var(--btn-p-bg); color:var(--btn-p-fg); transition:filter .14s, transform .12s; white-space:nowrap; }
+  .lx-btn:hover{ filter:brightness(1.06); } .lx-btn:active{ transform:translateY(1px); }
+  /* full-screen takeover: the running preview becomes the app, filling the whole stage */
+  .lx.full .lx-top, .lx.full .lx-list{ display:none; }
+  .lx.full .lx-stage{ padding:0; }
+  .lx.full .lx-win{ border-radius:0; border:0; box-shadow:none; }
+  @media (max-width:860px){
+    .lx-stage{ display:none; } .lx-list{ width:100%; border-right:0; }
+    .lx.full .lx-stage{ display:flex; } .lx-kappa .lx-kx{ display:none; }
+  }
+  @media (prefers-reduced-motion: reduce){ .lx-pulse{ animation:none; } }
 </style>
 </head>
 <body>
 
 <!-- one shared definition of the Hologram dot-mark, referenced wherever the brand glyph appears -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="holo-mark" viewBox="-104 -104 208 208"><g fill="currentColor"><circle cx="0.20" cy="-97.39" r="2.61"/><circle cx="-22.86" cy="-86.55" r="2.71"/><circle cx="22.54" cy="-86.32" r="2.81"/><circle cx="-0.03" cy="-76.01" r="2.71"/><circle cx="45.26" cy="-75.92" r="7.80"/><circle cx="-45.82" cy="-75.86" r="2.61"/><circle cx="68.34" cy="-65.13" r="7.70"/><circle cx="-68.83" cy="-65.00" r="2.61"/><circle cx="-22.91" cy="-64.90" r="2.61"/><circle cx="22.71" cy="-64.88" r="2.51"/><circle cx="91.24" cy="-54.34" r="2.61"/><circle cx="-45.94" cy="-54.25" r="7.83"/><circle cx="-91.17" cy="-54.19" r="2.71"/><circle cx="-0.03" cy="-54.19" r="2.71"/><circle cx="45.35" cy="-54.19" r="7.80"/><circle cx="-22.86" cy="-43.64" r="2.71"/><circle cx="22.71" cy="-43.49" r="2.51"/><circle cx="68.29" cy="-43.47" r="7.73"/><circle cx="-68.60" cy="-43.37" r="7.73"/><circle cx="-45.85" cy="-32.63" r="7.77"/><circle cx="45.36" cy="-32.60" r="7.80"/><circle cx="-91.26" cy="-32.55" r="2.71"/><circle cx="0.10" cy="-32.51" r="2.61"/><circle cx="91.24" cy="-32.51" r="2.61"/><circle cx="68.22" cy="-21.95" r="7.83"/><circle cx="22.67" cy="-21.84" r="7.87"/><circle cx="-22.86" cy="-21.82" r="2.71"/><circle cx="-68.57" cy="-21.80" r="7.80"/><circle cx="45.45" cy="-11.06" r="7.73"/><circle cx="-0.19" cy="-11.04" r="7.87"/><circle cx="91.35" cy="-11.01" r="2.81"/><circle cx="-91.54" cy="-10.97" r="2.51"/><circle cx="-45.87" cy="-10.87" r="7.73"/><circle cx="22.71" cy="-0.27" r="8.06"/><circle cx="-22.89" cy="-0.21" r="7.90"/><circle cx="68.28" cy="-0.15" r="7.87"/><circle cx="-68.62" cy="-0.11" r="8.00"/><circle cx="-0.06" cy="10.98" r="7.87"/><circle cx="45.54" cy="11.00" r="7.83"/><circle cx="-45.85" cy="11.02" r="7.77"/><circle cx="-91.26" cy="11.10" r="2.71"/><circle cx="91.24" cy="11.13" r="2.61"/><circle cx="22.71" cy="21.64" r="2.71"/><circle cx="-68.74" cy="21.66" r="7.87"/><circle cx="-22.86" cy="21.67" r="7.87"/><circle cx="68.28" cy="21.67" r="7.87"/><circle cx="-91.54" cy="32.46" r="2.61"/><circle cx="0.15" cy="32.46" r="2.71"/><circle cx="-45.72" cy="32.50" r="7.73"/><circle cx="45.54" cy="32.59" r="7.83"/><circle cx="91.35" cy="32.63" r="2.81"/><circle cx="-23.01" cy="43.23" r="2.61"/><circle cx="68.25" cy="43.31" r="7.83"/><circle cx="-68.71" cy="43.34" r="7.83"/><circle cx="22.71" cy="43.37" r="2.90"/><circle cx="91.39" cy="53.92" r="2.71"/><circle cx="45.48" cy="53.95" r="7.87"/><circle cx="-45.86" cy="53.97" r="7.80"/><circle cx="-91.34" cy="53.99" r="2.61"/><circle cx="0.20" cy="54.09" r="2.61"/><circle cx="-68.57" cy="64.90" r="7.80"/><circle cx="-22.86" cy="64.92" r="2.71"/><circle cx="68.28" cy="64.92" r="2.71"/><circle cx="22.54" cy="65.15" r="2.81"/><circle cx="-45.88" cy="75.56" r="7.80"/><circle cx="0.10" cy="75.62" r="2.61"/><circle cx="45.32" cy="75.62" r="2.61"/><circle cx="22.53" cy="86.47" r="2.71"/><circle cx="-22.86" cy="86.75" r="2.71"/><circle cx="-0.03" cy="97.29" r="2.71"/></g></symbol></svg>
+
+<!-- the power-on core — a single point of light under the Power-up button that the whole gateway
+     collapses into on boot (see "THE POWER-UP" in the styles). Inert until boot() ignites it. -->
+<div class="core" aria-hidden="true"></div>
 
 <!-- ── IMMERSIVE BACKGROUND — inline vector/CSS holo-field; part of this object's own bytes ──── -->
 <div class="bg" aria-hidden="true">
@@ -419,7 +619,7 @@
   </a>
   <nav class="links" aria-label="Primary">
     <a href="docs/">Docs</a>
-    <a href="README.md">Blog</a>
+    <a href="manifesto.html">Manifesto</a>
     <a href="CONSTITUTION.md">Changelog</a>
   </nav>
   <span class="grow"></span>
@@ -478,51 +678,115 @@
 </main>
 
 <!-- the gateway's own content address — proof this page is one self-verifying UOR object (Law L5) -->
-<div class="sig"><i class="dot"></i><span id="kappa">Self-verifying <a class="uor" href="https://uor.foundation/" target="_blank" rel="noopener noreferrer">UOR</a> object <span id="kx" class="kx">computing…</span></span></div>
+<div class="sig"><i class="dot"></i><span id="kappa">Self-certified with serverless <a class="uor" href="https://uor.foundation/" target="_blank" rel="noopener noreferrer">UOR</a><span class="uor-colon">:</span> <span id="kx" class="kx">computing…</span></span></div>
+
+<!-- ── THE LAUNCHER — full-screen app search with a live, sealed-holospace preview (wired below) ── -->
+<div class="lx" id="launcher" role="dialog" aria-modal="true" aria-label="Search Hologram apps" hidden>
+  <div class="lx-top">
+    <label class="lx-find">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="lq" type="text" placeholder="Search holo apps" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"
+             role="combobox" aria-autocomplete="list" aria-controls="lresults" aria-expanded="true" aria-label="Search holo apps" />
+    </label>
+    <span class="lx-count" id="lcount"></span>
+    <span class="lx-esc" id="lclose"><kbd>Esc</kbd> close</span>
+  </div>
+  <div class="lx-body">
+    <div class="lx-list" id="lresults" role="listbox" aria-label="Hologram apps"></div>
+    <div class="lx-stage">
+      <article class="lx-win" id="lwin">
+        <div class="lx-bar">
+          <span class="lights" aria-hidden="true"><i class="c" id="lback" title="Back"></i><i class="m"></i><i class="x"></i></span>
+          <span class="lx-wtitle"><span class="lx-wic" id="lwic" aria-hidden="true"></span><span id="lwtitle">Hologram</span></span>
+          <button class="lx-kappa" id="lkappa" type="button" aria-label="Sealed holospace content address, click to copy">
+            <svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            <span id="lklbl">Sealed holospace</span><span class="lx-kx" id="lkx"></span>
+          </button>
+        </div>
+        <div class="lx-framewrap">
+          <iframe class="lx-frame" id="lframe" title="App preview" sandbox="allow-scripts allow-same-origin allow-forms allow-modals" allow="clipboard-write; autoplay"></iframe>
+          <div class="lx-loading" id="lloading"><svg class="mk lx-pulse" aria-hidden="true" style="width:2.6em;height:2.6em"><use href="#holo-mark"/></svg><span id="lloadtxt">Mounting…</span></div>
+        </div>
+        <div class="lx-meta">
+          <span class="lx-mtile" id="lmtile" aria-hidden="true"></span>
+          <span class="m-main"><span class="m-name" id="lmname">&mdash;</span><span class="m-cat" id="lmcat"></span><span class="m-desc" id="lmdesc"></span></span>
+          <a class="lx-ext" id="lext" href="#" title="Open in its own tab" aria-label="Open in its own tab">&#8599;</a>
+          <button class="lx-btn" id="lopen" type="button">Open</button>
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
 
 <!-- AI agents: the full machine map is in the JSON-LD + /.well-known links in <head>; AGENTS.md is the human door. -->
 
 <!-- Vanta CLOUDS2 effect — vendored locally (Vanta.js + three.js r134, both MIT), served same-origin (no
-     runtime CDN). These classic scripts run before the module below, so window.THREE + window.VANTA are
-     ready. The effect is the genuine vantajs.com clouds2 — we only tune its pixel ratio + frame rate. -->
-<script src="system/vendor/vanta/three.min.js"></script>
-<script src="system/vendor/vanta/vanta.clouds2.min.js"></script>
+     runtime CDN). DEFERRED so they NEVER block first paint: the hero (text · CTAs · search) renders
+     instantly, then the cloud sky fades in (.bg-gl has an opacity transition) once three+vanta load.
+     defer preserves order — three → vanta → holo-fx → the module — so window.THREE/VANTA/HoloFX are all
+     ready before the module runs. The effect is the genuine vantajs.com clouds2; we only tune pixel
+     ratio + frame rate. -->
+<script defer src="system/vendor/vanta/three.min.js"></script>
+<script defer src="system/vendor/vanta/vanta.clouds2.min.js"></script>
 <!-- Holo FX (the OS's faithful unicode-animations adoption): renders every κ as a streaming braille
      projection of its own bytes (hover/focus reveals the hash) and auto-upgrades any did:holo digest
-     in the page. Classic script → window.HoloFX is ready before the module below. -->
-<script src="system/os/usr/lib/holo/holo-fx.js"></script>
+     in the page. Deferred → window.HoloFX is ready before the module, but never blocks paint. -->
+<script defer src="system/os/usr/lib/holo/holo-fx.js"></script>
 <script type="module">
   const $ = (id) => document.getElementById(id);
 
   // ── Fail-closed boot-refusal screen (ADR-033) — sharp, on-brand, self-contained (NO fetch). ──
   // It must render even when the OS image is unreachable — exactly when it fires. One renderer,
   // used by both boot gateways, so the refusal looks identical everywhere.
-  function holoBootRefused(constitutionHref) {
-    document.title = "Boot refused — Hologram OS";
+  function holoRefuse(opts) {
+    document.title = (opts.title || "Refused") + " — Hologram OS";
     const cube = '<svg class="hh-cube" viewBox="-104 -104 208 208" aria-hidden="true"><defs><linearGradient id="hhg" x1="-104" y1="-104" x2="104" y2="104"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#2dd4bf"/></linearGradient></defs><g fill="url(#hhg)"><circle cx="0.20" cy="-97.39" r="2.61"/><circle cx="-22.86" cy="-86.55" r="2.71"/><circle cx="22.54" cy="-86.32" r="2.81"/><circle cx="-0.03" cy="-76.01" r="2.71"/><circle cx="45.26" cy="-75.92" r="7.80"/><circle cx="-45.82" cy="-75.86" r="2.61"/><circle cx="68.34" cy="-65.13" r="7.70"/><circle cx="-68.83" cy="-65.00" r="2.61"/><circle cx="-22.91" cy="-64.90" r="2.61"/><circle cx="22.71" cy="-64.88" r="2.51"/><circle cx="91.24" cy="-54.34" r="2.61"/><circle cx="-45.94" cy="-54.25" r="7.83"/><circle cx="-91.17" cy="-54.19" r="2.71"/><circle cx="-0.03" cy="-54.19" r="2.71"/><circle cx="45.35" cy="-54.19" r="7.80"/><circle cx="-22.86" cy="-43.64" r="2.71"/><circle cx="22.71" cy="-43.49" r="2.51"/><circle cx="68.29" cy="-43.47" r="7.73"/><circle cx="-68.60" cy="-43.37" r="7.73"/><circle cx="-45.85" cy="-32.63" r="7.77"/><circle cx="45.36" cy="-32.60" r="7.80"/><circle cx="-91.26" cy="-32.55" r="2.71"/><circle cx="0.10" cy="-32.51" r="2.61"/><circle cx="91.24" cy="-32.51" r="2.61"/><circle cx="68.22" cy="-21.95" r="7.83"/><circle cx="22.67" cy="-21.84" r="7.87"/><circle cx="-22.86" cy="-21.82" r="2.71"/><circle cx="-68.57" cy="-21.80" r="7.80"/><circle cx="45.45" cy="-11.06" r="7.73"/><circle cx="-0.19" cy="-11.04" r="7.87"/><circle cx="91.35" cy="-11.01" r="2.81"/><circle cx="-91.54" cy="-10.97" r="2.51"/><circle cx="-45.87" cy="-10.87" r="7.73"/><circle cx="22.71" cy="-0.27" r="8.06"/><circle cx="-22.89" cy="-0.21" r="7.90"/><circle cx="68.28" cy="-0.15" r="7.87"/><circle cx="-68.62" cy="-0.11" r="8.00"/><circle cx="-0.06" cy="10.98" r="7.87"/><circle cx="45.54" cy="11.00" r="7.83"/><circle cx="-45.85" cy="11.02" r="7.77"/><circle cx="-91.26" cy="11.10" r="2.71"/><circle cx="91.24" cy="11.13" r="2.61"/><circle cx="22.71" cy="21.64" r="2.71"/><circle cx="-68.74" cy="21.66" r="7.87"/><circle cx="-22.86" cy="21.67" r="7.87"/><circle cx="68.28" cy="21.67" r="7.87"/><circle cx="-91.54" cy="32.46" r="2.61"/><circle cx="0.15" cy="32.46" r="2.71"/><circle cx="-45.72" cy="32.50" r="7.73"/><circle cx="45.54" cy="32.59" r="7.83"/><circle cx="91.35" cy="32.63" r="2.81"/><circle cx="-23.01" cy="43.23" r="2.61"/><circle cx="68.25" cy="43.31" r="7.83"/><circle cx="-68.71" cy="43.34" r="7.83"/><circle cx="22.71" cy="43.37" r="2.90"/><circle cx="91.39" cy="53.92" r="2.71"/><circle cx="45.48" cy="53.95" r="7.87"/><circle cx="-45.86" cy="53.97" r="7.80"/><circle cx="-91.34" cy="53.99" r="2.61"/><circle cx="0.20" cy="54.09" r="2.61"/><circle cx="-68.57" cy="64.90" r="7.80"/><circle cx="-22.86" cy="64.92" r="2.71"/><circle cx="68.28" cy="64.92" r="2.71"/><circle cx="22.54" cy="65.15" r="2.81"/><circle cx="-45.88" cy="75.56" r="7.80"/><circle cx="0.10" cy="75.62" r="2.61"/><circle cx="45.32" cy="75.62" r="2.61"/><circle cx="22.53" cy="86.47" r="2.71"/><circle cx="-22.86" cy="86.75" r="2.71"/><circle cx="-0.03" cy="97.29" r="2.71"/></g></svg>';
+    // golden-ratio + on-theme (the OS aurora · frosted card · teal accent), plain-language, delightful.
     const css = `
-      .hh{position:fixed;inset:0;overflow:auto;color:#ECE9FB;font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(1200px 760px at 82% -12%,rgba(139,92,246,.30),transparent 60%),radial-gradient(1000px 720px at 10% 114%,rgba(45,212,191,.16),transparent 60%),linear-gradient(160deg,#07041a,#0b071e);}
-      .hh-sky{position:fixed;inset:0;opacity:.5;pointer-events:none;background-repeat:no-repeat;background-image:radial-gradient(1px 1px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 70% 60%,#cbd5ff,transparent),radial-gradient(1px 1px at 40% 80%,#fff,transparent),radial-gradient(1px 1px at 85% 25%,#bfe9ff,transparent),radial-gradient(1px 1px at 55% 15%,#fff,transparent),radial-gradient(1px 1px at 30% 65%,#e9d5ff,transparent);}
-      .hh-aur{position:fixed;inset:-25%;opacity:.4;filter:blur(40px);pointer-events:none;background:radial-gradient(closest-side,rgba(251,113,133,.12),transparent),radial-gradient(closest-side,rgba(139,92,246,.13),transparent);background-size:60% 60%,52% 52%;background-position:26% 28%,76% 72%;background-repeat:no-repeat;}
-      .hh-stage{position:relative;min-height:100%;display:grid;place-items:center;padding:6vh 6vw;}
-      .hh-card{width:min(92vw,520px);display:grid;justify-items:center;gap:1.35rem;text-align:center;background:linear-gradient(180deg,rgba(22,15,46,.62),rgba(11,7,30,.58));border:1px solid rgba(139,92,246,.20);border-top:2px solid rgba(251,113,133,.9);border-radius:18px;box-shadow:0 30px 90px rgba(2,0,12,.55);padding:clamp(34px,5vw,52px);}
-      .hh-cube{width:54px;height:54px;filter:drop-shadow(0 0 16px rgba(139,92,246,.5));}
-      .hh h1{margin:0;font-size:clamp(34px,5.4vw,48px);font-weight:600;letter-spacing:-.015em;line-height:1.08;}
-      .hh-lead{margin:0;max-width:26ch;font-size:clamp(16px,2.3vw,19px);line-height:1.5;color:#c9c3ea;}
-      .hh-act{display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center;margin-top:.5rem;}
-      .hh-btn{display:inline-flex;align-items:center;gap:.5rem;border-radius:999px;padding:.82rem 1.55rem;font:500 15.5px/1 inherit;cursor:pointer;text-decoration:none;border:1px solid transparent;transition:filter .15s,background .15s;}
-      .hh-p{color:#fff;background:linear-gradient(135deg,#8b5cf6,#6d4bd0);box-shadow:0 12px 32px rgba(109,75,208,.45);}
-      .hh-p:hover{filter:brightness(1.12);}
-      .hh-g{color:#cdd6ff;border-color:rgba(139,92,246,.4);}
-      .hh-g:hover{background:rgba(139,92,246,.12);}`;
-    const html = `<div class="hh"><div class="hh-sky"></div><div class="hh-aur"></div><div class="hh-stage"><main class="hh-card">
+      .hh{ --phi:1.618; --u:clamp(16px,1.7vmin,19px);
+        --g1:calc(var(--u)*1.618); --g2:calc(var(--u)*2.618); --g3:calc(var(--u)*4.236); --g4:calc(var(--u)*6.854);
+        --teal:#7defc9; --teal2:#34d3a6; --ink:#f4f7fc; --ink-dim:rgba(231,237,250,.82);
+        position:fixed; inset:0; overflow:auto; z-index:9; color:var(--ink);
+        font:var(--u)/1.55 "Segoe UI",system-ui,-apple-system,"Oxygen",sans-serif;
+        background:radial-gradient(120% 120% at 20% 0%, #1b2a4a 0%, #0d1117 60%, #05070c 100%); }
+      .hh-aur{ position:fixed; inset:0; pointer-events:none; opacity:.6;
+        background:radial-gradient(42vw 42vw at 12% 14%, rgba(52,211,166,.22), transparent 62%),
+                   radial-gradient(46vw 46vw at 88% 92%, rgba(64,99,214,.20), transparent 62%); filter:blur(20px); }
+      .hh-stage{ position:relative; min-height:100%; display:grid; place-items:center; padding:var(--g3) var(--g2); }
+      .hh-card{ width:min(94vw, calc(var(--u) * 31)); display:flex; flex-direction:column; align-items:center; text-align:center; gap:var(--g1);
+        padding:var(--g3) var(--g3); border-radius:var(--g2);
+        background:rgba(9,13,24,.55); border:1px solid rgba(255,255,255,.10);
+        -webkit-backdrop-filter:blur(30px) saturate(1.3); backdrop-filter:blur(30px) saturate(1.3);
+        box-shadow:0 .9em 3em rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+        animation:hhIn .5s var(--ease, cubic-bezier(.4,0,.2,1)) both; }
+      @keyframes hhIn{ from{ opacity:0; transform:translateY(10px) scale(.99); } to{ opacity:1; transform:none; } }
+      .hh-cube{ width:var(--g4); height:var(--g4); filter:drop-shadow(0 0 1.1em rgba(125,239,201,.45)); }
+      .hh h1{ margin:0; max-width:16ch; font-size:calc(var(--u) * var(--phi) * var(--phi)); font-weight:300; letter-spacing:-.01em; line-height:1.1; text-wrap:balance; text-shadow:0 2px 18px rgba(0,0,0,.45); }
+      .hh-lead{ margin:0; max-width:40ch; font-size:var(--u); line-height:1.55; color:var(--ink-dim); text-wrap:balance; }
+      .hh-hint{ margin:0; max-width:40ch; font-size:var(--u); line-height:1.5; color:var(--ink); font-weight:500; text-wrap:balance; }
+      .hh-act{ display:flex; gap:var(--u); flex-wrap:wrap; justify-content:center; margin-top:calc(var(--u)*.3); }
+      .hh-btn{ display:inline-flex; align-items:center; gap:calc(var(--u)*.4); height:var(--g2); padding:0 var(--g1); border-radius:999px;
+        font:600 var(--u)/1 inherit; cursor:pointer; text-decoration:none; border:1px solid transparent; transition:filter .15s, background .15s, transform .12s, box-shadow .18s; }
+      .hh-p{ color:#06140f; background:linear-gradient(135deg,var(--teal),var(--teal2)); box-shadow:0 .7em 1.6em rgba(52,211,166,.32); }
+      .hh-p:hover{ filter:brightness(1.06); transform:translateY(-1px); box-shadow:0 .9em 2em rgba(52,211,166,.46); } .hh-p:active{ transform:none; }
+      .hh-g{ color:var(--ink-dim); border-color:rgba(255,255,255,.18); background:rgba(255,255,255,.04); }
+      .hh-g:hover{ background:rgba(255,255,255,.10); color:#fff; }
+      @media (prefers-reduced-motion:reduce){ .hh-card{ animation:none; } }`;
+    const hint = opts.hint ? `<p class="hh-hint">${opts.hint}</p>` : "";
+    const html = `<div class="hh"><div class="hh-aur"></div><div class="hh-stage"><main class="hh-card">
       ${cube}
-      <h1>Boot refused</h1>
-      <p class="hh-lead">Hologram OS couldn't verify its Constitution, so it didn't start. Nothing ran.</p>
-      <div class="hh-act"><button class="hh-btn hh-p" onclick="location.reload()">↻ Re-verify</button><a class="hh-btn hh-g" href="${constitutionHref}">Read the Constitution</a></div>
+      <h1>${opts.title || "Refused"}</h1>
+      <p class="hh-lead">${opts.lead || ""}</p>
+      ${hint}
+      <div class="hh-act">${opts.actions || ""}</div>
     </main></div></div>`;
     const s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
     document.body.style.cssText = "margin:0"; document.body.innerHTML = html;
+  }
+  // the Constitution boot-gate refusal (ADR-033) — one specialization of the shared renderer above.
+  function holoBootRefused(constitutionHref) {
+    holoRefuse({ title: "Boot refused", lead: "Hologram OS couldn't verify its Constitution, so it didn't start. Nothing ran.",
+      actions: `<button class="hh-btn hh-p" onclick="location.reload()">↻ Re-verify</button><a class="hh-btn hh-g" href="${constitutionHref}">Read the Constitution</a>` });
   }
 
   // ── Appearance mode: Light · Dark · Immersive (one tri-state control) ─────────────────────────
@@ -551,42 +815,75 @@
   // under reduced-motion it runs at speed 0 (a still sky). If the libraries didn't load, the CSS nebula
   // below remains as a graceful fallback.
   //
-  // IDENTICAL ON EVERY SCREEN: Vanta composes its clouds relative to the canvas's LOGICAL size, so on a
-  // bigger window the horizon drifts and the framing changes. We pin it: Vanta renders into a fixed
-  // REFW×REFH stage (its logical size never changes ⇒ the exact same cloudscape every time), and we
-  // COVER-scale that stage to fill the viewport — centred, cropping the overflow, exactly like
-  // background-size:cover. Phone, laptop or 8K panel show the same clouds in the same place; only how much
-  // of the edges is visible differs. Backing pixels track the on-screen size, so it stays razor sharp
-  // (native, true 8K), and a live frame-rate probe lightens it (fewer pixels) only if a GPU can't keep up.
+  // IDENTICAL CLOUDSCAPE ON EVERY SCREEN: Vanta composes its clouds (and crucially the HORIZON line) from
+  // the canvas's LOGICAL pixel size — so the moment the logical size changes, the scene recomposes and the
+  // horizon drifts. We therefore PIN the logical size to a fixed REF frame: Vanta always renders the exact
+  // same cloud image, byte for byte. We then display that fixed image with `background-size:cover` semantics
+  // — scale = max(vw/REF, vh/REF), centred — which keeps the horizon at the SAME screen fraction (~the lower
+  // third, lots of sky above) on any size OR aspect ratio: phone, laptop, 16:9 monitor or 4K all get the
+  // small-screen framing the design was tuned for. Backing pixels track on-screen size (razor sharp), and a
+  // live frame-rate probe lightens it (fewer pixels) only if a GPU can't keep up.
   (function () {
     const el = document.getElementById("vanta");
     if (!el || !window.VANTA || !window.VANTA.CLOUDS2) return;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const REFW = 1920, REFH = 1320;                       // the fixed design frame the clouds are composed in
     el.style.overflow = "hidden";
-    const stage = document.createElement("div");
-    stage.style.cssText = "position:absolute;top:50%;left:50%;width:" + REFW + "px;height:" + REFH + "px;transform-origin:center center;will-change:transform;";
-    el.appendChild(stage);
 
-    const STEPS = [1, 1.5, 2, 3];                         // adaptive load: 1 = sharp (backing = on-screen pixels) → higher = lighter
-    let si = 0, inst = null, fpsRAF = 0, cover = 1;
-    const coverOf = () => Math.max(window.innerWidth / REFW, window.innerHeight / REFH);
-    const scaleNow = () => STEPS[si] / cover;             // pixelRatio = dpr/scale ⇒ backing ≈ displayed px (sharp); logical stays REFW×REFH
+    // ── HORIZON, locked once for every screen ────────────────────────────────────────────────────
+    // CLOUDS2's shader normalises the vertical axis by the canvas HEIGHT (`coord / iResolution.y`), so the
+    // horizon — and the apparent size of the clouds — sit at a FIXED FRACTION of the height no matter how
+    // big or what shape the screen is. So we DON'T cover-scale or zoom anything (that was the "zoomed-in on
+    // a big panel" bug); we render at the NATIVE viewport size. Phone, laptop, 16:9 monitor or 4K panel then
+    // all get the identical vertical framing and the identical cloud scale — a wider screen simply reveals
+    // more sky to the sides, never an enlarged crop. We only nudge the shader's horizon constant so more sky
+    // sits above the cloud bank (the low-horizon look the page is tuned for). HOLO_HORIZON is the single
+    // dial: LOWER ⇒ lower horizon / more sky. The vendored file is untouched — we patch the shader on the
+    // effect's CLASS PROTOTYPE at runtime, so the file's content hash (and any seal) is preserved.
+    // LOWER the constant to drop the horizon and show more sky. Calibrated empirically by sampling the
+    // rendered canvas for the dense cloud-bank onset, measured from the top: stock 0.65 ⇒ ~47%, 0.55 ⇒ 58%,
+    // 0.48 ⇒ 65%, 0.46 ⇒ ~66%, 0.42 ⇒ 71%, 0.38 ⇒ 75%, 0.34 ⇒ 79%. We use 0.46 ⇒ ~66% from the top — the
+    // balance point: the cloud bank fills the lower third with plenty of sky above, neither cloud-heavy
+    // (0.55/58%, felt zoomed-in on a big panel) nor too sparse (0.38/75%, felt zoomed-out on a laptop).
+    // Delivered identically at every size because the shader normalises Y by height.
+    // VANTA.CLOUDS2 is a FACTORY, not the class — the shader lives on the prototype of the instances it makes.
+    // So we mount one throwaway probe, patch the prototype it exposes (every later instance inherits it), and
+    // discard it. Done once, lazily, only when Immersive actually needs the field.
+    const HOLO_HORIZON = "0.46";   // shader vertical offset (stock Vanta = 0.65); LOWER ⇒ lower horizon / more sky. 0.46 ⇒ cloud bank ~66% from top
+    let horizonPatched = false;
+    function patchHorizon() {
+      if (horizonPatched) return;
+      horizonPatched = true;
+      try {
+        const probe = document.createElement("div");
+        probe.style.cssText = "position:absolute;left:-9999px;top:0;width:8px;height:8px;pointer-events:none";
+        document.body.appendChild(probe);
+        const t = window.VANTA.CLOUDS2({ el: probe, THREE: window.THREE, mouseControls: false, touchControls: false, gyroControls: false, speed: 0.0, texturePath: "system/vendor/vanta/noise.png" });
+        const proto = t && Object.getPrototypeOf(t);
+        if (proto && typeof proto.fragmentShader === "string" && proto.fragmentShader.includes("- 0.65")) {
+          proto.fragmentShader = proto.fragmentShader.replace("coord / iResolution.y - 0.65", "coord / iResolution.y - " + HOLO_HORIZON);
+        }
+        try { t.destroy(); } catch {}
+        probe.remove();
+      } catch (e) {}
+    }
+
+    const STEPS = [1, 1.5, 2, 3];                         // adaptive load: 1 = native sharp → higher = fewer pixels (lighter)
+    let si = 0, inst = null, fpsRAF = 0;
+    const scaleNow = () => STEPS[si];                     // Vanta `scale` = resolution divisor; 1 = native px (sharp), >1 = lighter
     const on = () => document.documentElement.getAttribute("data-immersive") === "full" && !document.hidden;
-    function place() { cover = coverOf(); stage.style.transform = "translate(-50%,-50%) scale(" + cover + ")"; }
     function apply() { if (!inst) return; const ns = scaleNow(); try { inst.setOptions({ scale: ns, scaleMobile: ns }); inst.scale = ns; inst.resize(); } catch {} }
-    function fit() { place(); apply(); }
     function start() {
       if (inst) return;
-      place();
+      patchHorizon();                                     // ensure the prototype carries the tuned horizon BEFORE the real mount builds its material
       try {
         inst = window.VANTA.CLOUDS2({
-          el: stage, THREE: window.THREE,
+          el: el, THREE: window.THREE,                    // mount at native viewport size — no stage, no transform, no zoom
           mouseControls: false, touchControls: false, gyroControls: false,
           scale: scaleNow(), scaleMobile: scaleNow(),
           texturePath: "system/vendor/vanta/noise.png",
           speed: reduce ? 0.0 : 1.0,
         });
+        document.body.classList.add("vanta-on");          // the real clouds are live → drop the CSS fallback sky from compositing (perf)
         if (!reduce) watchFps();
       } catch (e) { inst = null; }
     }
@@ -605,29 +902,107 @@
       // warm up first so one-off texture-load hitches don't trigger a needless downscale
       setTimeout(() => { if (inst && on()) fpsRAF = requestAnimationFrame(tick); }, 800);
     }
-    function stop() { cancelAnimationFrame(fpsRAF); if (inst) { try { inst.destroy(); } catch {} inst = null; } }
+    function stop() { cancelAnimationFrame(fpsRAF); document.body.classList.remove("vanta-on"); if (inst) { try { inst.destroy(); } catch {} inst = null; } }
     function sync() { if (on()) start(); else stop(); }
     new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ["data-immersive"] });
     document.addEventListener("visibilitychange", sync);
-    addEventListener("resize", () => { if (inst) fit(); else place(); }, { passive: true });
+    addEventListener("resize", () => { if (inst) { try { inst.resize(); } catch {} } }, { passive: true });
     sync();
   })();
 
-  // Live self-address: the gateway resolves ITS OWN bytes to a κ — booting is resolve-by-content (Law L5).
+  // ── SELF-CERTIFICATION (Law L5) — the gateway must PROVE its own bytes before it will boot ─────────
+  // It re-derives its κ from its exact bytes (resolve-by-content). Without a verifiable context (http +
+  // crypto.subtle) it CANNOT — and an OPTIONAL pinned κ (meta[name=holo-gateway-kappa] / window.
+  // HOLO_GATEWAY_K, set out-of-band by a deploy) must match. UNCERTIFIED ⇒ Power up is disabled and the
+  // hero is replaced by a fail-closed screen: tampered or unprovable bytes do not boot. The deeper
+  // Constitution gate still runs at boot() (ADR-033). Two fail-closed gates, no boot without proof.
+  let certified = false;
+  const _enter = $("enter");
+  if (_enter) { _enter.disabled = true; _enter.setAttribute("aria-disabled", "true"); }
+  document.documentElement.setAttribute("data-holo-certified", "pending");
+  function failCert(reason, want, got) {
+    document.documentElement.setAttribute("data-holo-certified", "refused");
+    document.documentElement.setAttribute("data-holo-refusal", reason);   // machine-readable for an agent
+    if (want) document.documentElement.setAttribute("data-holo-want", want);   // the proof (κ) lives in the DOM for
+    if (got) document.documentElement.setAttribute("data-holo-got", got);      // tools/agents — never as jargon on screen
+    const reverify = `<button class="hh-btn hh-p" onclick="location.reload()">↻ Try again</button>`;
+    const constitution = `<a class="hh-btn hh-g" href="CONSTITUTION.md">Why this matters</a>`;
+    let title, lead, hint;
+    if (reason === "no-http") {
+      title = "Open Hologram from the web";
+      lead = "Hologram runs from a web address so it can prove it’s the real, untampered version. It can’t do that from a file saved on your device, so nothing started.";
+      hint = "Open the official Hologram link to begin.";
+    } else if (reason === "mismatch") {
+      title = "This isn’t the genuine page";
+      lead = "Before it runs, Hologram checks the page is the real, untampered one. This copy doesn’t match, so nothing started. You’re safe.";
+      hint = "Open Hologram from its official link to continue.";
+    } else {   // no-hash: http but crypto/fetch unavailable
+      title = "This page couldn’t be verified";
+      lead = "Hologram makes sure this is the real, untampered page before it runs, and it couldn’t confirm that here. So nothing started. You’re safe.";
+      hint = "Open Hologram over a secure (https) link, then try again.";
+    }
+    holoRefuse({ title, lead, hint, actions: reverify + constitution });
+  }
   (async () => {
+    const pinMeta = document.querySelector('meta[name="holo-gateway-kappa"]');
+    // expected κ, set out-of-band: a deploy global, a <meta> sidecar, or ?verify=<κ> on a shared link
+    // (so "open THIS exact, proven page" is itself a content address). Absent ⇒ certify on re-derivability.
+    const pinned = String((window.HOLO_GATEWAY_K || (pinMeta && pinMeta.content) || new URLSearchParams(location.search).get("verify") || "")).trim().toLowerCase();
+    if (!location.protocol.startsWith("http")) return failCert("no-http", pinned, "");
+    let got = "";
     try {
       const buf = await (await fetch(location.href, { cache: "no-store" })).arrayBuffer();
       const hex = [...new Uint8Array(await crypto.subtle.digest("SHA-256", buf))].map((b) => b.toString(16).padStart(2, "0")).join("");
-      const kx = $("kx"); if (kx) { const k = "did:holo:sha256:" + hex; kx.textContent = k;   // the canonical hash of THIS page's exact bytes
-        try { window.HoloFX && window.HoloFX.kappa(kx, k, { width: 10 }); } catch {} }   // …shown as a short streaming-braille window DERIVED from those bytes (hover reveals the full hash)
-    } catch { const kx = $("kx"); if (kx) kx.textContent = "(hash needs http — serve this page over http to verify)"; }
+      got = "did:holo:sha256:" + hex;
+    } catch (e) { return failCert("no-hash", pinned, ""); }
+    const kx = $("kx"); if (kx) { kx.textContent = got;   // the live self-address footer — the canonical hash of THIS page's exact bytes
+      try { window.HoloFX && window.HoloFX.kappa(kx, got, { width: 10 }); } catch {} }
+    if (pinned && pinned !== got.toLowerCase()) return failCert("mismatch", pinned, got);
+    certified = true;                                                     // proven ✓ — booting is now permitted
+    document.documentElement.setAttribute("data-holo-certified", "true");
+    if (_enter) { _enter.disabled = false; _enter.removeAttribute("aria-disabled"); try { _enter.focus({ preventScroll: true }); } catch {} }
+    // proven ⇒ warm the boot chain on idle so Power-up hands off instantly (pre-activated κ SW + cached splash)
+    (window.requestIdleCallback ? requestIdleCallback(() => preloadBootChain(), { timeout: 1500 }) : setTimeout(() => preloadBootChain(), 600));
   })();
 
   // Boot: bring up the κ / FHS Service Worker (the substrate gateway — maps the flat URL space onto
   // the FHS tree + supplies cross-origin isolation), then enter the bootloader. Relative paths, so
   // this works at a root site, a /<repo>/ project site, or `node tools/holo-serve-fhs.mjs`.
+  // ── The power-on press (cinematic veil for boot) ───────────────────────────────────────────────
+  // Pure garnish layered over the fail-closed boot(): a sub-bass thrum, then a CHARGE→IMPLODE that
+  // draws the whole gateway into the core. Everything below is compositor-only or audio and wrapped
+  // so a failure here never blocks the boot.
+  const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // a single deep sub-bass thrum, synthesised on the user's click (no asset) — the machine powering on
+  function thrum() {
+    if (REDUCE) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      const ac = new AC(); const t = ac.currentTime;
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(48, t); o.frequency.exponentialRampToValueAtTime(27, t + 1.1);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.2, t + 0.16); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + 1.25);
+      o.onended = () => { try { ac.close(); } catch {} };
+    } catch {}
+  }
+  // pin the core to the Power-up button and aim every hero element's collapse vector at it
+  function aimAtCore() {
+    const b = $("enter").getBoundingClientRect();
+    const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+    const core = document.querySelector(".core"); if (core) { core.style.left = cx + "px"; core.style.top = cy + "px"; }
+    const bg = document.querySelector(".bg"); if (bg) bg.style.transformOrigin = cx + "px " + cy + "px";
+    document.querySelectorAll(".bar, .pill-star, h1, .sub, #download, .sig").forEach((el) => {
+      const r = el.getBoundingClientRect(); const ex = r.left + r.width / 2, ey = r.top + r.height / 2;
+      el.style.setProperty("--dx", (cx - ex).toFixed(1) + "px");
+      el.style.setProperty("--dy", (cy - ey).toFixed(1) + "px");
+    });
+  }
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
   let booting = false;
   async function boot() {
+    if (!certified) return;        // fail-closed: an uncertified gateway never boots (Power up is disabled too)
     if (booting) return; booting = true;
     // Hologram OS needs http(s): the κ Service Worker — which maps the flat URL space onto the FHS
     // tree AND re-derives every byte to its κ (Law L5) — cannot run from file://. So guide the user
@@ -637,11 +1012,16 @@
       $("status").innerHTML = 'Hologram OS boots over <b>http</b>. From this folder run<br><code>cd system &amp;&amp; node tools/serve-pages.mjs</code><br>then open <b>http://127.0.0.1:8080/</b>';
       return;
     }
+    // CHARGE — ignite the core under the button the instant the user commits, for zero-latency feel.
+    // The fail-closed gates below still decide whether we actually boot; if a gate refuses we tear the
+    // charge back down before showing the refusal. (Reduced-motion charges instantly via no-op CSS.)
+    aimAtCore(); thrum();
+    document.body.classList.add("charging");
     // Find where the OS image is served — its real repo path (system/os/), or a remapped root (os/)
     // if the host aliases it. So the gateway boots whether the repo is served literally by ANY static
     // host or through the remapping dev server. (HEAD-probe the SW; first hit wins.)
     let root = "system/os/";
-    for (const r of ["system/os/", "os/"]) { try { if ((await fetch(r + "holo-fhs-sw.js", { method: "HEAD", cache: "no-store" })).ok) { root = r; break; } } catch {} }
+    for (const r of ["", "system/os/", "os/"]) { try { if ((await fetch(r + "holo-fhs-sw.js", { method: "HEAD", cache: "no-store" })).ok) { root = r; break; } } catch {} }   // "" wins only on a flat host where the OS root IS the origin (FHS dev server); Pages/static fall through to system/os/
 
     // ── Constitutional boot gate (ADR-033): the FIRST act of boot is to verify the conscience ──
     // A sovereign computer does not boot under a constitution it cannot re-derive for itself. Load
@@ -655,29 +1035,38 @@
     } catch (e) { constitutionSealed = false; }
     if (!constitutionSealed) {
       booting = false;
+      document.body.classList.remove("charging");   // tear the charge down — the gate refused, nothing boots
       holoBootRefused("CONSTITUTION.md");
       return;
     }
-    // Sealed ⇒ commit to boot. NO status text under the button (it would shift the layout) — instead,
-    // immediately fade the whole gateway to black (a clean power-on) and do the rest behind the veil.
-    document.body.classList.add("leaving");
-    const faded = Date.now();
+    // Sealed ⇒ commit to boot. Kick the κ Service Worker registration NOW so it warms behind the
+    // implosion, then play CHARGE→IMPLODE and only navigate once the core has collapsed.
     try {
       const TK = "holo.theme.v1", s = JSON.parse(localStorage.getItem(TK) || "{}");
       s.palette = "dark"; localStorage.setItem(TK, JSON.stringify(s));       // pin the OS palette DARK so the boot screens match the black gateway
     } catch {}
-
-    // Bring up the κ / FHS Service Worker behind the black veil, so every byte the boot chain loads is
-    // resolved + re-derived to its κ (Law L5).
-    try {
-      if ("serviceWorker" in navigator) {
-        const reg = await navigator.serviceWorker.register(root + "holo-fhs-sw.js", { type: "module", scope: root }).catch(() => null);
-        if (reg && !navigator.serviceWorker.controller) {
-          await new Promise((res) => { if (reg.active) return res(); const w = reg.installing || reg.waiting; if (!w) return res(); w.addEventListener("statechange", function () { if (this.state === "activated") res(); }); setTimeout(res, 4000); });
-          if (!navigator.serviceWorker.controller) await Promise.race([new Promise((r) => navigator.serviceWorker.addEventListener("controllerchange", r, { once: true })), new Promise((r) => setTimeout(r, 2000))]);
+    const swReady = (async () => {
+      try {
+        if ("serviceWorker" in navigator) {
+          const reg = await navigator.serviceWorker.register(root + "holo-fhs-sw.js", { type: "module", scope: root }).catch(() => null);
+          if (reg && !navigator.serviceWorker.controller) {
+            await new Promise((res) => { if (reg.active) return res(); const w = reg.installing || reg.waiting; if (!w) return res(); w.addEventListener("statechange", function () { if (this.state === "activated") res(); }); setTimeout(res, 4000); });
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    })();
+    // IMPLODE — let the charge bloom settle, then collapse the whole gateway into the core.
+    if (!REDUCE) {
+      await wait(420);
+      aimAtCore();                                   // re-measure in case the viewport changed during the charge
+      document.body.classList.remove("charging");
+      document.body.classList.add("imploding");
+      await wait(560);
+    }
+    // hand off to the boot splash on the shared #000 veil (kept for the seamless cross-page seam)
+    document.body.classList.add("leaving");
+    const darkStart = Date.now();
+    await Promise.race([swReady, wait(3000)]);        // warm the κ SW INSIDE the dark window (pre-activated → instant)
 
     // Power on like a real computer: Plymouth boot-splash animation (usr/share/frame/splash.html, served
     // flat as splash.html by the κ worker) → the LOGIN screen (the SDDM greeter) → and only AFTER sign-in,
@@ -689,11 +1078,13 @@
     const splash = root + "splash.html?" + new URLSearchParams({
       next: loginURL,
       menu: new URL(root + "boot/index.html", location.href).href,
-      label: "Hologram OS", logo: "boot/icons/os_hologram.svg", theme: "holo-pulse", duration: "4",
+      label: "Hologram OS", logo: "boot/icons/os_hologram.svg", theme: "holo-pulse", duration: "12",   // a calm, unrushed power-on
     }).toString();
-    // navigate the instant the black veil has settled (≈160ms), regardless of how long the SW took — the
-    // splash's first paint is the same #000, so this hands off with no flash and no extra animation beat
-    setTimeout(() => location.replace(splash), Math.max(0, 200 - (Date.now() - faded)));
+    // HOLD COMPLETELY DARK for a full ~3s — the black moment a real machine shows between the power press
+    // and the boot logo. The splash's first frame lights up out of this same black (no flash, no seam).
+    const darkElapsed = Date.now() - darkStart;
+    if (darkElapsed < 3000) await wait(3000 - darkElapsed);
+    location.replace(splash);
   }
   $("enter").addEventListener("click", boot);   // "Power up" → the Plymouth boot splash → the OS
   // No auto-boot — the gateway stays a STATIC splash until the user acts. Boot is an explicit
@@ -755,39 +1146,39 @@
   // up the κ Service Worker and opens the holospace launcher (holospace.html?app=…&bare=1) in a new
   // tab: the app mounts in its OWN isolated, capability-bounded, self-contained shell (Law L1/L5).
   const APPS = [
-    {n:"Holo Amp",f:"amp",c:"Multimedia",d:"A classic skinnable audio player, content-addressed."},
-    {n:"Holo Atlas",f:"atlas",c:"Developer",d:"A live map of every holospace — discover, verify and monitor the whole OS by content address."},
-    {n:"Holo Atlas 96",f:"atlas96",c:"Educational",d:"The Φ-Atlas-12288 structure, encoded as a self-verifying UOR object."},
-    {n:"Holo Guide",f:"book",c:"Social",d:"The Hitchhiker's Guide for AI agents — a content-addressable social hypergraph. Don't Panic."},
-    {n:"Holo BRC Miner",f:"brcminer",c:"Communication",d:"Mine, send and explore real BrowserCoin — wallet, miner and explorer in one."},
-    {n:"Holo Browser",f:"browser",c:"Communication",d:"A web browser that treats every page — web, local or holo://κ — as verifiable content."},
-    {n:"BTC Miner",f:"btc",c:"Communication",d:"A real self-custodial Bitcoin wallet and live network view, entirely in your browser."},
-    {n:"Holo Capture",f:"capture",c:"Multimedia",d:"Capture, annotate and share your screen — every capture content-addressed."},
-    {n:"Holo Cloud",f:"cloud",c:"Communication",d:"Your files — end-to-end encrypted, content-addressed, and shared without a server."},
-    {n:"Holo Code",f:"code",c:"Developer",d:"An agentic coding partner that runs entirely on your machine — local verifiable inference."},
-    {n:"Holo Docs",f:"docs",c:"Business",d:"A serverless office suite — documents, spreadsheets and slides with live co-editing."},
-    {n:"Holo Scan",f:"etherscan",c:"Communication",d:"One universal block explorer for 27 networks — verifiable, in the browser."},
-    {n:"Holo EVM",f:"evm",c:"Developer",d:"A spec-faithful Ethereum Virtual Machine that runs in your browser."},
-    {n:"Holo Files",f:"files",c:"Utilities",d:"The native file explorer for Hologram OS — one window onto the whole object universe."},
-    {n:"Holo Forge",f:"forge",c:"Developer",d:"Compile in your browser. Verify by re-derivation. Trust no server."},
-    {n:"Holo Git",f:"git",c:"Developer",d:"A self-hosted git forge — issues, pull requests and merges, serverless."},
-    {n:"Holo IPFS",f:"ipfs",c:"Communication",d:"Browse the entire IPFS space as easily as the web — every block verified."},
-    {n:"On Liberty",f:"liberty",c:"Reference",d:"On Liberty by John Stuart Mill, published as a self-verifying object."},
-    {n:"Hologram Meet",f:"meet",c:"Communication",d:"Serverless, end-to-end-encrypted video conferencing."},
-    {n:"Holo Music",f:"music",c:"Multimedia",d:"A content-addressed music library — and the whole internet as one."},
-    {n:"Holo Notepad",f:"notepad",c:"Business",d:"Your second brain — a networked, private outliner and always-on memory bank."},
+    {n:"Holo Amp",f:"amp",c:"Multimedia",d:"A classic skinnable audio player, content addressed."},
+    {n:"Holo Atlas",f:"atlas",c:"Developer",d:"A live map of every holospace. Discover, verify and monitor the whole OS by content address."},
+    {n:"Holo Atlas 96",f:"atlas96",c:"Educational",d:"The Φ Atlas 12288 structure, encoded as a self verifying UOR object."},
+    {n:"Holo Guide",f:"book",c:"Social",d:"The Hitchhiker's Guide for AI agents, a content addressable social hypergraph. Don't Panic."},
+    {n:"Holo BRC Miner",f:"brcminer",c:"Communication",d:"Mine, send and explore real BrowserCoin. Wallet, miner and explorer in one."},
+    {n:"Holo Browser",f:"browser",c:"Communication",d:"A web browser where every page, web, local or holo://κ, is verifiable content."},
+    {n:"BTC Miner",f:"btc",c:"Communication",d:"A real self custodial Bitcoin wallet and live network view, entirely in your browser."},
+    {n:"Holo Capture",f:"capture",c:"Multimedia",d:"Capture, annotate and share your screen. Every capture content addressed."},
+    {n:"Holo Cloud",f:"cloud",c:"Communication",d:"Your files, end to end encrypted, content addressed, and shared without a server."},
+    {n:"Holo Code",f:"code",c:"Developer",d:"An agentic coding partner that runs entirely on your machine. Local, verifiable inference."},
+    {n:"Holo Docs",f:"docs",c:"Business",d:"A serverless office suite. Documents, spreadsheets and slides with live co editing."},
+    {n:"Holo Scan",f:"etherscan",c:"Communication",d:"One universal block explorer for 27 networks, verifiable, in the browser."},
+    {n:"Holo EVM",f:"evm",c:"Developer",d:"A spec faithful Ethereum Virtual Machine that runs in your browser."},
+    {n:"Holo Files",f:"files",c:"Utilities",d:"The native file explorer for Hologram OS. One window onto the whole object universe."},
+    {n:"Holo Forge",f:"forge",c:"Developer",d:"Compile in your browser. Verify by re deriving. Trust no server."},
+    {n:"Holo Git",f:"git",c:"Developer",d:"A self hosted git forge. Issues, pull requests and merges, serverless."},
+    {n:"Holo IPFS",f:"ipfs",c:"Communication",d:"Browse the entire IPFS space as easily as the web. Every block verified."},
+    {n:"On Liberty",f:"liberty",c:"Reference",d:"On Liberty by John Stuart Mill, published as a self verifying object."},
+    {n:"Hologram Meet",f:"meet",c:"Communication",d:"Serverless, end to end encrypted video conferencing."},
+    {n:"Holo Music",f:"music",c:"Multimedia",d:"A content addressed music library, and the whole internet as one."},
+    {n:"Holo Notepad",f:"notepad",c:"Business",d:"Your second brain, a networked, private outliner and always on memory bank."},
     {n:"Hologram OS",f:"os",c:"Utilities",d:"A real Debian GNU/Linux system, booted in a browser tab."},
     {n:"Plasma Desktop",f:"plasma",c:"System",d:"Your real KDE Plasma desktop, mounted live in a holospace over VNC."},
-    {n:"Holo Player",f:"player",c:"Multimedia",d:"A content-addressed media library for your movies and shows."},
-    {n:"Holo Privacy",f:"privacy",c:"Security",d:"Control what an AI agent may learn about you — minimum disclosure, for a stated purpose."},
-    {n:"Holo Q",f:"q",c:"Productivity",d:"A real AI that thinks entirely in your browser — no server, no cloud, no API key."},
-    {n:"QEMU",f:"qemu",c:"Utilities",d:"A full machine emulator — boot other architectures in your browser."},
-    {n:"Holo SDK",f:"sdk",c:"Developer",d:"A spatial, self-authoring desktop where every window, component and world is a verifiable object."},
-    {n:"Holo Search",f:"search",c:"Utilities",d:"One search bar over the whole OS and the open web — every result verifiable."},
-    {n:"Holo Stream",f:"stream",c:"Multimedia",d:"Live streaming, recording and a creator coin — composited in the browser."},
-    {n:"Holo Terms",f:"terms",c:"Security",d:"Your machine-readable personal terms (MyTerms / IEEE 7012): you propose, each app agrees."},
-    {n:"Holo Video",f:"video",c:"Multimedia",d:"A content-addressed video player with adaptive streaming."},
-    {n:"Holo Wallet",f:"wallet",c:"Finance",d:"A self-custodial, multi-chain wallet — one seed, every chain, for humans and AI agents."},
+    {n:"Holo Player",f:"player",c:"Multimedia",d:"A content addressed media library for your movies and shows."},
+    {n:"Holo Privacy",f:"privacy",c:"Security",d:"Control what an AI agent may learn about you. Minimum disclosure, for a stated purpose."},
+    {n:"Holo Q",f:"q",c:"Productivity",d:"A real AI that thinks entirely in your browser. No server, no cloud, no API key."},
+    {n:"QEMU",f:"qemu",c:"Utilities",d:"A full machine emulator. Boot other architectures in your browser."},
+    {n:"Holo SDK",f:"sdk",c:"Developer",d:"A spatial, self authoring desktop where every window, component and world is a verifiable object."},
+    {n:"Holo Search",f:"search",c:"Utilities",d:"One search bar over the whole OS and the open web. Every result verifiable."},
+    {n:"Holo Stream",f:"stream",c:"Multimedia",d:"Live streaming, recording and a creator coin, composited in the browser."},
+    {n:"Holo Terms",f:"terms",c:"Security",d:"Your machine readable personal terms (MyTerms / IEEE 7012): you propose, each app agrees."},
+    {n:"Holo Video",f:"video",c:"Multimedia",d:"A content addressed video player with adaptive streaming."},
+    {n:"Holo Wallet",f:"wallet",c:"Finance",d:"A self custodial, multi chain wallet. One seed, every chain, for humans and AI agents."},
     {n:"Holo Workspace",f:"workspace",c:"Developer",d:"A code editor with language servers and a real filesystem, in the browser."},
   ];
   const CAT_HUE = { Multimedia:349, Developer:222, Communication:170, Educational:42, Social:288,
@@ -836,21 +1227,16 @@
     Q.setAttribute("aria-activedescendant", sel >= 0 ? `r${sel}` : "");
   }
   function move(d) { if (RES.hidden) return render(); sel = (sel + d + items.length) % items.length; mark(); }
-  Q.addEventListener("input", render);
-  Q.addEventListener("focus", render);
-  Q.addEventListener("blur", () => setTimeout(closeRes, 140));
-  Q.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowDown") { e.preventDefault(); move(1); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); move(-1); }
-    else if (e.key === "Enter") { e.preventDefault(); if (items[sel]) launchApp(items[sel].f); }
-    else if (e.key === "Escape") { if (Q.value) { Q.value = ""; render(); } else { closeRes(); Q.blur(); } }
-  });
-  // mousedown (not click) so the result fires before the input blur hides the list
-  RES.addEventListener("mousedown", (e) => { const it = e.target.closest(".r-item"); if (it) { e.preventDefault(); launchApp(it.dataset.f); } });
-  // ⌘/Ctrl+K or "/" focuses search from anywhere
-  addEventListener("keydown", (e) => {
-    if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) { e.preventDefault(); Q.focus(); Q.select(); }
-    else if (e.key === "/" && document.activeElement !== Q && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || "")) { e.preventDefault(); Q.focus(); }
+  // ── The search pill is the LAUNCHER trigger ───────────────────────────────────────────────────
+  // Focus / click / Ctrl(⌘)+K / "/" open the full-screen launcher (defined at the end of this module),
+  // which reuses the pure search helpers above (APPS · compute · score · hi · badgeColor · initial).
+  // The old inline dropdown is retired; #results stays hidden.
+  Q.addEventListener("focus", function () { openLauncher(); });
+  Q.addEventListener("mousedown", function (e) { e.preventDefault(); openLauncher(); });
+  addEventListener("keydown", function (e) {
+    if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openLauncher(); }
+    else if (e.key === "Escape" && launcherOpen()) { e.preventDefault(); launcherEsc(); }
+    else if (e.key === "/" && !launcherOpen() && document.activeElement !== Q && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || "")) { e.preventDefault(); openLauncher(); }
   });
 
   // Resolve the OS image root + bring up the κ Service Worker once, so launched tabs resolve through
@@ -859,7 +1245,7 @@
   function ensureRoot() {
     return _rootPromise || (_rootPromise = (async () => {
       let root = "system/os/";
-      for (const r of ["system/os/", "os/"]) { try { if ((await fetch(r + "holo-fhs-sw.js", { method: "HEAD", cache: "no-store" })).ok) { root = r; break; } } catch {} }
+      for (const r of ["", "system/os/", "os/"]) { try { if ((await fetch(r + "holo-fhs-sw.js", { method: "HEAD", cache: "no-store" })).ok) { root = r; break; } } catch {} }   // "" wins only on a flat host where the OS root IS the origin (FHS dev server); Pages/static fall through to system/os/
       if ("serviceWorker" in navigator) {
         try {
           const reg = await navigator.serviceWorker.register(root + "holo-fhs-sw.js", { type: "module", scope: root }).catch(() => null);
@@ -871,6 +1257,27 @@
       return root;
     })());
   }
+
+  // ── PRELOAD the boot chain ───────────────────────────────────────────────────────────────────────
+  // Once the gateway has PROVEN itself, warm the path to the OS so Power-up hands off with no latency:
+  // register + ACTIVATE the κ Service Worker now (it precaches the FHS closure — κ is content-addressed,
+  // so every later resolve is an O(1) cache hit), then nudge the splash document + its boot theme into
+  // the SW cache. At Power-up the splash is already resident: it paints from the first frame, on the same
+  // black, with no SW-activation wait and no load gap. All best-effort and idempotent.
+  let _preloaded = false;
+  async function preloadBootChain() {
+    if (_preloaded || !location.protocol.startsWith("http")) return; _preloaded = true;
+    let root;
+    try { root = await ensureRoot(); } catch { return; }   // the big win: the κ SW is live + warm before the click
+    // ask the just-activated SW to resolve the boot documents through its κ cache (these run IN scope, so
+    // the SW intercepts and stores them); ignored wherever a host can't map the flat κ-route.
+    try {
+      await Promise.allSettled(
+        ["splash.html", "login.html", "shell.html"].map((r) => fetch(root + r, { cache: "force-cache" }).catch(() => {}))
+      );
+    } catch {}
+  }
+
   async function launchApp(folder) {
     closeRes();
     if (!location.protocol.startsWith("http")) {
@@ -882,6 +1289,126 @@
     const url = root + "holospace.html?app=" + encodeURIComponent(folder) + "&bare=1";
     if (tab) { try { tab.opener = null; } catch {} tab.location.replace(url); } else { location.href = url; }
   }
+
+  // ════════════════════════════════════════════════════════════════════════════════════════════
+  // THE LAUNCHER — full-screen app search with a LIVE preview of the highlighted app running in its
+  // OWN self-verifying sealed holospace (holospace.html?app=…&bare=1 — the same mount launchApp uses).
+  // Reuses APPS · compute · hi · esc · badgeColor · initial · ensureRoot · launchApp. Opening morphs
+  // out of the search pill; Enter / Open expands the running preview to a full-screen takeover; ↗ opens
+  // it in its own tab. The seal — each app's content address from apps/index.jsonld — rides in the
+  // window chrome and verifies (✓) the moment a preview mounts.
+  // ════════════════════════════════════════════════════════════════════════════════════════════
+  // Per-app glyphs — vendored Tabler line icons (24px, uniform 2px stroke) for a clean, sharp, cohesive
+  // icon set. Rendered white on a category-hued tile. Keyed by the app's folder id (APPS[].f).
+  const APP_ICONS = {"amp":"<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M5 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z\"/><path d=\"M9 14a3 3 0 1 0 6 0a3 3 0 1 0-6 0m3-7v.01\"/></g>","atlas":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 18.5L9 17l-6 3V7l6-3l6 3l6-3v7.5M9 4v13m6-10v5.5m6.121 7.621a3 3 0 1 0-4.242 0Q17.506 20.749 19 22q1.577-1.335 2.121-1.879M19 18v.01\"/>","atlas96":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M19.875 6.27A2.23 2.23 0 0 1 21 8.218v7.284c0 .809-.443 1.555-1.158 1.948l-6.75 4.27a2.27 2.27 0 0 1-2.184 0l-6.75-4.27A2.23 2.23 0 0 1 3 15.502V8.217c0-.809.443-1.554 1.158-1.947l6.75-3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98z\"/>","book":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6v13m9-13v13m9-13v13\"/>","brcminer":"<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"m13 8l-9.383 9.418a2.09 2.09 0 0 0 0 2.967a2.11 2.11 0 0 0 2.976 0L16 11\"/><path d=\"M9 3h4.586a1 1 0 0 1 .707.293l6.414 6.414a1 1 0 0 1 .293.707V15a2 2 0 1 1-4 0v-3l-5-5H9a2 2 0 1 1 0-4\"/></g>","browser":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 8h16M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm4-2v4\"/>","btc":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 6h8a3 3 0 0 1 0 6a3 3 0 0 1 0 6H6M8 6v12m0-6h6M9 3v3m4-3v3M9 18v3m4-3v3\"/>","capture":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 8V6a2 2 0 0 1 2-2h2M4 16v2a2 2 0 0 0 2 2h2m8-16h2a2 2 0 0 1 2 2v2m-4 12h2a2 2 0 0 0 2-2v-2M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0\"/>","cloud":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6.657 18C4.085 18 2 15.993 2 13.517s2.085-4.482 4.657-4.482c.393-1.762 1.794-3.2 3.675-3.773c1.88-.572 3.956-.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486s-1.551 3.487-3.465 3.487H6.657\"/>","code":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"m7 8l-4 4l4 4m10-8l4 4l-4 4M14 4l-4 16\"/>","docs":"<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M14 3v4a1 1 0 0 0 1 1h4\"/><path d=\"M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2M9 9h1m-1 4h6m-6 4h6\"/></g>","etherscan":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M11 15a4 4 0 1 0 8 0a4 4 0 1 0-8 0m7.5 3.5L21 21M4 6h16M4 12h4m-4 6h4\"/>","evm":"<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M5 6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z\"/><path d=\"M9 9h6v6H9zm-6 1h2m-2 4h2m5-11v2m4-2v2m7 5h-2m2 4h-2m-5 7v-2m-4 2v-2\"/></g>","files":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2\"/>","forge":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"m11.414 10l-7.383 7.418a2.09 2.09 0 0 0 0 2.967a2.11 2.11 0 0 0 2.976 0L14.414 13m3.707 2.293l2.586-2.586a1 1 0 0 0 0-1.414l-7.586-7.586a1 1 0 0 0-1.414 0L9.121 6.293a1 1 0 0 0 0 1.414l7.586 7.586a1 1 0 0 0 1.414 0\"/>","git":"<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M5 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0M5 6a2 2 0 1 0 4 0a2 2 0 1 0-4 0m10 6a2 2 0 1 0 4 0a2 2 0 1 0-4 0M7 8v8\"/><path d=\"M7 8a4 4 0 0 0 4 4h4\"/></g>","ipfs":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"m5.931 6.936l1.275 4.249m5.607 5.609l4.251 1.275m-5.381-5.752l5.759-5.759M4 5.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0m13 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0m0 13a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0m-13-3a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0\"/>","liberty":"<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M19 4v16H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z\"/><path d=\"M19 16H7a2 2 0 0 0-2 2M9 8h6\"/></g>","meet":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"m15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14zM3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/>","music":"<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M3 17a3 3 0 1 0 6 0a3 3 0 0 0-6 0m10 0a3 3 0 1 0 6 0a3 3 0 0 0-6 0\"/><path d=\"M9 17V4h10v13M9 8h10\"/></g>","notepad":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m3 0v18m4-14h2m-2 4h2\"/>","os":"<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"m8 9l3 3l-3 3m5 0h3\"/><path d=\"M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/></g>","plasma":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zm4 15h10m-8-4v4m6-4v4\"/>","player":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M7 4v16l13-8z\"/>","privacy":"<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M12 3a12 12 0 0 0 8.5 3A12 12 0 0 1 12 21A12 12 0 0 1 3.5 6A12 12 0 0 0 12 3\"/><path d=\"M11 11a1 1 0 1 0 2 0a1 1 0 1 0-2 0m1 1v2.5\"/></g>","q":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2-2a2 2 0 0 1-2-2a2 2 0 0 1-2 2m0-12a2 2 0 0 1 2 2a2 2 0 0 1 2-2a2 2 0 0 1-2-2a2 2 0 0 1-2 2M9 18a6 6 0 0 1 6-6a6 6 0 0 1-6-6a6 6 0 0 1-6 6a6 6 0 0 1 6 6\"/>","qemu":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"m12 3l8 4.5v9L12 21l-8-4.5v-9zm0 9l8-4.5M12 12v9m0-9L4 7.5\"/>","sdk":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"m6 17.6l-2-1.1V14m0-4V7.5l2-1.1m4-2.3L12 3l2 1.1m4 2.3l2 1.1V10m0 4v2.5l-2 1.12m-4 2.28L12 21l-2-1.1m2-7.9l2-1.1m4-2.3l2-1.1M12 12v2.5m0 4V21m0-9l-2-1.12M6 8.6L4 7.5\"/>","search":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 10a7 7 0 1 0 14 0a7 7 0 1 0-14 0m18 11l-6-6\"/>","stream":"<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M18.364 19.364a9 9 0 1 0-12.728 0\"/><path d=\"M15.536 16.536a5 5 0 1 0-7.072 0\"/><path d=\"M11 13a1 1 0 1 0 2 0a1 1 0 1 0-2 0\"/></g>","terms":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 21H6a3 3 0 0 1-3-3v-1h10v2a2 2 0 0 0 4 0V5a2 2 0 1 1 2 2h-2m2-4H8a3 3 0 0 0-3 3v11M9 7h4m-4 4h4\"/>","video":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm4-2v16m8-16v16M4 8h4m-4 8h4m-4-4h16m-4-4h4m-4 8h4\"/>","wallet":"<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M17 8V5a1 1 0 0 0-1-1H6a2 2 0 0 0 0 4h12a1 1 0 0 1 1 1v3m0 4v3a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V6\"/><path d=\"M20 12v4h-4a2 2 0 0 1 0-4z\"/></g>","workspace":"<path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm8-2v16\"/>"};
+  function hueFor(c) { return (CAT_HUE[c] != null) ? CAT_HUE[c] : 220; }
+  function appIcon(a) { var b = APP_ICONS[a.f]; return b ? ('<svg viewBox="0 0 24 24" aria-hidden="true">' + b + '</svg>') : esc(initial(a.n)); }
+  const LX = $("launcher"), LQ = $("lq"), LRES = $("lresults"), LWIN = $("lwin"), LFRAME = $("lframe"),
+    LLOAD = $("lloading"), LLOADTXT = $("lloadtxt"), LCOUNT = $("lcount"), LKAPPA = $("lkappa"),
+    LKLBL = $("lklbl"), LKX = $("lkx"), LWTITLE = $("lwtitle"), LMNAME = $("lmname"), LMCAT = $("lmcat"),
+    LMDESC = $("lmdesc"), LOPEN = $("lopen"), LEXT = $("lext"), LCLOSE = $("lclose"), LBACK = $("lback"),
+    LWIC = $("lwic"), LMTILE = $("lmtile");
+  let lItems = [], lSel = -1, lIsOpen = false, lFull = false, lTimer = 0, lFolder = null, lRoot = null,
+      lKappa = {}, lFullKappa = null, lLoadTO = 0;
+  function launcherOpen() { return lIsOpen; }
+  function launcherEsc() { if (!lIsOpen) return; if (lFull) exitFull(); else closeLauncher(); }
+  function shortDid(d) { const s = String(d || ""); const h = s.split(":").pop() || s; return (/sha256/i.test(s) ? "sha256:" : "") + (h.length > 12 ? h.slice(0, 8) + "…" + h.slice(-4) : h); }
+  // the seal source: each app's holospace.lock.json `root` IS its content address (did:holo:sha256) —
+  // the κ the OS re-derives the app's bytes against (Law L5). Fetched per app on demand, then cached.
+  async function appKappa(folder) {
+    if (folder in lKappa) return lKappa[folder];
+    let k = null;
+    try {
+      const root = lRoot || await ensureRoot(); lRoot = root;
+      const lock = await fetch(root + "apps/" + folder + "/holospace.lock.json", { cache: "force-cache" }).then(r => r.ok ? r.json() : null);
+      k = (lock && (lock.root || lock.kappa)) || null;
+    } catch (e) {}
+    lKappa[folder] = k; return k;
+  }
+  function openLauncher(seed) {
+    if (lIsOpen) { try { LQ.focus(); } catch {} return; }
+    lIsOpen = true; lFull = false; LX.classList.remove("full"); LOPEN.textContent = "Open"; LX.hidden = false;
+    document.documentElement.style.overflow = "hidden";
+    if (typeof seed === "string") LQ.value = seed; else if (Q.value) LQ.value = Q.value;
+    ensureRoot().then(r => { lRoot = r; }).catch(() => {});
+    requestAnimationFrame(() => requestAnimationFrame(() => { if (lIsOpen) LX.classList.add("open"); }));
+    setTimeout(() => { if (lIsOpen) LX.classList.add("open"); }, 60);   // rAF can be throttled — ensure reveal
+    lrender();
+    setTimeout(() => { try { LQ.focus(); LQ.select(); } catch {} }, 50);
+  }
+  function closeLauncher() {
+    if (!lIsOpen) return; lIsOpen = false; lFull = false; LX.classList.remove("open", "full");
+    clearTimeout(lTimer); clearTimeout(lLoadTO);
+    setTimeout(() => { if (!lIsOpen) { LX.hidden = true; try { LFRAME.removeAttribute("src"); } catch {} LFRAME.classList.remove("in"); lFolder = null; document.documentElement.style.overflow = ""; } }, 360);
+    try { Q.blur(); } catch {}
+  }
+  function lrender() {
+    const q = LQ.value.trim(), ql = q.toLowerCase();
+    lItems = compute(q); lSel = lItems.length ? 0 : -1;
+    LCOUNT.textContent = lItems.length ? (q ? (lItems.length + " result" + (lItems.length > 1 ? "s" : "")) : (APPS.length + " apps")) : "";
+    if (!lItems.length) { LRES.innerHTML = '<div class="lx-empty">No app matches “' + esc(q) + '”</div>'; return; }
+    const head = q ? "" : '<div class="lx-head">Apps</div>';
+    LRES.innerHTML = head + lItems.map((a, i) => '<div class="lx-item" role="option" id="li' + i + '" data-f="' + a.f + '" aria-selected="' + (i === lSel) + '">'
+      + '<span class="lx-badge" style="--h:' + hueFor(a.c) + '">' + appIcon(a) + '</span>'
+      + '<span class="lx-main"><span class="lx-name">' + hi(a.n, ql) + '</span><span class="lx-desc">' + esc(a.d) + '</span></span></div>').join("");
+    lmark(true);
+  }
+  function lmark(reschedule) {
+    [...LRES.querySelectorAll(".lx-item")].forEach((el, i) => { el.setAttribute("aria-selected", String(i === lSel)); if (i === lSel) el.scrollIntoView({ block: "nearest" }); });
+    LQ.setAttribute("aria-activedescendant", lSel >= 0 ? ("li" + lSel) : "");
+    const app = lItems[lSel]; if (app) { setMeta(app); if (reschedule) schedulePreview(app); }
+  }
+  function lmove(d) { if (!lItems.length) return; lSel = (lSel + d + lItems.length) % lItems.length; lmark(true); }
+  function setMeta(app) {
+    LWTITLE.textContent = app.n; LMNAME.textContent = app.n; LMCAT.textContent = app.c; LMDESC.textContent = app.d;
+    var ic = appIcon(app); LWIC.innerHTML = ic; LMTILE.innerHTML = ic; LMTILE.style.setProperty("--h", hueFor(app.c));
+  }
+  function showKappa(folder) {
+    LKAPPA.classList.remove("copied"); const k = lKappa[folder];
+    if (k) { lFullKappa = k; LKLBL.textContent = "Sealed"; LKX.textContent = shortDid(k); LKAPPA.title = k + " — content address (click to copy)"; LKAPPA.classList.add("ok"); }
+    else { lFullKappa = null; LKX.textContent = ""; LKAPPA.classList.remove("ok"); LKLBL.textContent = "Self-verifying holospace"; LKAPPA.title = "Runs in its own self-verifying, content-addressed holospace (Law L5)"; }
+  }
+  function schedulePreview(app) { clearTimeout(lTimer); lTimer = setTimeout(() => mountPreview(app), 175); }   // debounce: don't thrash while arrowing
+  async function mountPreview(app) {
+    if (!app || !lIsOpen) return;
+    if (lFolder === app.f && LFRAME.getAttribute("src")) return;   // already showing this app
+    lFolder = app.f;
+    LFRAME.classList.remove("in"); LLOAD.style.display = "grid"; LLOADTXT.textContent = "Mounting " + app.n + "…";
+    LKAPPA.classList.remove("ok", "copied"); LKLBL.textContent = "Sealing…"; LKX.textContent = ""; appKappa(app.f).then(() => { if (lFolder === app.f) showKappa(app.f); });
+    if (!location.protocol.startsWith("http")) { LLOADTXT.innerHTML = "Live previews boot over <b>http</b>.<br>Run <code>node tools/serve-pages.mjs</code> in <b>system</b>."; return; }
+    const root = lRoot || await ensureRoot(); lRoot = root;
+    if (lFolder !== app.f) return;   // selection moved on while awaiting the SW
+    const url = root + "holospace.html?app=" + encodeURIComponent(app.f) + "&bare=1";
+    clearTimeout(lLoadTO);
+    lLoadTO = setTimeout(() => { if (lFolder === app.f && !LFRAME.classList.contains("in")) LLOADTXT.innerHTML = "Still mounting… open it in its own tab with <b>↗</b>"; }, 9000);
+    LFRAME.onload = function () { if (lFolder === app.f) { LFRAME.classList.add("in"); LLOAD.style.display = "none"; clearTimeout(lLoadTO); LWIN.classList.remove("swept"); void LWIN.offsetWidth; LWIN.classList.add("swept"); } };
+    LFRAME.src = url;
+  }
+  function enterFull(app) { if (!app) return; if (lFolder !== app.f) { lFolder = null; mountPreview(app); } lFull = true; LX.classList.add("full"); LOPEN.textContent = "← Back to apps"; }
+  function exitFull() { lFull = false; LX.classList.remove("full"); LOPEN.textContent = "Open"; try { LQ.focus(); } catch {} }
+  // wiring
+  LQ.addEventListener("input", lrender);
+  LQ.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowDown") { e.preventDefault(); lmove(1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); lmove(-1); }
+    else if (e.key === "Enter") { e.preventDefault(); if (lItems[lSel]) enterFull(lItems[lSel]); }
+    else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); if (lFull) exitFull(); else if (LQ.value) { LQ.value = ""; lrender(); } else closeLauncher(); }
+  });
+  LRES.addEventListener("mousedown", function (e) {
+    const it = e.target.closest(".lx-item"); if (!it) return; e.preventDefault();
+    const i = [...LRES.querySelectorAll(".lx-item")].indexOf(it); if (i < 0) return;
+    if (i === lSel) enterFull(lItems[i]); else { lSel = i; lmark(true); }   // click selects+previews; click again opens
+  });
+  LRES.addEventListener("dblclick", function (e) { if (e.target.closest(".lx-item") && lItems[lSel]) enterFull(lItems[lSel]); });
+  LOPEN.addEventListener("click", function () { if (lFull) exitFull(); else if (lItems[lSel]) enterFull(lItems[lSel]); });
+  LEXT.addEventListener("click", function (e) { e.preventDefault(); const app = lItems[lSel]; if (app) launchApp(app.f); });
+  LBACK.addEventListener("click", function () { if (lFull) exitFull(); else closeLauncher(); });
+  LCLOSE.addEventListener("click", function () { closeLauncher(); });
+  LKAPPA.addEventListener("click", function () {
+    if (!lFullKappa) return; const old = LKLBL.textContent;
+    const fin = () => { LKAPPA.classList.add("copied"); LKLBL.textContent = "Copied"; setTimeout(() => { LKAPPA.classList.remove("copied"); LKLBL.textContent = old; }, 1400); };
+    try { navigator.clipboard.writeText(lFullKappa).then(fin, fin); } catch (e) { fin(); }
+  });
 </script>
 <noscript><div style="position:fixed;inset:0;display:grid;place-items:center"><a href="os/boot.html" style="color:#2dd4bf">Enter Hologram OS →</a></div></noscript>
 </body>

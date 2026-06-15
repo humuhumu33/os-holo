@@ -31,6 +31,7 @@ const COI = {
   "Cross-Origin-Resource-Policy": "cross-origin",
 };
 const KCACHE = "holo-kappa-v2";   // content-addressed response cache: key = κ-route URL, so identical bytes are stored ONCE and shared across every app (dedup), and a re-open is network-free. Only VERIFIED bytes are ever cached. (bumped v1→v2 to force a SW re-activate so the fresh closure — new wallet κ — is served.)
+const IMPORTS = "holo-imports-v1";   // IMPORTED-app surfaces (ADR-0093): the page caches an imported app's holospace.json + its self-verifying κ-objects here, so /~<id>/mcp + /~<id>/api answer for an in-memory import with NO origin server. Must match holo-import-agent.SW_IMPORTS_CACHE + swCacheEntries.
 const kKey = (axis, hex) => `${BASE}.holo/${axis}/${hex}`;
 
 // ── SELF-HEAL (ADR-0067): turn the dead-end refusal into RECOVERY. A content address is a perfect
@@ -191,12 +192,19 @@ const refuse = (rel, want, got, axis = "sha256") => new Response(`holo-fhs-sw: �
 const MCP_APP = /^~([a-z0-9._-]{1,40})\/(mcp|\.well-known\/mcp\.json)$/i;
 const isMcpRoute = (rel) => rel === "mcp" || rel === ".well-known/mcp.json" || MCP_APP.test(rel);
 const jsonRes = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { ...COI, "content-type": "application/json", "access-control-allow-origin": "*", "cache-control": "no-store" } });
-async function mcpManifest(id) {   // read the app's manifest from cache/origin → the per-app surface
+async function mcpManifest(id) {   // read the app's manifest: an IMPORTED app's manifest from the imports cache FIRST, else origin
+  try { const m = await (await caches.open(IMPORTS)).match(`${BASE}apps/${id}/holospace.json`); if (m) return { ...(await m.json()), id }; } catch {}
   try { const r = await fetch(`${BASE}apps/${id}/holospace.json`, { cache: "no-store" }); if (r.ok) return { ...(await r.json()), id }; } catch {}
   return null;
 }
-// a best-effort resolver over served UOR objects (resolve_object / declared resolve-handlers)
-const mcpResolve = async (uri) => { try { const r = await fetch(BASE + String(uri).replace(/^\/+/, ""), { cache: "no-store" }); if (r.ok) return await r.json(); } catch {} return null; };
+// a best-effort resolver over served UOR objects (resolve_object / declared resolve-handlers): an imported
+// app's self-verifying κ-objects live in the imports cache (keyed by hex), else fall back to origin paths.
+const mcpResolve = async (uri) => {
+  const hex = String(uri).split(":").pop().replace(/^\/+/, "").split(/[/?#]/)[0];
+  if (/^[0-9a-f]{64}$/i.test(hex)) { try { const m = await (await caches.open(IMPORTS)).match(`${BASE}.holo-import/o/${hex}`); if (m) return await m.json(); } catch {} }
+  try { const r = await fetch(BASE + String(uri).replace(/^\/+/, ""), { cache: "no-store" }); if (r.ok) return await r.json(); } catch {}
+  return null;
+};
 async function mcpRespond(req, rel) {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...COI, "access-control-allow-origin": "*", "access-control-allow-methods": "GET,POST,OPTIONS", "access-control-allow-headers": "content-type,accept" } });
   const appId = (rel.match(MCP_APP) || [])[1];
@@ -270,9 +278,16 @@ self.addEventListener("fetch", (event) => {
       expect = BYPATH.get(rel) || null;                       // the pinned (sha256) κ for this path, if any
     }
 
-    // κ-routes are content-addressed (immutable) → always cacheable + verified. PATH requests bypass the
-    // by-κ cache AND L5 refusal in DEV (localhost) so live source edits show without a reload; prod is unchanged.
-    const isKRoute = !!(m || mb), trustCache = isKRoute || !DEV;
+    // κ-routes are content-addressed (immutable) → cacheable + verified. PATH requests bypass the by-κ
+    // cache AND L5 refusal in DEV (localhost) so live source edits show without a reload; prod is unchanged.
+    // ALSO in DEV: a κ-route that resolves to live SOURCE (not a vendored immutable blob) is served FRESH —
+    // right after you edit a shared lib its pin is intentionally stale (e.g. a gateway-marked
+    // `data-holo-shared` src froze the OLD κ), so follow the file, not the frozen κ. This is what ends the
+    // "SW kept serving stale holo-voice.js" friction; vendored model blobs (onnx/wasm/…) stay content-addressed.
+    const isKRoute = !!(m || mb);
+    const isVendorBlob = /(^|\/)vendor\//.test(rel) || /\.(onnx|wasm|bin|data|task)$/i.test(rel);
+    const devSourceK = DEV && isKRoute && !isVendorBlob;   // a source lib reached via a (now-stale) κ-route, in dev
+    const trustCache = (isKRoute || !DEV) && !devSourceK;
 
     // tier 0 · the content cache: if this name has a known κ and that κ's VERIFIED bytes are already
     // resident, serve them network-free (no origin fetch, no re-hash — they were verified at store time).

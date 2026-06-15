@@ -7,6 +7,8 @@
     "self-improvement",
     "learn-from-failure",
     "governed-evolution",
+    "evolving-skill-lineage",
+    "skill-projection",
     "audit-trail",
     "law-l5"
   ],
@@ -16,10 +18,13 @@
     "governedInForce": true,
     "noModelNoProposal": true,
     "revisionReDerives": true,
-    "derivesFromCorpus": true
+    "derivesFromCorpus": true,
+    "growSkillProjects": true,
+    "lineageChains": true,
+    "failingGateNoAdvance": true
   },
   "notes": {
     "core": "os/usr/lib/holo/q/holo-factory-grow.mjs",
-    "basis": "growFromFailures() composes holo-mind-evolve.evolve over the factory's failure traces; in-force is governed + re-derived"
+    "basis": "growFromFailures() composes holo-mind-evolve.evolve over the factory's failure traces; in-force is governed + re-derived. growSkill() closes the loop: a VERIFIED generation projects to a live agentskills.io skill AND advances the κ-addressed lineage head (child → prov:wasRevisionOf parent); a failing gate never advances (Q.factory.grow consumes this — projects live + persists)."
   }
 }

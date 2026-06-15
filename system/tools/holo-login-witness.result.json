@@ -6,12 +6,12 @@
     {
       "n": "enrol → did:holo κ (content address) + did:key + Ed25519",
       "ok": true,
-      "d": "did:key:z6MkszJ5yCFHi6ko…"
+      "d": "did:key:z6MkhMH1zpyZHK8o…"
     },
     {
       "n": "ONE seed → an omni-chain wallet (eth+btc+sol)",
       "ok": true,
-      "d": "ethereum,base,arbitrum,optimism,polygon,bsc,bitcoin,solana"
+      "d": "ethereum,base,arbitrum,optimism,polygon,bsc,avalanche,gnosis,linea,scroll,celo,blast,plasma,bitcoin,solana,hyperliquid"
     },
     {
       "n": "12-word recovery phrase issued",

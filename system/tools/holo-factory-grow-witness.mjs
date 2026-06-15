@@ -13,7 +13,7 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { growFromFailures } from "../os/usr/lib/holo/q/holo-factory-grow.mjs";
+import { growFromFailures, growSkill } from "../os/usr/lib/holo/q/holo-factory-grow.mjs";
 import { appendTrace } from "../os/usr/lib/holo/holo-mind-evolve.mjs";
 import { verify, verifyDeep, resolve } from "../os/usr/lib/holo/holo-mind.mjs";
 
@@ -78,6 +78,35 @@ function corpusWithFailures(store, n) {
   checks.derivesFromCorpus = links.includes(head);
 }
 
+// ── 7. growSkillProjects — growSkill closes the loop: a VERIFIED generation projects to a live skill AND
+//      advances the κ-addressed lineage head to the revision's κ (the consumption seam Q.factory.grow uses) ──
+{
+  const store = new Map(); const head = corpusWithFailures(store, 2);
+  const r = await growSkill(store, head, { sampler, gate: PASS_GATE, minFailures: 2 });
+  checks.growSkillProjects = r.advanced === true && r.projected && r.projected.name === "factory-fix"
+    && typeof r.skillHead === "string" && r.skillHead === r.revision && !!resolve(store, r.skillHead);
+}
+
+// ── 8. lineageChains — a SECOND verified generation links prov:wasRevisionOf the FIRST (the evolving chain):
+//      the head advances and the child commits to its parent κ (κ-addressed, verified evolution) ──
+{
+  const store = new Map(); const head = corpusWithFailures(store, 2);
+  const g1 = await growSkill(store, head, { sampler, gate: PASS_GATE, minFailures: 2 });
+  const g2 = await growSkill(store, head, { skillHead: g1.skillHead, skillBytes: g1.skillBytes, sampler, gate: PASS_GATE, minFailures: 2 });
+  const child = resolve(store, g2.skillHead);
+  const revOf = (child.links || []).filter((l) => l.rel === "prov:wasRevisionOf").map((l) => l.id);
+  checks.lineageChains = g2.advanced === true && g2.skillHead !== g1.skillHead && revOf.includes(g1.skillHead);
+}
+
+// ── 9. failingGateNoAdvance — an in-force-FAILING generation NEVER advances the lineage and projects to null:
+//      a failing gate cannot silently change behaviour; the prior head is preserved (HONEST, Law L5) ──
+{
+  const store = new Map(); const head = corpusWithFailures(store, 2);
+  const prior = "did:holo:sha256:" + "a".repeat(64);
+  const r = await growSkill(store, head, { skillHead: prior, skillBytes: "x", sampler, gate: FAIL_GATE, minFailures: 2 });
+  checks.failingGateNoAdvance = r.grew === true && r.inForce === false && r.advanced === false && r.projected === null && r.skillHead === prior;
+}
+
 const witnessed = Object.values(checks).every(Boolean);
 const out = {
   spec: "Holo Factory SELF-IMPROVEMENT (ADR-0097) — the factory improves over time by OBSERVING ITSELF (the last Factory 2.0 "
@@ -91,9 +120,9 @@ const out = {
     + "H(canonical form)) · the Holo Constitution governed succession + conscience gate + adaptive-immune-classifier pattern (ADR-033) · "
     + "Holo Mind ADR-0081 Phase 2 (the trace corpus + governed self-evolution) · Holo Factory ADR-0097 · holospaces Laws L1/L2/L3/L4/L5",
   witnessed,
-  covers: ["holo-factory", "self-improvement", "learn-from-failure", "governed-evolution", "audit-trail", "law-l5"],
+  covers: ["holo-factory", "self-improvement", "learn-from-failure", "governed-evolution", "evolving-skill-lineage", "skill-projection", "audit-trail", "law-l5"],
   checks,
-  notes: { core: "os/usr/lib/holo/q/holo-factory-grow.mjs", basis: "growFromFailures() composes holo-mind-evolve.evolve over the factory's failure traces; in-force is governed + re-derived" },
+  notes: { core: "os/usr/lib/holo/q/holo-factory-grow.mjs", basis: "growFromFailures() composes holo-mind-evolve.evolve over the factory's failure traces; in-force is governed + re-derived. growSkill() closes the loop: a VERIFIED generation projects to a live agentskills.io skill AND advances the κ-addressed lineage head (child → prov:wasRevisionOf parent); a failing gate never advances (Q.factory.grow consumes this — projects live + persists)." },
 };
 writeFileSync(join(here, "holo-factory-grow-witness.result.json"), JSON.stringify(out, null, 2));
 console.log(`holo-factory-grow-witness: ${witnessed ? "PASS" : "FAIL"}`);

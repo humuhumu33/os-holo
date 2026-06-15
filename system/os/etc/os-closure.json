@@ -607,22 +607,22 @@
       ]
     },
     "holospace.html": {
-      "kappa": "did:holo:sha256:6d52e19df8ca4bcfdd2494abe4d3009ed47672a525314926d979f9e8986e0b07",
-      "sri": "sha256-bVLhnfjKS8/dJJSr5NMAntR2cqUlMUkm2Xn56JhuCwc=",
-      "multibase": "uEiBtUuGd-MpLz90klKvk0wCe1HZypSUxSSbZefnomG4LBw",
-      "bytes": 13911,
+      "kappa": "did:holo:sha256:3de1fd37ec240802ba3d8f2ed0af6d825e61dbcbaf764dbadaa11f870a9afc8e",
+      "sri": "sha256-PeH9N+wkCAK6PY8u0K9tgl5h28uvdk262qEfhwqa/I4=",
+      "multibase": "uEiA94f037CQIAro9jy7Qr22CXmHby692TbraoR-HCpr8jg",
+      "bytes": 14575,
       "alsoKnownAs": [
-        "did:holo:blake3:dfbcb9a532401674e1454520cab3b8d02cb887e06f37dc58fd8d48148b203563"
+        "did:holo:blake3:8110e09fe59edc76a576683eab63814d01859439fe13927d86a653dc347f9e65"
       ],
       "holo:within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
       "holo:atlasCoordinate": {
         "space": "Φ-Atlas-12288",
         "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
-        "cell": 9571,
-        "page": 37,
-        "byte": 99,
-        "r96": 3,
-        "phi": 9571
+        "cell": 3685,
+        "page": 14,
+        "byte": 101,
+        "r96": 5,
+        "phi": 3685
       }
     },
     "home.html": {
@@ -1293,12 +1293,12 @@
       ]
     },
     "boot/boot-manifest.json": {
-      "kappa": "did:holo:sha256:0ecfe85839a06114ac4938af451f475687964f7d276f4145693bc797562402bd",
-      "sri": "sha256-Ds/oWDmgYRSsSTivRR9HVoeWT30nb0FFaTvHl1YkAr0=",
-      "multibase": "uEiAOz-hYOaBhFKxJOK9FH0dWh5ZPfSdvQUVpO8eXViQCvQ",
+      "kappa": "did:holo:sha256:3d72dfbfd68338d4bc385e090bb52862192007d4a47d9b704d6bdb0b09c59d57",
+      "sri": "sha256-PXLfv9aDONS8OF4JC7UoYhkgB9SkfZtwTWvbCwnFnVc=",
+      "multibase": "uEiA9ct-_1oM41Lw4XgkLtShiGSAH1KR9m3BNa9sLCcWdVw",
       "bytes": 5406,
       "alsoKnownAs": [
-        "did:holo:blake3:818df94e04f9810dce2883d42a81f506f619641f6f5d707461e337c25f7887fe"
+        "did:holo:blake3:c0d39f70a6fd20ac39b1af1a979796277e8662256adbef608d8e503332fd70e8"
       ]
     },
     "boot/icons/banner.svg": {
@@ -2472,22 +2472,22 @@
       ]
     },
     "shell.html": {
-      "kappa": "did:holo:sha256:88df57766a0846b9d7c210c7d9ed9a8d3929e5608a89184c40b8c7bc93539f36",
-      "sri": "sha256-iN9XdmoIRrnXwhDH2e2ajTkp5WCKiRhMQLjHvJNTnzY=",
-      "multibase": "uEiCI31d2aghGudfCEMfZ7ZqNOSnlYIqJGExAuMe8k1OfNg",
-      "bytes": 454805,
+      "kappa": "did:holo:sha256:2cf3f97707094236bb266fb730cf76768fd7c7bb5352498b3b963b0c1469d3c1",
+      "sri": "sha256-LPP5dwcJQja7Jm+3MM92do/Xx7tTUkmLO5Y7DBRp08E=",
+      "multibase": "uEiAs8_l3BwlCNrsmb7cwz3Z2j9fHu1NSSYs7ljsMFGnTwQ",
+      "bytes": 467486,
       "alsoKnownAs": [
-        "did:holo:blake3:c60915b47d48af8b8825a785ba4e535ca090e6fd8f6906d44ccc26ac21f218df"
+        "did:holo:blake3:23c6064f89554164117fa3bf3e922b621c4024fd5054e865df38e220a2e01a6d"
       ],
       "holo:within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
       "holo:atlasCoordinate": {
         "space": "Φ-Atlas-12288",
         "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
-        "cell": 6367,
-        "page": 24,
-        "byte": 223,
-        "r96": 31,
-        "phi": 6367
+        "cell": 2669,
+        "page": 10,
+        "byte": 109,
+        "r96": 13,
+        "phi": 2669
       }
     },
     "_shared/holo-gov.js": {

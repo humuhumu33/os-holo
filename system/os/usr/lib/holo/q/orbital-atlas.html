@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Hydrogenoid Atlas · |n,l,m⟩ over Φ-Atlas-12288</title>
+<!--
+  orbital-atlas.html — an EXACT replica of the hydrogenoid quantum-state animation, but every state it
+  draws is a κ-ADDRESSED UOR MATH OBJECT whose position is pinned in the finite Φ-Atlas-12288 torus.
+
+  · The wavefunction is the analytic Coulomb solution shown in the header:
+        ψ_nlm = N_nl e^(-ρ/2) ρ^l L_{n-l-1}^{2l+1}(ρ) · N_lm P_l^|m|(cosθ) e^(imφ),   ρ = 2Zr/(n a0)
+  · The picture is the |ψ|² isosurface (a surface of revolution about the quantization axis, since |ψ|²
+    is φ-independent) drawn as stacked latitude rings — the "concentric toroidal" wireframe. Radial nodes
+    (n-l-1 of them) split it into nested shells; angular nodes (l) carve the lobes. EXACT, from the math.
+  · IDENTITY: each state |n,l,m⟩ is sealed as a canonical UOR object; κ = sha256(JCS(content)) — Law L2/L5.
+    The jcs + SHA-256 here are VERBATIM from holo-uor.mjs; atlasCoord() is VERBATIM from holo-atlas-coord.mjs.
+    The page re-derives all 35 κ in-browser and checks them against the sealed manifest (tools/orbital-atlas.manifest.json).
+  · COORDINATE: position is a pure function of κ — Φ(p,b)=(p<<8)|b in T²=ℤ₄₈×ℤ₂₅₆ (12,288 cells), R96=b%96.
+-->
+<style>
+  :root{ --gold:#ffcf3a; --gold-hi:#ffe9a6; --gold-dim:#7a5600; --ink:#05040a; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; background:#000; color:var(--gold); overflow:hidden;
+    font-family:"Cambria Math","STIX Two Math","Latin Modern Math",Cambria,Georgia,"Times New Roman",serif; }
+  #stage{ position:relative; width:100vw; height:100vh; height:100dvh; background:
+    radial-gradient(120% 80% at 50% 64%, #0a0805 0%, #000 62%); overflow:hidden; }
+  canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+  /* ── header: the analytic identities, rendered in math serif ───────────────────────────── */
+  .head{ position:absolute; left:0; right:0; top:1.6vh; padding:0 4vw; text-align:center;
+    color:#ffd34d; text-shadow:0 0 10px rgba(255,180,40,.35); pointer-events:none;
+    font-size:clamp(9px, 2.55vw, 17px); line-height:1.9; letter-spacing:.2px; }
+  .head .eq{ display:inline-flex; align-items:center; justify-content:center; gap:.18em; flex-wrap:wrap; }
+  .head .row{ margin:.28em 0; }
+  i,.it{ font-style:italic; }
+  sub{ font-size:.62em; vertical-align:-.32em; } sup{ font-size:.62em; vertical-align:.55em; }
+  .frac{ display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle;
+    margin:0 .14em; line-height:1.05; }
+  .frac>.num{ padding:0 .3em; } .frac>.den{ padding:.06em .3em 0; border-top:1px solid currentColor; }
+  .sqrt{ display:inline-flex; align-items:flex-start; }
+  .sqrt>.rad{ border-top:1px solid currentColor; padding:.05em .25em 0; margin-top:.18em; }
+  .sqrt::before{ content:"√"; font-size:1.18em; line-height:1; margin-right:-.02em; }
+  .under{ display:inline-flex; flex-direction:column; align-items:center; }
+  .under>.lbl{ font-size:.6em; opacity:.8; margin-top:.05em; }
+  .under>.lbl::before{ content:"⏟"; display:block; font-size:.9em; line-height:.3; opacity:.75; }
+  .brand{ margin-top:.5em; font-style:italic; opacity:.92; font-size:.95em; letter-spacing:.4px; }
+  .state{ margin-top:.35em; font-size:1.28em; letter-spacing:.6px; color:#ffe27a;
+    text-shadow:0 0 14px rgba(255,190,50,.5); }
+
+  /* ── κ / Φ-Atlas readout: the anchor, made visible ─────────────────────────────────────── */
+  .foot{ position:absolute; left:0; right:0; bottom:1.3vh; text-align:center; pointer-events:none;
+    font-family:"SF Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+    font-size:clamp(7px,1.7vw,10.5px); line-height:1.65; color:#caa23c; opacity:.92; }
+  .foot .k{ color:#ffd970; } .foot .ok{ color:#7CFFA0; } .foot .bad{ color:#ff6b6b; }
+  .foot .dim{ opacity:.6; }
+  .hint{ position:absolute; right:1.2vw; top:1vh; font-family:ui-monospace,monospace; font-size:10px;
+    color:#6b5a25; opacity:.0; transition:opacity .3s; } #stage:hover .hint{ opacity:.7; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="c"></canvas>
+
+  <div class="head">
+    <div class="row eq">
+      <i>ψ</i><sub>nlm</sub>(<i>r</i>,<i>θ</i>,<i>φ</i>)&nbsp;=&nbsp;
+      <span class="under"><span class="sqrt"><span class="rad">
+        <span class="frac"><span class="num">(<span class="frac"><span class="num">2<i>Z</i></span><span class="den"><i>n</i><i>a</i><sub>0</sub></span></span>)<sup>3</sup>(<i>n</i>−<i>l</i>−1)!</span>
+          <span class="den">2<i>n</i>(<i>n</i>+<i>l</i>)!</span></span>
+      </span></span><span class="lbl"><i>N</i><sub>nl</sub></span></span>
+      <i>e</i><sup>−ρ/2</sup>&nbsp;ρ<sup><i>l</i></sup>&nbsp;<i>L</i><sub><i>n−l−</i>1</sub><sup>2<i>l</i>+1</sup>(ρ)
+      <span class="under"><span class="sqrt"><span class="rad">
+        <span class="frac"><span class="num">2<i>l</i>+1</span><span class="den">4<i>π</i></span></span>
+        <span class="frac"><span class="num">(<i>l</i>−|<i>m</i>|)!</span><span class="den">(<i>l</i>+|<i>m</i>|)!</span></span>
+      </span></span><span class="lbl"><i>N</i><sub>lm</sub></span></span>
+      <i>P</i><sub><i>l</i></sub><sup>|<i>m</i>|</sup>(cos<i>θ</i>)&nbsp;<i>e</i><sup><i>imφ</i></sup>
+    </div>
+    <div class="row eq">ρ&nbsp;=&nbsp;<span class="frac"><span class="num">2<i>Zr</i></span><span class="den"><i>n</i><i>a</i><sub>0</sub></span></span></div>
+    <div class="row eq">
+      <i>ρ</i><sub>nlm</sub>(<i>r</i>,<i>θ</i>,<i>φ</i>)&nbsp;=&nbsp;|<i>ψ</i><sub>nlm</sub>|<sup>2</sup>
+      &nbsp;&nbsp;con&nbsp;&nbsp;∫<sub>0</sub><sup>∞</sup>∫<sub>0</sub><sup>π</sup>∫<sub>0</sub><sup>2π</sup>
+      |<i>ψ</i><sub>nlm</sub>|<sup>2</sup>&nbsp;<i>r</i><sup>2</sup>&nbsp;sin<i>θ</i>&nbsp;d<i>r</i>&nbsp;d<i>θ</i>&nbsp;d<i>φ</i>&nbsp;=&nbsp;1
+    </div>
+    <div class="brand">@qbitlab · Φ-Atlas-12288</div>
+    <div class="state" id="state">n = 1,&nbsp; l = 0,&nbsp; m = 0</div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+  <div class="hint">space ⏸ · ←/→ state · +/− iso</div>
+</div>
+
+<script>
+"use strict";
+
+/* ════════════════════════════════════════════════════════════════════════════════════════
+   1 · CONTENT-ADDRESSING PRIMITIVE — verbatim from system/os/usr/lib/holo/holo-uor.mjs
+   (FIPS 180-4 SHA-256, pure JS) + RFC 8785 JCS. Isomorphic: same bytes in Node, browser, SW.
+   ════════════════════════════════════════════════════════════════════════════════════════ */
+const SHA_K=new Uint32Array([0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+const _rotr=(x,n)=>(x>>>n)|(x<<(32-n));
+function sha256u8(msg){
+  const h=new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+  const len=msg.length,bitLen=len*8,withOne=len+1,k=(56-(withOne%64)+64)%64,total=withOne+k+8;
+  const m=new Uint8Array(total); m.set(msg); m[len]=0x80;
+  const hi=Math.floor(bitLen/0x100000000),lo=bitLen>>>0;
+  m[total-8]=(hi>>>24)&255;m[total-7]=(hi>>>16)&255;m[total-6]=(hi>>>8)&255;m[total-5]=hi&255;
+  m[total-4]=(lo>>>24)&255;m[total-3]=(lo>>>16)&255;m[total-2]=(lo>>>8)&255;m[total-1]=lo&255;
+  const w=new Uint32Array(64);
+  for(let off=0;off<total;off+=64){
+    for(let i=0;i<16;i++) w[i]=(m[off+i*4]<<24)|(m[off+i*4+1]<<16)|(m[off+i*4+2]<<8)|(m[off+i*4+3]);
+    for(let i=16;i<64;i++){ const s0=_rotr(w[i-15],7)^_rotr(w[i-15],18)^(w[i-15]>>>3); const s1=_rotr(w[i-2],17)^_rotr(w[i-2],19)^(w[i-2]>>>10); w[i]=(w[i-16]+s0+w[i-7]+s1)|0; }
+    let a=h[0],b=h[1],c=h[2],d=h[3],e=h[4],f=h[5],g=h[6],hh=h[7];
+    for(let i=0;i<64;i++){ const S1=_rotr(e,6)^_rotr(e,11)^_rotr(e,25); const ch=(e&f)^((~e)&g); const t1=(hh+S1+ch+SHA_K[i]+w[i])|0; const S0=_rotr(a,2)^_rotr(a,13)^_rotr(a,22); const maj=(a&b)^(a&c)^(b&c); const t2=(S0+maj)|0; hh=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0; }
+    h[0]=(h[0]+a)|0;h[1]=(h[1]+b)|0;h[2]=(h[2]+c)|0;h[3]=(h[3]+d)|0;h[4]=(h[4]+e)|0;h[5]=(h[5]+f)|0;h[6]=(h[6]+g)|0;h[7]=(h[7]+hh)|0;
+  }
+  const out=new Uint8Array(32);
+  for(let i=0;i<8;i++){ out[i*4]=(h[i]>>>24)&255; out[i*4+1]=(h[i]>>>16)&255; out[i*4+2]=(h[i]>>>8)&255; out[i*4+3]=h[i]&255; }
+  return out;
+}
+const _enc=new TextEncoder();
+const toHex=(u8)=>{ let s=""; for(let i=0;i<u8.length;i++) s+=u8[i].toString(16).padStart(2,"0"); return s; };
+const sha256hex=(s)=>toHex(sha256u8(_enc.encode(s)));
+// RFC 8785 JCS — verbatim
+const jcs=(v)=>Array.isArray(v)?"["+v.map(jcs).join(",")+"]"
+  :(v&&typeof v==="object")?"{"+Object.keys(v).sort().map((k)=>JSON.stringify(k)+":"+jcs(v[k])).join(",")+"}"
+  :JSON.stringify(v);
+
+/* The UOR envelope @context + the math-object body — IDENTICAL to gen-orbital-atlas.mjs / holo-object.mjs,
+   so the κ re-derived here equals the sealed κ byte-for-byte. */
+const UOR_CONTEXT=[
+  "https://www.w3.org/ns/did/v1",
+  "https://w3id.org/security/data-integrity/v2",
+  { schema:"https://schema.org/", prov:"http://www.w3.org/ns/prov#", dcterms:"http://purl.org/dc/terms/",
+    rel:"schema:additionalType", links:{ "@id":"schema:hasPart", "@container":"@set" } },
+];
+function stateKappa(n,l,m){
+  const content={
+    "@context":[...UOR_CONTEXT,{ holo:"https://holo.foundation/ns#" }],
+    "@type":["holo:MathObject","schema:DefinedTerm"],
+    family:"hydrogenoid-stationary-state", model:"schrodinger-coulomb",
+    Z:1, a0:1, n, l, m,
+    rho:"2*Z*r/(n*a0)",
+    wavefunction:"psi_nlm = N_nl * e^(-rho/2) * rho^l * L_{n-l-1}^{2l+1}(rho) * N_lm * P_l^|m|(cos theta) * e^(i*m*phi)",
+    N_nl:"sqrt( (2Z/(n a0))^3 * (n-l-1)! / (2n (n+l)!) )",
+    N_lm:"sqrt( (2l+1)/(4 pi) * (l-|m|)! / (l+|m|)! )",
+    density:"|psi_nlm|^2",
+    norm:"triple integral |psi_nlm|^2 r^2 sin(theta) dr dtheta dphi = 1",
+  };
+  return "did:holo:sha256:"+sha256hex(jcs(content));
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════
+   2 · Φ-ATLAS-12288 COORDINATE — verbatim from system/os/usr/lib/holo/holo-atlas-coord.mjs.
+   Position is a PURE function of κ; always inside T² = ℤ₄₈ × ℤ₂₅₆ = 12,288 cells.
+   ════════════════════════════════════════════════════════════════════════════════════════ */
+const ATLAS={ space:"Φ-Atlas-12288", object:"did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0", pages:48, bytes:256, cells:12288, classes:96 };
+const phiEncode=(p,b)=>(p<<8)|b, phiPage=(c)=>c>>8, phiByte=(c)=>c&0xff, r96=(b)=>b%96;
+function atlasCoord(kappa){
+  const hex=String(kappa).split(":").pop().toLowerCase();
+  if(!/^[0-9a-f]{8,}$/.test(hex)) throw new Error("atlasCoord: not a content address");
+  const cell=Number(BigInt("0x"+hex)%BigInt(ATLAS.cells));
+  const page=phiPage(cell), byte=phiByte(cell);
+  return { space:ATLAS.space, cell, page, byte, r96:r96(byte), phi:phiEncode(page,byte) };
+}
+
+/* sealed manifest (tools/orbital-atlas.manifest.json) — for visible Law-L5 self-verification */
+const EXPECT=[{"n":1,"l":0,"m":0,"k":"89a54459319f8b88243411ec43e2b73f3fe6b1d5e836123b8144b7ac998ffb83","c":11139,"p":43,"b":131,"r":35},{"n":2,"l":0,"m":0,"k":"93fc3cee68c40c03aac974d8ab3982d54c241eb7305d7f252750eafc0654c2b4","c":8884,"p":34,"b":180,"r":84},{"n":2,"l":1,"m":0,"k":"1ccab11ddecfc5f1fe007e4d7435b670d86fcf99d489f5bc92fb648431dd47df","c":10207,"p":39,"b":223,"r":31},{"n":2,"l":1,"m":1,"k":"4fab7b6ec52b7d3162f96f9607ae67e01c3d61e7dc6ed9b0004e40c117ba2db9","c":3513,"p":13,"b":185,"r":89},{"n":3,"l":0,"m":0,"k":"c03309ae7b450819fdd361161831967a0af4ee86fb571f3cc599590dbec5ea7a","c":6778,"p":26,"b":122,"r":26},{"n":3,"l":1,"m":0,"k":"35290df9da165d07f1828aee2f0458f42ac9b1582d54a881408ac17460eac11b","c":4379,"p":17,"b":27,"r":27},{"n":3,"l":1,"m":1,"k":"8ed8ca0b2720d618a1a7062579df759fefe1d8d91168b349e1b45b682b763122","c":8482,"p":33,"b":34,"r":34},{"n":3,"l":2,"m":0,"k":"5a0b72117df19f7939a9e7ddc57ba48c369658ecff60ff68d3eba987a5e6f14e","c":334,"p":1,"b":78,"r":78},{"n":3,"l":2,"m":1,"k":"b742afa53198e66bfd340875ebc4d208d3bad168d42eec1083f5e103a8a868eb","c":6379,"p":24,"b":235,"r":43},{"n":3,"l":2,"m":2,"k":"7fe068922b2b7aa6ecb4f2f2bf822dd5205d81897d0923f2d4e151bfed6228ba","c":2234,"p":8,"b":186,"r":90},{"n":4,"l":0,"m":0,"k":"c33c8077c944a34a955eed6f05161f77359ed6efa999ffc4fb53240f2099adee","c":7662,"p":29,"b":238,"r":46},{"n":4,"l":1,"m":0,"k":"0dc0ba74ff12f17366995670f39c71128e41c17520e929293f6481686d42b4c4","c":5316,"p":20,"b":196,"r":4},{"n":4,"l":1,"m":1,"k":"a376fe145fd43cc3a130c828e6cf334f3bf57b5373fd8b963cbd611dac2189c4","c":2500,"p":9,"b":196,"r":4},{"n":4,"l":2,"m":0,"k":"ef354f46b4419f8f5b41cd1e45bf0beef2bfdc8e3c4529a6024866292d6e1a57","c":10839,"p":42,"b":87,"r":87},{"n":4,"l":2,"m":1,"k":"3fcdca4db9044f747d8bc50b6d57a37c0b2b1b4c06cf9c96d87a92292cfab1dc","c":8668,"p":33,"b":220,"r":28},{"n":4,"l":2,"m":2,"k":"d564205326d0446fdc9c8d07f7ec0f3ba6739658aaaa3fbbe53c99d4652c9c32","c":11314,"p":44,"b":50,"r":50},{"n":4,"l":3,"m":0,"k":"6e6bf6a3ae0b804f1051c72d3643efbf351a62a52539722732a9f6f3bfe54d39","c":7481,"p":29,"b":57,"r":57},{"n":4,"l":3,"m":1,"k":"99c259b2c8e0f4b2a05778cfd0df056cc3a9fe62b9ca77a1d977a665ca7fea9d","c":10909,"p":42,"b":157,"r":61},{"n":4,"l":3,"m":2,"k":"f058dcc5cdb68f90be3d45cc89a33c5dc49e32154b7bac6e89f2139fbeeadf01","c":12033,"p":47,"b":1,"r":1},{"n":4,"l":3,"m":3,"k":"a277d03cd828ac57fa091120dc54674821537b93d200a43e4f820bfc71a5ffd9","c":4057,"p":15,"b":217,"r":25},{"n":5,"l":0,"m":0,"k":"b72d472c782d72b51b52f52ac00b6e43904065030e81d215169b847f08e64700","c":1792,"p":7,"b":0,"r":0},{"n":5,"l":1,"m":0,"k":"76d9469226084edd2475ef4eb8e394e18320b2b790c25b2aa38c9b6a07a788af","c":2223,"p":8,"b":175,"r":79},{"n":5,"l":1,"m":1,"k":"ffb9d1c1d4f9c028d22b4efd3cb5a1b4d78c039363b434f63f6e3902911aa2c8","c":8904,"p":34,"b":200,"r":8},{"n":5,"l":2,"m":0,"k":"739abae1dc8ac40714d50ed650bc4bf37e1b72e12097eaf2e6be0320b7b1b3b5","c":9141,"p":35,"b":181,"r":85},{"n":5,"l":2,"m":1,"k":"d28b48b58eec94235c10f4dd9fd120e1ae7215d79bb387bb1ad1dcbb04e4d94f","c":2383,"p":9,"b":79,"r":79},{"n":5,"l":2,"m":2,"k":"5bfac9263e5c185b657f43e3a12fed48bb20314e374043724b24844a372b567d","c":9853,"p":38,"b":125,"r":29},{"n":5,"l":3,"m":0,"k":"47f7c5134e2f004c2865a28c86d1ddce1e3948659816693a717777ca7bf4e6cb","c":9931,"p":38,"b":203,"r":11},{"n":5,"l":3,"m":1,"k":"a1a53c57696b4c9cae015893b29cc4ba6062c8bcc692c16366c143e5d7d20b2a","c":11050,"p":43,"b":42,"r":42},{"n":5,"l":3,"m":2,"k":"784b23343ec055ee1c60ad16277815179334827af2f033a7a4734362134dbcb3","c":11443,"p":44,"b":179,"r":83},{"n":5,"l":3,"m":3,"k":"3352662f38f84046660119ee5900b3fa508ef3a369aa74aef3493b1f32d93754","c":10068,"p":39,"b":84,"r":84},{"n":5,"l":4,"m":0,"k":"b71b218ce03cf07ed3e23a840fb42cd80ffd8bddafecb306bb91dd8d5abc76af","c":5807,"p":22,"b":175,"r":79},{"n":5,"l":4,"m":1,"k":"4a43b9c13cf32c69944f89864694cd746d1caee2240dc6e757dc257f82ecfcdb","c":11483,"p":44,"b":219,"r":27},{"n":5,"l":4,"m":2,"k":"cb0d4e135888dd722839b11958f553e993055f0b728eda7462bdee31e1d2c2cd","c":8909,"p":34,"b":205,"r":13},{"n":5,"l":4,"m":3,"k":"1eba540003ebc0250533f87ceef4072aba1143d2b0a15339646bb2daf7356e02","c":7682,"p":30,"b":2,"r":2},{"n":5,"l":4,"m":4,"k":"a31d68bc20b75382aae618d1a5f2498d96a52c91d7d3a5ab962b9c2ae7da6e2e","c":3630,"p":14,"b":46,"r":46}];
+
+/* re-derive all 35 in-browser, prove they equal the sealed manifest (Law L5) */
+const STATES=EXPECT.map(({n,l,m})=>{
+  const kappa=stateKappa(n,l,m), coord=atlasCoord(kappa);
+  return { n,l,m, radialNodes:n-l-1, angularNodes:l, kappa, coord };
+});
+const L5=STATES.reduce((a,s,i)=>a+((s.kappa.split(":").pop()===EXPECT[i].k && s.coord.cell===EXPECT[i].c)?1:0),0);
+console.log(`Law L5 · re-derived κ + Φ-Atlas-12288 coordinate: ${L5}/${STATES.length} match the sealed manifest`);
+
+/* ════════════════════════════════════════════════════════════════════════════════════════
+   3 · THE EXACT WAVEFUNCTION  ψ_nlm  (Z=1, a0=1)  — |ψ|² shape only (per-state iso normalises).
+   ════════════════════════════════════════════════════════════════════════════════════════ */
+// generalized Laguerre L_k^α(x) by recurrence
+function laguerre(k,a,x){
+  let l0=1; if(k===0) return 1;
+  let l1=1+a-x; if(k===1) return l1;
+  for(let i=1;i<k;i++){ const l2=((2*i+1+a-x)*l1-(i+a)*l0)/(i+1); l0=l1; l1=l2; }
+  return l1;
+}
+// associated Legendre P_l^m(x), m≥0 (Condon–Shortley; squared in |ψ|² so sign is irrelevant)
+function legendre(l,m,x){
+  let pmm=1;
+  if(m>0){ const s=Math.sqrt(Math.max(0,1-x*x)); let f=1; for(let i=1;i<=m;i++){ pmm*=-f*s; f+=2; } }
+  if(l===m) return pmm;
+  let pmmp1=x*(2*m+1)*pmm; if(l===m+1) return pmmp1;
+  let pll=0;
+  for(let ll=m+2;ll<=l;ll++){ pll=((2*ll-1)*x*pmmp1-(ll+m-1)*pmm)/(ll-m); pmm=pmmp1; pmmp1=pll; }
+  return pll;
+}
+const radial=(r,n,l)=>{ const rho=2*r/n; return Math.exp(-rho/2)*Math.pow(rho,l)*laguerre(n-l-1,2*l+1,rho); };
+function density(s,z,n,l,m){           // |ψ|² at meridional point (s≥0, z); φ-independent
+  let r=Math.hypot(s,z); if(r<1e-9) r=1e-9;
+  const R=radial(r,n,l), A=legendre(l,m,z/r);
+  return R*R*A*A;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════
+   4 · GEOMETRY — the |ψ|² isosurface as a surface of revolution, sampled as latitude rings.
+   For each height z we find every radius s with |ψ|²(s,z)=iso (multiple → nested shells); each
+   crossing becomes a circle of radius s at height z about the quantization axis. EXACT, no mesh.
+   ════════════════════════════════════════════════════════════════════════════════════════ */
+let ISO=0.075;                          // isovalue as a fraction of the per-state peak density
+const NZ=176, NS=150;                   // meridional sampling resolution
+const ringCache=new Map();
+function buildRings(idx){
+  const key=idx+":"+ISO.toFixed(3);
+  if(ringCache.has(key)) return ringCache.get(key);
+  const { n,l,m }=STATES[idx];
+  const Rmax=1.55*n*n+6;                 // generous bound on the orbital's extent (a0)
+  // peak density (scan the meridional half-plane)
+  let peak=0;
+  for(let zi=0;zi<=NZ;zi++){ const z=-Rmax+2*Rmax*zi/NZ;
+    for(let si=0;si<=NS;si++){ const s=Rmax*si/NS; const d=density(s,z,n,l,m); if(d>peak) peak=d; } }
+  const iso=ISO*peak;
+  const rings=[]; let maxR=1e-6;
+  for(let zi=0;zi<=NZ;zi++){ const z=-Rmax+2*Rmax*zi/NZ;
+    let prev=density(0,z,n,l,m)-iso, ps=0;
+    for(let si=1;si<=NS;si++){ const s=Rmax*si/NS; const cur=density(s,z,n,l,m)-iso;
+      if((prev<=0&&cur>0)||(prev>0&&cur<=0)){      // sign change → isosurface crossing
+        const t=prev/(prev-cur), sc=ps+(s-ps)*t;   // linear-interpolated crossing radius
+        rings.push({ s:sc, z }); const rr=Math.hypot(sc,z); if(rr>maxR) maxR=rr;
+      }
+      prev=cur; ps=s;
+    }
+  }
+  const out={ rings, maxR, n,l,m };
+  ringCache.set(key,out); return out;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════
+   5 · RENDER — tumbling gold wireframe over black, exactly as the source animation.
+   ════════════════════════════════════════════════════════════════════════════════════════ */
+const cv=document.getElementById("c"), ctx=cv.getContext("2d",{ alpha:false });
+let W=0,H=0,DPR=1;
+function resize(){ DPR=Math.min(2,window.devicePixelRatio||1);
+  W=cv.clientWidth; H=cv.clientHeight; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0); }
+window.addEventListener("resize",resize); resize();
+
+const PHI=48;                            // φ-samples per ring
+const cosT=new Float64Array(PHI+1), sinT=new Float64Array(PHI+1);
+for(let i=0;i<=PHI;i++){ const a=i/PHI*Math.PI*2; cosT[i]=Math.cos(a); sinT[i]=Math.sin(a); }
+
+let idx=0, t=0, paused=false, dwell=0, fade=0;
+const DWELL=2.8;                         // seconds per state
+const stateEl=document.getElementById("state"), footEl=document.getElementById("foot");
+
+function setState(i){
+  idx=((i%STATES.length)+STATES.length)%STATES.length; fade=0;
+  const s=STATES[idx], c=s.coord, exp=EXPECT[idx];
+  stateEl.innerHTML=`n = ${s.n},&nbsp; l = ${s.l},&nbsp; m = ${s.m}`;
+  const match=(s.kappa.split(":").pop()===exp.k && c.cell===exp.c);
+  footEl.innerHTML=
+    `<span class="dim">κ</span> <span class="k">did:holo:sha256:${s.kappa.split(":").pop().slice(0,40)}…</span>`+
+    ` &nbsp;<span class="${match?"ok":"bad"}">${match?"L5 ✓":"L5 ✗"}</span><br>`+
+    `<span class="dim">Φ-Atlas-12288</span> cell <b>${c.cell}</b> · page ${c.page} · byte ${c.byte} · R96 ${c.r96}`+
+    ` &nbsp;<span class="dim">· nodes r=${s.radialNodes} a=${s.angularNodes} · state ${idx+1}/35 · L5 ${L5}/35</span>`;
+}
+setState(0);
+
+function frame(dt){
+  if(!paused){ t+=dt; dwell+=dt; if(dwell>=DWELL){ dwell-=DWELL; setState(idx+1); } }
+  fade=Math.min(1,fade+dt*3.2);
+
+  // tumble: tilt (look down the ring stack → ellipses) + continuous spin, with a slow nutation
+  const tilt=1.12+0.42*Math.sin(t*0.21), spin=t*0.52;
+  const ca=Math.cos(tilt),sa=Math.sin(tilt), cb=Math.cos(spin),sb=Math.sin(spin);
+  // world frame after R = Rx(tilt)·Ry(spin); precompute axis (local +y) and ring-plane basis e1,e2
+  // local e1=(1,0,0), e2=(0,0,1), axis=(0,1,0) → rotate each:
+  const e1x=cb,           e1y=0,    e1z=-sb;
+  const ax_x=0,           ax_y=ca,  ax_z=sa;             // Rx·Ry of (0,1,0) = (0, ca, sa)
+  const e2x=ca*sb,        e2y=-sa,  e2z=ca*cb;           // Rx·Ry of (0,0,1)
+  // (e1 unaffected by Rx since its y-component is 0)
+
+  const G=buildRings(idx);
+  const fit=Math.min(W*0.46, H*0.34);
+  const scale=fit/G.maxR;
+  const cx=W*0.5, cy=H*0.635;
+  const D=8*G.maxR;                       // perspective camera distance (subtle)
+
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.globalCompositeOperation="source-over";
+  ctx.fillStyle="#000"; ctx.fillRect(0,0,W,H);
+  ctx.globalCompositeOperation="lighter";
+  ctx.lineWidth=1.05; ctx.lineJoin="round";
+
+  const a=fade;                            // fade-in on state change
+  for(const ring of G.rings){
+    const s=ring.s, z=ring.z;
+    // ring centre along axis
+    const c0x=ax_x*z, c0y=ax_y*z, c0z=ax_z*z;
+    ctx.beginPath();
+    let depthSum=0;
+    for(let i=0;i<=PHI;i++){
+      const u=cosT[i]*s, v=sinT[i]*s;     // local in-plane (e1,e2)
+      const x=c0x+e1x*u+e2x*v, y=c0y+e1y*u+e2y*v, zz=c0z+e1z*u+e2z*v;
+      const k=D/(D-zz);                    // perspective
+      const px=cx+scale*k*x, py=cy-scale*k*y;
+      i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+      depthSum+=zz;
+    }
+    // gold, brighter for nearer rings
+    const d=(depthSum/(PHI+1))/G.maxR;     // ~[-1,1]
+    const b=0.5+0.5*Math.max(-1,Math.min(1,d));
+    const R=Math.round(150+105*b), Gc=Math.round(70+135*b), Bv=Math.round(8+52*b);
+    ctx.strokeStyle=`rgba(${R},${Gc},${Bv},${(0.32+0.5*b)*a})`;
+    ctx.stroke();
+  }
+
+  // nucleus — soft glowing core at the projected origin
+  const k0=D/(D-0); const nx=cx, ny=cy;
+  const nr=Math.max(8,fit*0.05)*(0.92+0.08*Math.sin(t*3));
+  const grd=ctx.createRadialGradient(nx,ny,0,nx,ny,nr);
+  grd.addColorStop(0,`rgba(255,250,210,${0.95*a})`);
+  grd.addColorStop(0.35,`rgba(255,210,90,${0.7*a})`);
+  grd.addColorStop(1,"rgba(255,170,40,0)");
+  ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(nx,ny,nr,0,Math.PI*2); ctx.fill();
+
+  requestAnimationFrame(loop);
+}
+let last=0;
+function loop(now){ const dt=Math.min(0.05,(now-last)/1000)||0; last=now; frame(dt); }
+requestAnimationFrame((n)=>{ last=n; loop(n); });
+
+/* controls */
+addEventListener("keydown",(e)=>{
+  if(e.key===" "){ paused=!paused; e.preventDefault(); }
+  else if(e.key==="ArrowRight"){ dwell=0; setState(idx+1); }
+  else if(e.key==="ArrowLeft"){ dwell=0; setState(idx-1); }
+  else if(e.key==="+"||e.key==="="){ ISO=Math.min(0.4,ISO+0.01); }
+  else if(e.key==="-"||e.key==="_"){ ISO=Math.max(0.01,ISO-0.01); }
+});
+</script>
+</body>
+</html>

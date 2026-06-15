@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <script src="coi-serviceworker.min.js"></script>
     <title>Holo Identity</title>
-    <meta name="description" content="Holo Identity — one sovereign, self-verifying key for you and your agents. Post-quantum. Serverless. The wallet and your agents are facets of this one identity." />
+    <meta name="description" content="Holo Identity one sovereign, self-verifying key for you and your agents. Post-quantum. Serverless. The wallet and your agents are facets of this one identity." />
     <style>
       :root { color-scheme: dark;
         --bg: var(--holo-bg, #0b0d12); --ink: var(--holo-ink, #e8edf6); --dim: var(--holo-ink-dim, #9aa6b8);
@@ -137,7 +137,7 @@
       <section id="guest" class="hidden">
         <svg width="56" height="56" viewBox="0 0 24 24" style="margin:1rem 0"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--acc)"/><stop offset="1" stop-color="var(--good)"/></linearGradient></defs><path fill="url(#g)" d="M12 2l8 3v6c0 5-3.4 8.5-8 11-4.6-2.5-8-6-8-11V5l8-3z"/></svg>
         <h1 style="margin:.2rem 0">Sign in to Hologram</h1>
-        <p class="lede">One tap creates your key — for every app, chain and agent. No password, no server. Only you can re-derive it.</p>
+        <p class="lede">One tap creates your key for every app, chain and agent. No password, no server. Only you can re-derive it.</p>
         <button class="btn" id="guestSignin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 11c0 3 0 5-1 7M7.5 8.5a5 5 0 0 1 9 2.5c0 3-.5 5-1.5 7M5 11a7 7 0 0 1 12-5"/></svg> Sign in with Biometrics</button>
         <p class="err" id="guestErr"></p>
       </section>
@@ -152,8 +152,8 @@
                 <div class="content">
                   <span class="brand"><span class="mk">◈</span> HOLOGRAM</span>
                   <span class="sov">Sovereign Identity</span>
-                  <span class="name" id="cardName">—</span>
-                  <span class="meta">Member since <b id="cardDate">—</b></span>
+                  <span class="name" id="cardName"></span>
+                  <span class="meta">Member since <b id="cardDate"></b></span>
                 </div>
                 <span class="qr" id="cardQr" title="your identity address (holo://)"></span>
                 <span class="edge"></span>
@@ -162,18 +162,18 @@
             <div class="idrow">
               <span class="role-tag" id="role">Player</span>
               <span class="badge ok" id="pqBadge" title="Verified by re-derivation (Ed25519 ‖ ML-DSA)">🛡 Post-quantum</span>
-              <button class="kchip" id="kid" title="your identity address — tap to copy">did:holo —</button>
+              <button class="kchip" id="kid" title="your identity address tap to copy">did:holo </button>
             </div>
             <p class="tagline">Yours alone. Yours <b>forever</b>.</p>
             <button class="btn" id="shareCard"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2.5h3.3l-7.2 8.2 8.5 11.3h-6.7l-5.2-6.9-6 6.9H1.6l7.7-8.8L1 2.5h6.8l4.7 6.3 5.7-6.3Zm-1.2 17.6h1.8L7.1 4.3H5.2L17 20.1Z"/></svg> Share my sovereign card</button>
           </div>
 
           <div class="col-info facets">
-            <button class="row" id="walletRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2"/><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/><path d="M16 13h.01"/></svg></span><span class="m"><b>Money</b><span>Your wallet — every chain, one tap to sign.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+            <button class="row" id="walletRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2"/><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/><path d="M16 13h.01"/></svg></span><span class="m"><b>Money</b><span>Your wallet every chain, one tap to sign.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
 
-            <button class="row" id="qRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.8L18.5 9l-4.6 1.9L12 16l-1.9-5.1L5.5 9l4.6-1.2z"/><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9z"/></svg></span><span class="m"><b>Intelligence</b><span>Holo Q — your private AI to create, ask and act.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+            <button class="row" id="qRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.8L18.5 9l-4.6 1.9L12 16l-1.9-5.1L5.5 9l4.6-1.2z"/><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9z"/></svg></span><span class="m"><b>Intelligence</b><span>Holo Q your private AI to create, ask and act.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
 
-            <button class="row" id="netRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="12" cy="18" r="2.3"/><path d="M7.7 7.6l8.6 0M7.2 7.9l4 8.2M16.8 7.9l-4 8.2"/></svg></span><span class="m"><b>Network</b><span>Connect peer-to-peer — a link, no server.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+            <button class="row" id="netRow"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="12" cy="18" r="2.3"/><path d="M7.7 7.6l8.6 0M7.2 7.9l4 8.2M16.8 7.9l-4 8.2"/></svg></span><span class="m"><b>Network</b><span>Connect peer-to-peer a link, no server.</span></span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
 
             <h3>Agents</h3>
             <div id="agentList"></div>
@@ -191,7 +191,7 @@
     <!-- mint agent -->
     <div class="scrim" id="mintScrim"><div class="sheet">
       <h2>New agent</h2>
-      <p class="note" style="margin:.1rem 0 0">It gets its own key and only the powers you check — sealed so only it can read what you share.</p>
+      <p class="note" style="margin:.1rem 0 0">It gets its own key and only the powers you check sealed so only it can read what you share.</p>
       <label>Name</label><input id="agentName" placeholder="e.g. Scout" />
       <label>Can</label>
       <div class="caplist" id="caps"></div>
@@ -215,11 +215,11 @@
       const REVOKED_KEY = (kappa) => "holo.revoked:" + kappa;
       // capabilities as plain-language presets — what the agent can do, in words anyone understands
       const CAP_PRESETS = [
-        { id: "read", label: "See activity", desc: "Read what's happening — never moves anything." },
+        { id: "read", label: "See activity", desc: "Read what's happening never moves anything." },
         { id: "wallet:read", label: "View balances", desc: "See your holdings. Cannot spend." },
         { id: "q.agent", label: "Create & build", desc: "Make holospaces and answers for you." },
         { id: "schedule", label: "Schedule tasks", desc: "Run things on a timer you set." },
-        { id: "wallet:spend", label: "Request payments", desc: "Can ask to send funds — you still approve each one." },
+        { id: "wallet:spend", label: "Request payments", desc: "Can ask to send funds you still approve each one." },
       ];
       const capLabel = (id) => (CAP_PRESETS.find((c) => c.id === id) || { label: id }).label;
 
@@ -243,7 +243,7 @@
         // the sovereign platinum card — your name, the day you became sovereign, and your κ as a QR
         $("cardName").textContent = label;
         const joined = (op && op.createdAt) || (identity && identity.issuedAt) || new Date().toISOString();
-        try { $("cardDate").textContent = new Date(joined).toLocaleDateString(undefined, { month: "short", year: "numeric" }); } catch { $("cardDate").textContent = "—"; }
+        try { $("cardDate").textContent = new Date(joined).toLocaleDateString(undefined, { month: "short", year: "numeric" }); } catch { $("cardDate").textContent = ""; }
         renderCardQr(kappa); wireCard();
         renderAgents(kappa);
         show("me");
@@ -266,7 +266,7 @@
         });
         wrap.addEventListener("mouseleave", () => { card.style.setProperty("--mx", "50%"); card.style.setProperty("--my", "32%"); });
         $("shareCard").onclick = () => {
-          const text = "Just minted my sovereign Holo Identity ◈ — one post-quantum key for every app, chain and agent. Self-verifying. Serverless. Mine alone.";
+          const text = "Just minted my sovereign Holo Identity ◈ one post-quantum key for every app, chain and agent. Self-verifying. Serverless. Mine alone.";
           window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(text), "_blank", "noopener");
         };
       }
@@ -274,8 +274,8 @@
       function renderAgents(kappa) {
         let list = []; try { list = JSON.parse(localStorage.getItem(AGENTS_KEY(kappa)) || "[]"); } catch {}
         const el = $("agentList");
-        if (!list.length) { el.innerHTML = `<div class="empty">No agents yet. Create one to let it act for you — safely.</div>`; return; }
-        el.innerHTML = list.map((a, i) => `<div class="agent"><span class="d">${(a.name || "A")[0].toUpperCase()}</span><div class="m"><b>${a.name || "Agent"}</b><span class="mono" data-copy="${a.kappa}" title="its own identity address — tap to copy">${short(a.kappa, 7)}</span></div><span class="caps">${(a.caps || []).map(capLabel).join(" · ")}</span><button class="revoke" data-i="${i}" title="Revoke">✕</button></div>`).join("");
+        if (!list.length) { el.innerHTML = `<div class="empty">No agents yet. Create one to let it act for you safely.</div>`; return; }
+        el.innerHTML = list.map((a, i) => `<div class="agent"><span class="d">${(a.name || "A")[0].toUpperCase()}</span><div class="m"><b>${a.name || "Agent"}</b><span class="mono" data-copy="${a.kappa}" title="its own identity address tap to copy">${short(a.kappa, 7)}</span></div><span class="caps">${(a.caps || []).map(capLabel).join(" · ")}</span><button class="revoke" data-i="${i}" title="Revoke">✕</button></div>`).join("");
         for (const k of el.querySelectorAll("[data-copy]")) k.onclick = () => copy(k.dataset.copy);
         for (const b of el.querySelectorAll(".revoke")) b.onclick = () => revokeAgent(kappa, +b.dataset.i);
       }
@@ -314,7 +314,7 @@
           try { sessionStorage.setItem("holo.justminted", "1"); } catch {}   // → the card reveals on first render
           try { window.parent.postMessage({ type: "holo-identity", action: "signed-in" }, location.origin); } catch {}
           await boot();
-        } catch (e) { $("guestErr").textContent = /no-bio|WebAuthn|support/i.test(e.message) ? "Biometrics unavailable on this device." : (/cancel/i.test(e.message) ? "Cancelled — tap to try again." : ("Couldn't set up: " + e.message)); }
+        } catch (e) { $("guestErr").textContent = /no-bio|WebAuthn|support/i.test(e.message) ? "Biometrics unavailable on this device." : (/cancel/i.test(e.message) ? "Cancelled tap to try again." : ("Couldn't set up: " + e.message)); }
       };
 
       $("signout").onclick = () => {
@@ -353,7 +353,7 @@
           list.unshift({ name, kappa: npc.kappa, caps, at: new Date().toISOString(), cred: credential });
           localStorage.setItem(key, JSON.stringify(list));
           $("mintScrim").classList.remove("on"); renderAgents(op.kappa); toast("Agent “" + name + "” created · " + short(npc.kappa, 6));
-        } catch (e) { $("mintErr").textContent = /cancel|wrong|denied/i.test(e.message) ? "Couldn't authorise — try again." : ("Failed: " + e.message); }
+        } catch (e) { $("mintErr").textContent = /cancel|wrong|denied/i.test(e.message) ? "Couldn't authorise try again." : ("Failed: " + e.message); }
       };
 
       boot();

@@ -1,0 +1,19 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Holo Hub — the agent door (MCP + Store-API-shaped verbs over the real cores, ADR-0094 Stage 6)",
+  "passed": 10,
+  "failed": 0,
+  "checks": {
+    "the-hub-manifest-declares-every-product-as-a-self-verifying--1": true,
+    "mcp-tools-list-exposes-the-store-verbs-listproducts-searchpr-2": true,
+    "the-universal-built-in-verbs-are-present-too-resolve-verify--3": true,
+    "mcp-resources-list-includes-a-product-4": true,
+    "mcp-resources-read-returns-the-product-as-a-self-verifying-o-5": true,
+    "read-verbs-are-pure-listproducts-getproduct-are-not-egress-6": true,
+    "buyproduct-is-egress-discoverable-but-default-deny-value-mov-7": true,
+    "store-tools-are-faithfully-schema-d-getproduct-requires-an-i-8": true,
+    "the-agent-surface-binds-the-pinned-medusa-store-api-the-adop-9": true,
+    "0-network-deriving-mounting-the-agent-surface-made-no-fetch-10": true
+  }
+}

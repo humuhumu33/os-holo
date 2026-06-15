@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Hologram — Approve sign-in</title>
+<title>Hologram Approve sign-in</title>
 <!-- The PHONE side of Holo Pair ("scan QR to Access"). The desktop showed a QR carrying its device
      key + a single-use channel. This page (opened by scanning that QR) asks the operator — already
      signed in on THIS phone — to approve, unlocks their self-sovereign key with a biometric, mints a
@@ -50,7 +50,7 @@ try {
   const offer = await urlToOffer(location.href);
   const ops = await roster().catch(() => []);
   if (!ops.length) {
-    card.innerHTML = `<h1>Sign in here first</h1><div class="sub">To approve another device, sign in on <b>this phone</b> first — then scan again.</div><a href="./login.html">Open sign-in</a>`;
+    card.innerHTML = `<h1>Sign in here first</h1><div class="sub">To approve another device, sign in on <b>this phone</b> first then scan again.</div><a href="./login.html">Open sign-in</a>`;
   } else {
     await render(offer, ops[0]);   // v1: the most recent operator on this phone
   }
@@ -74,8 +74,8 @@ async function render(offer, op) {
     <div class="status" id="st"></div>`;
   const stEl = card.querySelector("#st");
   const st = (t, cls = "") => { stEl.className = "status " + cls; stEl.textContent = t; };
-  if (reason && !op.cred) st(reason + " — use your passphrase");
-  card.querySelector("#no").onclick = () => { st("Dismissed — you can close this tab."); };
+  if (reason && !op.cred) st(reason + " use your passphrase");
+  card.querySelector("#no").onclick = () => { st("Dismissed you can close this tab."); };
   const ok = card.querySelector("#ok");
   ok.onclick = async () => {
     ok.disabled = true;
@@ -87,7 +87,7 @@ async function render(offer, op) {
       st("Authorizing this device…");
       const { blob } = await mintDeviceGrant(principal, offer);
       await postGrant(offer.channel, blob);
-      st("✓ Approved — your desktop is signing in. You can close this tab.", "ok");
+      st("✓ Approved your desktop is signing in. You can close this tab.", "ok");
       ok.style.display = "none"; card.querySelector("#no").style.display = "none";
       const pf = card.querySelector("#pp"); if (pf) pf.style.display = "none";
     } catch (e) {

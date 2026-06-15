@@ -62,6 +62,19 @@
   var NEW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
   var KBD_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>';
   var SHARE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V3M8 7l4-4 4 4"/></svg>';
+  var EXPAND_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>';   // panel-toggle glyph (the expand/collapse navigator control)
+  var SEARCH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>';
+  // one coherent monochrome glyph set for the native categories (uniform 24·stroke 2) — file explorer,
+  // apps, tools, settings, etc. — so the navigator reads like a desktop OS sidebar.
+  var G = {
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>',
+    search: SEARCH_SVG,
+    resources: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM8 7h8M8 11h8"/></svg>',
+    files: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+    apps: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+    tools: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.6-.6-2.5z"/></svg>',
+    settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.81 1.17V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 7.5 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.18 14H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.5a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 10 3.18V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 2.4 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 20.82 10H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  };
   function dirOf(s) { var m = String(s || "").match(/([^\/]+)\/[^\/]*$/); return m ? m[1] : ""; }
 
   // ── the bundle model — a pin entry is an app id (string) OR a group {id,name,items:[id…]} ──
@@ -194,7 +207,7 @@
     STATE.holo = STATE.holo || {};
     var h = effectiveHolo();
     STATE.holo.pins = h.pins; STATE.holo.glass = h.glass; STATE.holo.magnify = h.magnify; STATE.holo.showClock = h.showClock; STATE.holo.showHome = h.showHome;
-    STATE.holo.dockSide = h.dockSide || null; STATE.holo.collapsed = !!h.collapsed; STATE.holo.dockX = h.dockX != null ? h.dockX : null; STATE.holo.dockY = h.dockY != null ? h.dockY : null;
+    STATE.holo.dockSide = h.dockSide || null; STATE.holo.collapsed = !!h.collapsed; STATE.holo.expanded = !!h.expanded; STATE.holo.dockX = h.dockX != null ? h.dockX : null; STATE.holo.dockY = h.dockY != null ? h.dockY : null;
     return saveOverride(STATE.holo);
   }
   function setPins(pins) { STATE.holo = STATE.holo || {}; STATE.holo.pins = pins.slice(); render(); persist(); }
@@ -274,6 +287,7 @@
     dock.setAttribute("data-orient", STATE.orient);
     if (STATE.orient === "free") { dock.style.left = clampN(holo.dockX != null ? holo.dockX : 60, 0, W.innerWidth - 64) + "px"; dock.style.top = clampN(holo.dockY != null ? holo.dockY : 80, 0, W.innerHeight - 120) + "px"; }
     if (holo.collapsed) dock.classList.add("holo-dock--collapsed");
+    if (holo.expanded) dock.classList.add("holo-dock--expanded");   // wide navigator (Lovable-style): labels + sections + κ-holospace recents
     if (wantsMagnify(holo)) dock.classList.add("holo-dock--magnify");
     var inner = el("div", { "class": "holo-dock-inner" });
 
@@ -284,13 +298,20 @@
       var foldLabel = holo.collapsed ? "Unfold the dock" : "Fold the dock — drag to move it";
       var logoImg = el("img", { "class": "holo-dock-icon holo-dock-logo", src: LOGO_URL, alt: "Hologram", draggable: "false" });
       logoImg.addEventListener("error", function () { var s = el("span", { "class": "holo-dock-icon", html: HOME_SVG }); if (this.parentNode) this.parentNode.replaceChild(s, this); });
-      homeBtn = el("button", { "class": "holo-dock-tile holo-dock-home", title: foldLabel, "aria-label": foldLabel }, [logoImg]);
+      homeBtn = el("button", { "class": "holo-dock-tile holo-dock-home", title: foldLabel, "aria-label": foldLabel }, [logoImg, el("span", { "class": "holo-dock-label", text: "Hologram OS" })]);
       inner.appendChild(homeBtn);                              // click → fold/unfold (wireDockMove); drag → move the dock
+      // the expand/collapse-navigator control — glides the dock between the icon rail and the wide navigator
+      var exLabel = holo.expanded ? "Collapse navigator" : "Expand navigator";
+      var exBtn = el("button", { "class": "holo-dock-tile holo-dock-expand", title: exLabel, "aria-label": exLabel }, [el("span", { "class": "holo-dock-icon", html: EXPAND_SVG }), el("span", { "class": "holo-dock-label", text: "Collapse" })]);
+      exBtn.addEventListener("click", function (e) { e.stopPropagation(); toggleExpand(); });
+      inner.appendChild(exBtn);
     }
 
+    if (holo.expanded) { fixedNav(inner); inner.appendChild(sectionHeader("Pinned")); }
     var list = el("ol", { "class": "holo-dock-items" });
     (holo.pins || []).forEach(function (entry) { list.appendChild(isGroup(entry) ? groupTile(entry) : item(entry)); });
     inner.appendChild(list);
+    if (holo.expanded) { var rec = recentsList(); if (rec) { inner.appendChild(sectionHeader("Recents")); inner.appendChild(rec); } }
 
     inner.appendChild(el("span", { "class": "holo-dock-sep" }));
 
@@ -327,9 +348,9 @@
     var li = el("li", { "class": "holo-dock-item holo-dock-vinyl", "data-app": id, "data-key": id, draggable: "true" });
     var disc = W.HoloVinyl.dockTile();                            // the live disc element, bound to the persistent player
     var tile = el("button", { "class": "holo-dock-tile", title: "Music — tap to play/pause", "aria-label": "Music — tap to play or pause" }, [disc]);
+    tile.appendChild(el("span", { "class": "holo-dock-label", text: "Music" }));
     li.appendChild(tile);
     li.appendChild(el("span", { "class": "holo-dock-dot" }));
-    li.appendChild(el("span", { "class": "holo-dock-label", text: "Music" }));
     li.addEventListener("contextmenu", function (e) { e.preventDefault(); openItemMenu(e, id); });
     bindLongPress(li, function (e) { openItemMenu(e, id); });
     return li;
@@ -342,11 +363,10 @@
     var li = el("li", { "class": "holo-dock-item", "data-app": id, "data-key": id, draggable: "true" });
     var img = el("img", { "class": "holo-dock-icon", src: iconSrc(id), alt: "", draggable: "false" });
     img.addEventListener("error", function () { this.src = letterIcon(info.name); });
-    var tile = el("button", { "class": "holo-dock-tile", title: info.name, "aria-label": info.name }, [img]);
+    var tile = el("button", { "class": "holo-dock-tile", title: info.name, "aria-label": info.name }, [img, el("span", { "class": "holo-dock-label", text: info.name })]);
     tile.addEventListener("click", function (e) { if (ctrlMenu(e, function () { openItemMenu(e, id); })) return; launch(id); });
     li.appendChild(tile);
     li.appendChild(el("span", { "class": "holo-dock-dot" }));
-    li.appendChild(el("span", { "class": "holo-dock-label", text: info.name }));
     li.addEventListener("contextmenu", function (e) { e.preventDefault(); openItemMenu(e, id); });
     bindLongPress(li, function (e) { openItemMenu(e, id); });
     return li;
@@ -360,15 +380,81 @@
     var n = group.items.length;
     var tile = el("button", { "class": "holo-dock-tile holo-dock-stack-tile", title: group.name + " · " + n + " items", "aria-label": group.name }, [grid]);
     if (n > 4) tile.appendChild(el("span", { "class": "holo-dock-stack-more", text: "+" + (n - 4) }));
+    tile.appendChild(el("span", { "class": "holo-dock-label", text: group.name }));
     tile.addEventListener("click", function (e) { if (ctrlMenu(e, function () { openGroupMenu(e, group.id); })) return; toggleGroup(group.id, li); });
     li.appendChild(tile);
     li.appendChild(el("span", { "class": "holo-dock-dot" }));
-    li.appendChild(el("span", { "class": "holo-dock-label", text: group.name }));
     li.addEventListener("contextmenu", function (e) { e.preventDefault(); openGroupMenu(e, group.id); });
     bindLongPress(li, function (e) { openGroupMenu(e, group.id); });
     return li;
   }
   function ctrlMenu(e, openFn) { if (STATE.profile && STATE.profile.apple && e.ctrlKey) { e.preventDefault(); e.stopImmediatePropagation(); openFn(); return true; } return false; }
+
+  // ── expanded navigator: section headers + the live, κ-addressed Recents list ──────────────────────
+  function toggleExpand() { STATE.holo = STATE.holo || {}; STATE.holo.expanded = !STATE.holo.expanded; render(); persist(); reveal(); }
+  function sectionHeader(text) { return el("div", { "class": "holo-dock-section", text: text }); }
+  // the shell publishes its open + recent holospaces on W.__holoNav (each {k,name,kind,fav}) and the
+  // opener on W.HoloShell.open(k) — so the navigator is 100% anchored in κ-addressed objects, rendered
+  // from in-memory state (instant) and re-rendered on the 'holo-nav' event. Absent → no Recents section.
+  function navFeed() { try { return (W.__holoNav && W.__holoNav.slice()) || []; } catch (e) { return []; } }
+  function openHolospace(k) { try { if (W.HoloShell && W.HoloShell.open) { W.HoloShell.open(k); return; } } catch (e) {} }
+  function copyK(k) { try { if (navigator.clipboard) navigator.clipboard.writeText(k); } catch (e) {} }
+  function recentRow(o) {
+    var name = o.name || (String(o.k || "").split(":").pop() || "holospace").slice(0, 18);
+    var li = el("li", { "class": "holo-dock-item holo-dock-recent", "data-k": o.k, "data-key": o.k, draggable: "true" });
+    var glyph = el("span", { "class": "holo-dock-icon", html: o.fav ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.1 1.2 6L12 16.9 6.6 19.4l1.2-6L3.3 9.3l6.1-.7z"/></svg>' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/></svg>' });
+    var tile = el("button", { "class": "holo-dock-tile", title: (o.name || "") + "  ·  " + (o.k || ""), "aria-label": name }, [glyph, el("span", { "class": "holo-dock-label", text: name })]);
+    tile.addEventListener("click", function (e) { if (ctrlMenu(e, function () { openItemMenu(e, o.k); })) return; openHolospace(o.k); });
+    li.appendChild(tile); li.appendChild(el("span", { "class": "holo-dock-dot" }));
+    li.addEventListener("contextmenu", function (e) { e.preventDefault(); openRecentMenu(e, o); });
+    bindLongPress(li, function (e) { openRecentMenu(e, o); });
+    return li;
+  }
+  function recentsList() {
+    var feed = navFeed(); if (!feed.length) return null;
+    var ol = el("ol", { "class": "holo-dock-items holo-dock-recents" });
+    feed.slice(0, 24).forEach(function (o) { if (o && o.k) ol.appendChild(recentRow(o)); });
+    return ol.childNodes.length ? ol : null;
+  }
+  function openRecentMenu(e, o) {
+    closeMenu();
+    var name = o.name || (String(o.k || "").split(":").pop() || "holospace").slice(0, 18);
+    var menu = el("div", { "class": "holo-dock-menu", role: "menu" }, [el("div", { "class": "holo-dock-menu-head", text: name })]);
+    menu.appendChild(mbtn("Open", function () { openHolospace(o.k); }));
+    menu.appendChild(mbtn("Copy κ address", function () { copyK(o.k); }));
+    placeMenu(menu, e.clientX, e.clientY);
+  }
+
+  // ── fixed native categories — a desktop-OS sidebar (Home · Search · Files · Apps · Tools · Settings),
+  //    each opening its real κ-addressed holospace/app via window.HoloShell. Only shown when expanded. ──
+  var NAV = [
+    { h: null, rows: [ { id: "home", t: "Home", g: G.home }, { id: "search", t: "Search", g: G.search, kbd: "Ctrl K" }, { id: "resources", t: "Resources", g: G.resources } ] },
+    { h: "System", rows: [ { id: "files", t: "Files", g: G.files }, { id: "apps", t: "Apps", g: G.apps }, { id: "tools", t: "Tools", g: G.tools }, { id: "settings", t: "Settings", g: G.settings } ] },
+  ];
+  var activeNav = "home";
+  function navGo(id) {
+    activeNav = id;
+    if (dockEl) dockEl.querySelectorAll(".holo-dock-nav").forEach(function (n) { if (n.getAttribute("data-nav") === id) n.setAttribute("data-active", ""); else n.removeAttribute("data-active"); });
+    try { var s = W.HoloShell; if (s && typeof s[id] === "function") s[id](); } catch (e) {}
+  }
+  function navRow(r) {
+    var li = el("li", { "class": "holo-dock-item holo-dock-nav", "data-nav": r.id });
+    if (r.id === activeNav) li.setAttribute("data-active", "");
+    var kids = [el("span", { "class": "holo-dock-icon", html: r.g }), el("span", { "class": "holo-dock-label", text: r.t })];
+    if (r.kbd) kids.push(el("kbd", { "class": "holo-dock-kbd", text: r.kbd }));
+    var tile = el("button", { "class": "holo-dock-tile", title: r.t, "aria-label": r.t }, kids);
+    tile.addEventListener("click", function () { navGo(r.id); });
+    li.appendChild(tile);
+    return li;
+  }
+  function fixedNav(inner) {
+    NAV.forEach(function (sec) {
+      if (sec.h) inner.appendChild(sectionHeader(sec.h));
+      var ol = el("ol", { "class": "holo-dock-items holo-dock-nav-list" });
+      sec.rows.forEach(function (r) { ol.appendChild(navRow(r)); });
+      inner.appendChild(ol);
+    });
+  }
 
   function updateRunning() {
     if (!dockEl) return;
@@ -678,6 +764,8 @@
       DOC.addEventListener("webkitfullscreenchange", reorient);
       try { var mq = W.matchMedia("(display-mode: fullscreen)"); mq.addEventListener ? mq.addEventListener("change", reorient) : mq.addListener(reorient); } catch (e) {}
       W.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeMenu(); closeFlyout(); } });
+      // the shell publishes holospace open/close on this event → refresh the live Recents (only when expanded)
+      W.addEventListener("holo-nav", function () { if (effectiveHolo().expanded) render(); });
     });
   }
   if (DOC.readyState === "loading") DOC.addEventListener("DOMContentLoaded", start); else start();
@@ -691,6 +779,7 @@
     setPins: setPins, setGlass: setGlass,
     setSide: function (s) { STATE.holo = STATE.holo || {}; STATE.holo.dockSide = (s === "left" || s === "right" || s === "top" || s === "bottom" || s === "free") ? s : null; STATE.holo.dockX = null; STATE.holo.dockY = null; render(); persist(); reveal(); },
     collapse: function (b) { STATE.holo = STATE.holo || {}; STATE.holo.collapsed = (b == null ? !STATE.holo.collapsed : !!b); render(); persist(); reveal(); },
+    expand: function (b) { STATE.holo = STATE.holo || {}; STATE.holo.expanded = (b == null ? !STATE.holo.expanded : !!b); render(); persist(); reveal(); },
     bundle: bundle, ungroup: ungroup, addToGroup: addToGroup, removeFromGroup: removeFromGroup,
     launch: launch, revealDesktop: revealDesktop,
     catalog: function () { return STATE.catalog || {}; },

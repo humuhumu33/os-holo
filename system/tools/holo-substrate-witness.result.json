@@ -1,39 +1,38 @@
 {
   "witnessed": false,
-  "passed": 5,
-  "failed": 2,
+  "passed": 4,
+  "failed": 3,
   "covers": [
-    "every OS object carries its substrate σ-axis",
     "every dual-axis app re-derives on the substr",
-    "the κ-route resolves an APP object by /.holo",
+    "the κ-route resolves an OS object by /.holo/",
     "an unknown substrate κ is refused (404 — con",
     "the prod Service Worker is dual-axis (resolv"
   ],
   "results": [
     {
       "name": "every OS object carries its substrate σ-axis κ (did:holo:blake3)",
-      "ok": true,
-      "detail": "260/260 anchored"
+      "ok": false,
+      "detail": "257/270 anchored"
     },
     {
       "name": "every OS object RE-DERIVES to its substrate κ via OS2 BLAKE3 (≡ hologram kappa(), Law L5)",
       "ok": false,
-      "detail": "255/260 sampled re-derive · 0 large anchored · 5 live-drift (reseal): holo-privacy.js, holo-fhs-map.mjs"
+      "detail": "255/257 sampled re-derive · 0 large anchored · 15 live-drift (reseal): index.jsonld, login.html"
     },
     {
       "name": "every dual-axis app re-derives on the substrate σ-axis (each lock entry)",
       "ok": true,
-      "detail": "40/40 stable apps · 7730/8336 entries"
+      "detail": "40/40 stable apps · 7626/8349 entries"
     },
     {
       "name": "the κ-route resolves an OS object by /.holo/blake3/<κ> + re-derives",
-      "ok": false,
-      "detail": "OS:shell.html a12f3b08989d…"
+      "ok": true,
+      "detail": "OS:shell.html 23c6064f8955…"
     },
     {
       "name": "the κ-route resolves an APP object by /.holo/blake3/<κ> + re-derives",
-      "ok": true,
-      "detail": "app:files a82cc6ebd9f1…"
+      "ok": false,
+      "detail": "app:files 9b1d41ebbc77…"
     },
     {
       "name": "an unknown substrate κ is refused (404 — content not in the index)",
@@ -46,7 +45,7 @@
       "detail": "holo-fhs-sw.js"
     }
   ],
-  "osObjects": 260,
-  "appObjects": 8336,
+  "osObjects": 270,
+  "appObjects": 8349,
   "spec": "Hologram OS — the whole OS + every app is dual-axis content-addressed: the OS serving key (did:holo:sha256) AND the unified-substrate σ-axis κ (did:holo:blake3 ≡ hologram kappa()), resolvable on the κ-route by either, re-derived (Law L5)"
 }

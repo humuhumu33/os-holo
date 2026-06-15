@@ -40,27 +40,36 @@ export function createScene() {
 
   const emit = (d) => { stats.deltas++; for (const fn of subs) { try { fn(d); } catch (e) {} } };
 
-  // observe(id, patch) — patch may carry { code, visual, kind, source }. Merges; emits a delta ONLY on
-  // an actual change (an unchanged re-observe is an O(1) no-op — free). `axis` names what moved.
+  // observe(id, patch) — patch may carry { code, visual, from, kind, source }. Merges; emits a delta
+  // ONLY on an actual change (an unchanged re-observe is an O(1) no-op — free). `axis` names what moved.
+  // COHERENCE is value-based: the visual records WHICH code version it was rendered from (`renderedFrom`,
+  // default = the visual κ, since in this pipeline a render's κ IS the code κ; pass `from` when they
+  // differ). An object is coherent when renderedFrom === code — the screen reflects the current code.
   function observe(id, patch = {}) {
     stats.observes++;
     const prev = entries.get(id);
+    const code = patch.code !== undefined ? patch.code : (prev ? prev.code : null);
     const codeChanged = patch.code !== undefined && (!prev || patch.code !== prev.code);
-    const visualChanged = patch.visual !== undefined && (!prev || patch.visual !== prev.visual);
+    let visual = prev ? prev.visual : null, renderedFrom = prev ? prev.renderedFrom : null, visualChanged = false;
+    if (patch.visual !== undefined) {
+      const rf = patch.from !== undefined ? patch.from : patch.visual;
+      visualChanged = !prev || patch.visual !== prev.visual || rf !== prev.renderedFrom;
+      visual = patch.visual; renderedFrom = rf;
+    }
     if (prev && !codeChanged && !visualChanged) { stats.noops++; return prev; }   // ← the hot path: nothing moved
     const next = {
       id, kind: patch.kind || (prev && prev.kind) || "object", source: patch.source || (prev && prev.source) || null,
-      code: patch.code !== undefined ? patch.code : (prev ? prev.code : null),
-      visual: patch.visual !== undefined ? patch.visual : (prev ? prev.visual : null),
+      code, visual, renderedFrom,
       codeSeq: codeChanged ? ++seq : (prev ? prev.codeSeq : 0),
       visualSeq: visualChanged ? ++seq : (prev ? prev.visualSeq : 0),
     };
     entries.set(id, next); dirty = true;
-    const axis = codeChanged && visualChanged ? "both" : codeChanged ? "code" : visualChanged ? "visual" : "none";
-    emit({ type: prev ? "changed" : "added", id, axis, code: next.code, visual: next.visual, kind: next.kind });
+    const axis = codeChanged && visualChanged ? "both" : codeChanged ? "code" : "visual";
+    emit({ type: prev ? "changed" : "added", id, axis, code, visual, kind: next.kind });
     return next;
   }
   const observeCode = (id, codeKappa, meta = {}) => observe(id, { ...meta, code: codeKappa });
+  // observeVisual(id, κ, { from }) — `from` is the code-κ this render reflects (default: κ itself).
   const observeVisual = (id, visualKappa, meta = {}) => observe(id, { ...meta, visual: visualKappa });
   function remove(id) { if (entries.delete(id)) { dirty = true; emit({ type: "removed", id }); } }
 
@@ -75,14 +84,15 @@ export function createScene() {
     dirty = false; return sceneK;
   }
 
-  // feedback() — the real-time self-improvement signal. Per entry: coherent (both faces fresh) ·
-  // codeOnly (computed, not yet on screen) · visualOnly (on screen, no tracked code) · DRIFT (code is
-  // newer than the visual → the screen hasn't caught up). Deterministic (seq-ordered, no clocks).
+  // feedback() — the real-time self-improvement signal. Per entry: coherent (the screen reflects the
+  // current code — renderedFrom === code) · codeOnly (computed, nothing on screen yet) · visualOnly
+  // (on screen, no tracked code) · DRIFT (code moved past what the screen shows). Value-based, so
+  // re-rendering to a κ already shown correctly reads as coherent (no false drift). Deterministic.
   function feedback() {
     const out = { total: entries.size, coherent: 0, codeOnly: 0, visualOnly: 0, drift: [] };
     for (const e of entries.values()) {
       const hasC = e.code != null, hasV = e.visual != null;
-      if (hasC && hasV) { out.coherent++; if (e.codeSeq > e.visualSeq) out.drift.push(e.id); }
+      if (hasC && hasV) { if (e.renderedFrom === e.code) out.coherent++; else out.drift.push(e.id); }
       else if (hasC) out.codeOnly++;
       else if (hasV) out.visualOnly++;
     }

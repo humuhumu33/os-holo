@@ -79,6 +79,16 @@ export function useBrain(p = null) {
   return { connected: false, provider: referenceProvider.id };
 }
 
+// ── dedicated text-embedding provider (EmbeddingGemma via holo-voice-embed.mjs, ADR-0096) ───────────
+// Separate from the brain — the embedder is a small sentence model, not the LLM. embed() prefers this,
+// then the brain's embed, then the FNV-1a reference floor. Pass { id?, embed(text|texts) → vector(s) }.
+let _embedder = null;
+export function useEmbed(p = null) {
+  _embedder = (p && typeof p.embed === "function") ? p : null;
+  return { connected: !!_embedder, provider: (_embedder && (_embedder.id || "holo-embed")) || null };
+}
+export function embedProvider() { return _embedder ? { id: _embedder.id || "holo-embed" } : null; }
+
 // ── a small registry: loaded models (content-addressed κ-disks) ───────────────────────────────────
 const _models = new Map();
 const _runs = new Map();
@@ -168,11 +178,16 @@ export async function embed({ modelId, input } = {}) {
   const verdict = conscience("text-embeddings", { modelId });
   if (blocked(verdict)) throw new Error(verdict.reason || "blocked");
   const texts = Array.isArray(input) ? input : [input];
-  const vectors = texts.map((t) => (activeProvider.embed ? activeProvider.embed(t) : SPEC.referenceEmbed(t)));
-  const body = SPEC.receiptBody({ capability: "text-embeddings", model: modelId || null, provider: activeProvider.id,
-    params: { dim: SPEC.EMBED_DIM }, input: { count: texts.length }, output: { dims: vectors[0].length }, conscience: verdict });
+  // prefer the dedicated embedder (EmbeddingGemma, async, batch-in-one-pass); else the brain/reference floor (sync).
+  const provId = (_embedder && (_embedder.id || "holo-embed")) || activeProvider.id;
+  let vectors;
+  if (_embedder && _embedder.embed) vectors = await _embedder.embed(texts);
+  else vectors = await Promise.all(texts.map((t) => (activeProvider.embed ? activeProvider.embed(t) : SPEC.referenceEmbed(t))));
+  const dim = (vectors[0] && vectors[0].length) || SPEC.EMBED_DIM;
+  const body = SPEC.receiptBody({ capability: "text-embeddings", model: modelId || provId, provider: provId,
+    params: { dim: dim }, input: { count: texts.length }, output: { dims: dim }, conscience: verdict });
   const receipt = await seal(body);
-  return { embeddings: Array.isArray(input) ? vectors : vectors[0], model: modelId || null, receipt };
+  return { embeddings: Array.isArray(input) ? vectors : vectors[0], model: modelId || provId, receipt };
 }
 export async function translate({ modelId, text, to = "en", from = "auto" } = {}) {
   const run = completion({ modelId, history: [{ role: "system", content: `Translate from ${from} to ${to}.` }, { role: "user", content: text }] });
@@ -336,7 +351,7 @@ export const HoloQVAC = {
   cancel, suspend, resume, state, loggingStream, invokePlugin, invokePluginStream, profiler,
   startQVACProvider, stopQVACProvider, heartbeat, blindRelay,
   // server + providers + introspection
-  serve, openai, useHoloQ, useHoloVoice, voiceProvider, useBrain, provider, capabilities, runtimes, info, verify,
+  serve, openai, useHoloQ, useHoloVoice, voiceProvider, useBrain, useEmbed, embedProvider, provider, capabilities, runtimes, info, verify,
 };
 if (typeof window !== "undefined") window.HoloQVAC = HoloQVAC;
 export default HoloQVAC;

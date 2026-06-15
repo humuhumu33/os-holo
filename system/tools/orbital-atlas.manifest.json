@@ -1,0 +1,603 @@
+{
+  "spec": "35 hydrogenoid stationary states |n,l,m> (n=1..5, l=0..n-1, m=0..l) as κ-addressed UOR math objects, each coordinated in the finite Φ-Atlas-12288 torus (verbatim atlas-12288 math).",
+  "space": "Φ-Atlas-12288",
+  "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+  "count": 35,
+  "states": [
+    {
+      "n": 1,
+      "l": 0,
+      "m": 0,
+      "radialNodes": 0,
+      "angularNodes": 0,
+      "kappa": "did:holo:sha256:89a54459319f8b88243411ec43e2b73f3fe6b1d5e836123b8144b7ac998ffb83",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 11139,
+        "page": 43,
+        "byte": 131,
+        "r96": 35,
+        "phi": 11139
+      }
+    },
+    {
+      "n": 2,
+      "l": 0,
+      "m": 0,
+      "radialNodes": 1,
+      "angularNodes": 0,
+      "kappa": "did:holo:sha256:93fc3cee68c40c03aac974d8ab3982d54c241eb7305d7f252750eafc0654c2b4",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 8884,
+        "page": 34,
+        "byte": 180,
+        "r96": 84,
+        "phi": 8884
+      }
+    },
+    {
+      "n": 2,
+      "l": 1,
+      "m": 0,
+      "radialNodes": 0,
+      "angularNodes": 1,
+      "kappa": "did:holo:sha256:1ccab11ddecfc5f1fe007e4d7435b670d86fcf99d489f5bc92fb648431dd47df",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 10207,
+        "page": 39,
+        "byte": 223,
+        "r96": 31,
+        "phi": 10207
+      }
+    },
+    {
+      "n": 2,
+      "l": 1,
+      "m": 1,
+      "radialNodes": 0,
+      "angularNodes": 1,
+      "kappa": "did:holo:sha256:4fab7b6ec52b7d3162f96f9607ae67e01c3d61e7dc6ed9b0004e40c117ba2db9",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 3513,
+        "page": 13,
+        "byte": 185,
+        "r96": 89,
+        "phi": 3513
+      }
+    },
+    {
+      "n": 3,
+      "l": 0,
+      "m": 0,
+      "radialNodes": 2,
+      "angularNodes": 0,
+      "kappa": "did:holo:sha256:c03309ae7b450819fdd361161831967a0af4ee86fb571f3cc599590dbec5ea7a",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 6778,
+        "page": 26,
+        "byte": 122,
+        "r96": 26,
+        "phi": 6778
+      }
+    },
+    {
+      "n": 3,
+      "l": 1,
+      "m": 0,
+      "radialNodes": 1,
+      "angularNodes": 1,
+      "kappa": "did:holo:sha256:35290df9da165d07f1828aee2f0458f42ac9b1582d54a881408ac17460eac11b",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 4379,
+        "page": 17,
+        "byte": 27,
+        "r96": 27,
+        "phi": 4379
+      }
+    },
+    {
+      "n": 3,
+      "l": 1,
+      "m": 1,
+      "radialNodes": 1,
+      "angularNodes": 1,
+      "kappa": "did:holo:sha256:8ed8ca0b2720d618a1a7062579df759fefe1d8d91168b349e1b45b682b763122",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 8482,
+        "page": 33,
+        "byte": 34,
+        "r96": 34,
+        "phi": 8482
+      }
+    },
+    {
+      "n": 3,
+      "l": 2,
+      "m": 0,
+      "radialNodes": 0,
+      "angularNodes": 2,
+      "kappa": "did:holo:sha256:5a0b72117df19f7939a9e7ddc57ba48c369658ecff60ff68d3eba987a5e6f14e",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 334,
+        "page": 1,
+        "byte": 78,
+        "r96": 78,
+        "phi": 334
+      }
+    },
+    {
+      "n": 3,
+      "l": 2,
+      "m": 1,
+      "radialNodes": 0,
+      "angularNodes": 2,
+      "kappa": "did:holo:sha256:b742afa53198e66bfd340875ebc4d208d3bad168d42eec1083f5e103a8a868eb",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 6379,
+        "page": 24,
+        "byte": 235,
+        "r96": 43,
+        "phi": 6379
+      }
+    },
+    {
+      "n": 3,
+      "l": 2,
+      "m": 2,
+      "radialNodes": 0,
+      "angularNodes": 2,
+      "kappa": "did:holo:sha256:7fe068922b2b7aa6ecb4f2f2bf822dd5205d81897d0923f2d4e151bfed6228ba",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 2234,
+        "page": 8,
+        "byte": 186,
+        "r96": 90,
+        "phi": 2234
+      }
+    },
+    {
+      "n": 4,
+      "l": 0,
+      "m": 0,
+      "radialNodes": 3,
+      "angularNodes": 0,
+      "kappa": "did:holo:sha256:c33c8077c944a34a955eed6f05161f77359ed6efa999ffc4fb53240f2099adee",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 7662,
+        "page": 29,
+        "byte": 238,
+        "r96": 46,
+        "phi": 7662
+      }
+    },
+    {
+      "n": 4,
+      "l": 1,
+      "m": 0,
+      "radialNodes": 2,
+      "angularNodes": 1,
+      "kappa": "did:holo:sha256:0dc0ba74ff12f17366995670f39c71128e41c17520e929293f6481686d42b4c4",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 5316,
+        "page": 20,
+        "byte": 196,
+        "r96": 4,
+        "phi": 5316
+      }
+    },
+    {
+      "n": 4,
+      "l": 1,
+      "m": 1,
+      "radialNodes": 2,
+      "angularNodes": 1,
+      "kappa": "did:holo:sha256:a376fe145fd43cc3a130c828e6cf334f3bf57b5373fd8b963cbd611dac2189c4",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 2500,
+        "page": 9,
+        "byte": 196,
+        "r96": 4,
+        "phi": 2500
+      }
+    },
+    {
+      "n": 4,
+      "l": 2,
+      "m": 0,
+      "radialNodes": 1,
+      "angularNodes": 2,
+      "kappa": "did:holo:sha256:ef354f46b4419f8f5b41cd1e45bf0beef2bfdc8e3c4529a6024866292d6e1a57",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 10839,
+        "page": 42,
+        "byte": 87,
+        "r96": 87,
+        "phi": 10839
+      }
+    },
+    {
+      "n": 4,
+      "l": 2,
+      "m": 1,
+      "radialNodes": 1,
+      "angularNodes": 2,
+      "kappa": "did:holo:sha256:3fcdca4db9044f747d8bc50b6d57a37c0b2b1b4c06cf9c96d87a92292cfab1dc",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 8668,
+        "page": 33,
+        "byte": 220,
+        "r96": 28,
+        "phi": 8668
+      }
+    },
+    {
+      "n": 4,
+      "l": 2,
+      "m": 2,
+      "radialNodes": 1,
+      "angularNodes": 2,
+      "kappa": "did:holo:sha256:d564205326d0446fdc9c8d07f7ec0f3ba6739658aaaa3fbbe53c99d4652c9c32",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 11314,
+        "page": 44,
+        "byte": 50,
+        "r96": 50,
+        "phi": 11314
+      }
+    },
+    {
+      "n": 4,
+      "l": 3,
+      "m": 0,
+      "radialNodes": 0,
+      "angularNodes": 3,
+      "kappa": "did:holo:sha256:6e6bf6a3ae0b804f1051c72d3643efbf351a62a52539722732a9f6f3bfe54d39",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 7481,
+        "page": 29,
+        "byte": 57,
+        "r96": 57,
+        "phi": 7481
+      }
+    },
+    {
+      "n": 4,
+      "l": 3,
+      "m": 1,
+      "radialNodes": 0,
+      "angularNodes": 3,
+      "kappa": "did:holo:sha256:99c259b2c8e0f4b2a05778cfd0df056cc3a9fe62b9ca77a1d977a665ca7fea9d",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 10909,
+        "page": 42,
+        "byte": 157,
+        "r96": 61,
+        "phi": 10909
+      }
+    },
+    {
+      "n": 4,
+      "l": 3,
+      "m": 2,
+      "radialNodes": 0,
+      "angularNodes": 3,
+      "kappa": "did:holo:sha256:f058dcc5cdb68f90be3d45cc89a33c5dc49e32154b7bac6e89f2139fbeeadf01",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 12033,
+        "page": 47,
+        "byte": 1,
+        "r96": 1,
+        "phi": 12033
+      }
+    },
+    {
+      "n": 4,
+      "l": 3,
+      "m": 3,
+      "radialNodes": 0,
+      "angularNodes": 3,
+      "kappa": "did:holo:sha256:a277d03cd828ac57fa091120dc54674821537b93d200a43e4f820bfc71a5ffd9",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 4057,
+        "page": 15,
+        "byte": 217,
+        "r96": 25,
+        "phi": 4057
+      }
+    },
+    {
+      "n": 5,
+      "l": 0,
+      "m": 0,
+      "radialNodes": 4,
+      "angularNodes": 0,
+      "kappa": "did:holo:sha256:b72d472c782d72b51b52f52ac00b6e43904065030e81d215169b847f08e64700",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 1792,
+        "page": 7,
+        "byte": 0,
+        "r96": 0,
+        "phi": 1792
+      }
+    },
+    {
+      "n": 5,
+      "l": 1,
+      "m": 0,
+      "radialNodes": 3,
+      "angularNodes": 1,
+      "kappa": "did:holo:sha256:76d9469226084edd2475ef4eb8e394e18320b2b790c25b2aa38c9b6a07a788af",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 2223,
+        "page": 8,
+        "byte": 175,
+        "r96": 79,
+        "phi": 2223
+      }
+    },
+    {
+      "n": 5,
+      "l": 1,
+      "m": 1,
+      "radialNodes": 3,
+      "angularNodes": 1,
+      "kappa": "did:holo:sha256:ffb9d1c1d4f9c028d22b4efd3cb5a1b4d78c039363b434f63f6e3902911aa2c8",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 8904,
+        "page": 34,
+        "byte": 200,
+        "r96": 8,
+        "phi": 8904
+      }
+    },
+    {
+      "n": 5,
+      "l": 2,
+      "m": 0,
+      "radialNodes": 2,
+      "angularNodes": 2,
+      "kappa": "did:holo:sha256:739abae1dc8ac40714d50ed650bc4bf37e1b72e12097eaf2e6be0320b7b1b3b5",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 9141,
+        "page": 35,
+        "byte": 181,
+        "r96": 85,
+        "phi": 9141
+      }
+    },
+    {
+      "n": 5,
+      "l": 2,
+      "m": 1,
+      "radialNodes": 2,
+      "angularNodes": 2,
+      "kappa": "did:holo:sha256:d28b48b58eec94235c10f4dd9fd120e1ae7215d79bb387bb1ad1dcbb04e4d94f",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 2383,
+        "page": 9,
+        "byte": 79,
+        "r96": 79,
+        "phi": 2383
+      }
+    },
+    {
+      "n": 5,
+      "l": 2,
+      "m": 2,
+      "radialNodes": 2,
+      "angularNodes": 2,
+      "kappa": "did:holo:sha256:5bfac9263e5c185b657f43e3a12fed48bb20314e374043724b24844a372b567d",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 9853,
+        "page": 38,
+        "byte": 125,
+        "r96": 29,
+        "phi": 9853
+      }
+    },
+    {
+      "n": 5,
+      "l": 3,
+      "m": 0,
+      "radialNodes": 1,
+      "angularNodes": 3,
+      "kappa": "did:holo:sha256:47f7c5134e2f004c2865a28c86d1ddce1e3948659816693a717777ca7bf4e6cb",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 9931,
+        "page": 38,
+        "byte": 203,
+        "r96": 11,
+        "phi": 9931
+      }
+    },
+    {
+      "n": 5,
+      "l": 3,
+      "m": 1,
+      "radialNodes": 1,
+      "angularNodes": 3,
+      "kappa": "did:holo:sha256:a1a53c57696b4c9cae015893b29cc4ba6062c8bcc692c16366c143e5d7d20b2a",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 11050,
+        "page": 43,
+        "byte": 42,
+        "r96": 42,
+        "phi": 11050
+      }
+    },
+    {
+      "n": 5,
+      "l": 3,
+      "m": 2,
+      "radialNodes": 1,
+      "angularNodes": 3,
+      "kappa": "did:holo:sha256:784b23343ec055ee1c60ad16277815179334827af2f033a7a4734362134dbcb3",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 11443,
+        "page": 44,
+        "byte": 179,
+        "r96": 83,
+        "phi": 11443
+      }
+    },
+    {
+      "n": 5,
+      "l": 3,
+      "m": 3,
+      "radialNodes": 1,
+      "angularNodes": 3,
+      "kappa": "did:holo:sha256:3352662f38f84046660119ee5900b3fa508ef3a369aa74aef3493b1f32d93754",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 10068,
+        "page": 39,
+        "byte": 84,
+        "r96": 84,
+        "phi": 10068
+      }
+    },
+    {
+      "n": 5,
+      "l": 4,
+      "m": 0,
+      "radialNodes": 0,
+      "angularNodes": 4,
+      "kappa": "did:holo:sha256:b71b218ce03cf07ed3e23a840fb42cd80ffd8bddafecb306bb91dd8d5abc76af",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 5807,
+        "page": 22,
+        "byte": 175,
+        "r96": 79,
+        "phi": 5807
+      }
+    },
+    {
+      "n": 5,
+      "l": 4,
+      "m": 1,
+      "radialNodes": 0,
+      "angularNodes": 4,
+      "kappa": "did:holo:sha256:4a43b9c13cf32c69944f89864694cd746d1caee2240dc6e757dc257f82ecfcdb",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 11483,
+        "page": 44,
+        "byte": 219,
+        "r96": 27,
+        "phi": 11483
+      }
+    },
+    {
+      "n": 5,
+      "l": 4,
+      "m": 2,
+      "radialNodes": 0,
+      "angularNodes": 4,
+      "kappa": "did:holo:sha256:cb0d4e135888dd722839b11958f553e993055f0b728eda7462bdee31e1d2c2cd",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 8909,
+        "page": 34,
+        "byte": 205,
+        "r96": 13,
+        "phi": 8909
+      }
+    },
+    {
+      "n": 5,
+      "l": 4,
+      "m": 3,
+      "radialNodes": 0,
+      "angularNodes": 4,
+      "kappa": "did:holo:sha256:1eba540003ebc0250533f87ceef4072aba1143d2b0a15339646bb2daf7356e02",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 7682,
+        "page": 30,
+        "byte": 2,
+        "r96": 2,
+        "phi": 7682
+      }
+    },
+    {
+      "n": 5,
+      "l": 4,
+      "m": 4,
+      "radialNodes": 0,
+      "angularNodes": 4,
+      "kappa": "did:holo:sha256:a31d68bc20b75382aae618d1a5f2498d96a52c91d7d3a5ab962b9c2ae7da6e2e",
+      "atlas": {
+        "space": "Φ-Atlas-12288",
+        "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
+        "cell": 3630,
+        "page": 14,
+        "byte": 46,
+        "r96": 46,
+        "phi": 3630
+      }
+    }
+  ]
+}

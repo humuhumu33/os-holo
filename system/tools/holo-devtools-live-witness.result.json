@@ -1,0 +1,15 @@
+{
+  "witnessed": true,
+  "covers": [
+    "Tier 1 PURE-WEB real F12 — the live same-origin holospace reflected as CDP (no native host, no extension)",
+    "DOM domain ⇄ the LIVE document: real tree, flat attributes, comment/text nodes, childNodeCount; root + [data-holo-k] nodes alias a κ (L1/L2)",
+    "DOM.requestChildNodes returns {} and emits a DOM.setChildNodes event (the render path) — the exact shape the vendored frontend renders",
+    "CSS domain ⇄ the LIVE CSSOM: getComputedStyleForNode + getMatchedStylesForNode (selector match) + inlineStyle, all real",
+    "Runtime.enable emits executionContextCreated(isDefault); Runtime.evaluate is REAL eval in the page, FAIL-CLOSED through the conscience (L4)",
+    "every edit (setAttributeValue/setOuterHTML) re-seals the source → a NEW κ via the liveEdit primitive (ADR-0093); read-only when no editor is wired (honest)",
+    "Overlay.highlightNode injects a real highlight box into the holospace",
+    "flat-protocol session routing — setAutoAttach emits one Target.attachedToTarget(page session); responses ECHO the sessionId and events are TAGGED with it (matched to a real Chromium backend)"
+  ],
+  "failed": 0,
+  "authority": "the VENDORED chrome-devtools-frontend WebSocketConnection path · Chrome DevTools Protocol 1.3 flat protocol · same-origin DOM/CSSOM/HTML Living Standard · ADR-0093 (liveEdit) · the conscience gate (ADR-0033) · verify-by-re-derivation (Law L5) · holospaces Laws L1/L2/L3/L4/L5"
+}

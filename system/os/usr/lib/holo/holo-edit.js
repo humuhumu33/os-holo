@@ -189,7 +189,7 @@
         // history: scrub versions (each is a κ → re-renders instantly); diff previous→now; Edit any = branch
         '<div class="row" style="display:block"><span class="lab">history</span><div style="margin-top:5px;display:flex;flex-wrap:wrap;align-items:center;gap:4px">' +
         chain.map(function (c, i) { return '<span class="child" data-k="' + c + '" data-ver="1"' + (i === ci ? ' style="border-color:var(--mx-acc);color:var(--mx-fg)"' : "") + '>v' + (i + 1) + (i === ci ? " ·now" : "") + "</span>" + (i < chain.length - 1 ? '<span style="color:var(--mx-mut)">→</span>' : ""); }).join("") +
-        (chain.length > 1 ? ' <span class="child" id="hmx-diff" title="what changed">⇄ diff</span>' : ' <span style="color:var(--mx-mut);font:16px ui-monospace">original · edit to fork a version</span>') +
+        (chain.length > 1 ? ' <span class="child" id="hmx-diff" title="what changed">⇄ diff</span>' : ' <span style="color:var(--mx-mut);font:16px ui-monospace">the original · edit to branch my own</span>') +
         "</div></div></div>";
       body.querySelectorAll(".child[data-k]").forEach(function (c) { var ver = c.hasAttribute("data-ver");
         c.onclick = function () { var nk2 = c.getAttribute("data-k"); if (ver) HR().render(el, nk2).catch(function () {}); openPanel(el, nk2, "inspect"); }; });   // version → scrub (time-travel) + drill; child → drill

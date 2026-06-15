@@ -10,8 +10,8 @@
     "ratchet",
     "adopt-vs-own"
   ],
-  "appsScanned": 41,
-  "baselinedTotal": 1594,
+  "appsScanned": 42,
+  "baselinedTotal": 1742,
   "regressions": [
     {
       "app": "browser",
@@ -36,6 +36,28 @@
       }
     },
     {
+      "app": "files",
+      "was": 82,
+      "now": 105,
+      "added": 23,
+      "detail": {
+        "hex": 75,
+        "radius": 30,
+        "bypass": 105
+      }
+    },
+    {
+      "app": "hub",
+      "was": 0,
+      "now": 128,
+      "added": 128,
+      "detail": {
+        "hex": 113,
+        "radius": 15,
+        "bypass": 128
+      }
+    },
+    {
       "app": "ipfs",
       "was": 61,
       "now": 65,
@@ -52,6 +74,11 @@
       "app": "music",
       "was": 87,
       "now": 80
+    },
+    {
+      "app": "wallet",
+      "was": 23,
+      "now": 20
     }
   ]
 }

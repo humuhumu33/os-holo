@@ -226,6 +226,75 @@
 #holo-dock[data-orient="left"] .holo-dock-item.drop-before::before { top: calc(var(--hd-gap) / -2); }
 #holo-dock[data-orient="left"] .holo-dock-item.drop-after::after { bottom: calc(var(--hd-gap) / -2); }
 
+/* ════ EXPANDED NAVIGATOR (Lovable-style) — the left bar glides wider into a full navigator: every
+ * item becomes a row (icon + inline name) under quiet section headers, with a live, κ-addressed
+ * Recents list. Collapsed stays the icon rail. The measure() ResizeObserver publishes the new width
+ * to --holo-dock-w, so the holospace card reflows automatically. ════════════════════════════════ */
+@media (prefers-reduced-motion: no-preference) {
+  #holo-dock[data-orient="left"] .holo-dock-inner { transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+}
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-inner {
+  width: clamp(208px, 16vw, 280px); align-items: stretch; overflow-y: auto; overflow-x: hidden; padding: var(--hd-sp2) var(--hd-sp2) var(--hd-sp3);
+}
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-items { flex-direction: column; align-items: stretch; gap: 2px; width: 100%; }
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-item { width: 100%; flex-direction: row; }
+/* a row: icon (left) + full name, hover-highlit; flat (no glossy chip on the row itself) */
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-tile {
+  display: flex; align-items: center; justify-content: flex-start; gap: var(--hd-sp2);
+  width: 100%; height: calc(var(--hd-tile) * 0.78); padding: 0 var(--hd-sp2);
+  background: transparent; border: 0; border-radius: var(--hd-radius); box-shadow: none; transform-origin: left center;
+}
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-tile:hover,
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-tile:focus-visible {
+  background: var(--hd-hover); box-shadow: none; transform: none;
+}
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-tile:active { transform: none; }
+/* app icons keep a small glossy chip so they stay legible; glyphs (home/expand/recents) ride on light ink */
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-tile img.holo-dock-icon {
+  width: calc(var(--hd-icon) * 1.18); height: calc(var(--hd-icon) * 1.18); flex: 0 0 auto; padding: 4px; box-sizing: border-box;
+  border-radius: calc(var(--hd-chip-radius) * 0.6); border: 1px solid rgba(255,255,255,0.5);
+  background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(243,246,250,0.42));
+}
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-tile span.holo-dock-icon { width: var(--hd-icon); height: var(--hd-icon); flex: 0 0 auto; color: var(--hd-ink-dim); }
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-tile span.holo-dock-icon svg { width: 100%; height: 100%; }
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-stack { width: calc(var(--hd-icon) * 1.18); height: calc(var(--hd-icon) * 1.18); flex: 0 0 auto; }
+/* inline label — full name, ellipsis; overrides the tooltip styling */
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-label {
+  position: static; opacity: 1; transform: none; left: auto; top: auto; bottom: auto; z-index: auto;
+  background: transparent; border: 0; box-shadow: none; padding: 0; pointer-events: none;
+  flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: var(--hd-text-sm); color: var(--hd-ink);
+}
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-item[data-running] .holo-dock-label { color: var(--hd-accent); }
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-dot { display: none; }   /* running shown via label tint; no floating dot in a row */
+/* section headers — quiet, only in expanded */
+.holo-dock-section { display: none; }
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-section {
+  display: block; padding: var(--hd-sp3) var(--hd-sp2) var(--hd-pad); font-size: var(--hd-text-xs, 11px);
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--hd-ink-dim); opacity: 0.62;
+}
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-recents { margin-bottom: var(--hd-sp2); }
+/* keep the tray (Create/Share/Add) as rows too in expanded */
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-action,
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-add {
+  width: 100%; justify-content: flex-start; gap: var(--hd-sp2); padding: 0 var(--hd-sp2); height: calc(var(--hd-tile) * 0.78);
+  border-radius: var(--hd-radius);
+}
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-action:hover,
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-add:hover { background: var(--hd-hover); }
+/* fixed native-category rows: lists share the exact row grid (one scale, no drift); active row marked */
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-nav-list { flex-direction: column; align-items: stretch; gap: 2px; width: 100%; }
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-nav[data-active] .holo-dock-tile { background: var(--hd-hover); }
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-nav[data-active] .holo-dock-label,
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-nav[data-active] span.holo-dock-icon { color: var(--hd-ink); }
+/* the ⌘K / Ctrl K hint chip, right-aligned in the row */
+#holo-dock.holo-dock--expanded[data-orient="left"] .holo-dock-kbd {
+  margin-left: auto; flex: 0 0 auto; font: 600 calc(var(--hd-text-xs, 11px)) var(--hd-font, ui-monospace, monospace);
+  color: var(--hd-ink-dim); background: color-mix(in srgb, var(--hd-ink) 10%, transparent);
+  border: 1px solid var(--hd-border); border-radius: var(--hd-radius-sm); padding: 1px 6px; letter-spacing: .02em;
+}
+.holo-dock-kbd { display: none; }   /* hidden in the collapsed icon rail */
+
 /* ════ Movable dock — drag the bar (its empty area, or the H logo) to pin it to ANY edge, or drop it
  *      in the open to float free. Left/bottom reserve content space; right/top/free float over it.
  *      Press the H logo to FOLD the dock to a single icon; click that icon again to unfold. ═══════ */

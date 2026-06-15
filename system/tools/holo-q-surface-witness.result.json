@@ -1,0 +1,24 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Q warm-κ surface cache — open(app κ) is O(1) on repeat, warm-on-close, LRU-bounded + device-tuned (hotMax/weight)",
+  "passed": 15,
+  "failed": 0,
+  "checks": {
+    "first-acquire-mounts-miss-1": true,
+    "repeat-acquire-is-o-1-hot-no-re-mount-2": true,
+    "same-same-handle-3": true,
+    "release-warms-does-not-dispose-4": true,
+    "re-open-after-close-is-a-warm-reuse-still-no-re--5": true,
+    "lru-evicts-the-oldest-warm-surface-beyond-hotmax-6": true,
+    "the-newer-warm-surfaces-survive-7": true,
+    "in-use-surfaces-are-pinned-never-evicted-8": true,
+    "telemetry-mounts-counted-once-per-distinct-9": true,
+    "telemetry-hits-hitrate-reflect-the-o-1-reuse-10": true,
+    "recommendhotmax-scales-with-device-memory-11": true,
+    "recommendhotmax-defaults-sanely-when-memory-unkn-12": true,
+    "weight-budget-evicts-heavy-lru-surfaces-over-max-13": true,
+    "a-heavy-surface-counts-more-weight-than-a-light--14": true,
+    "three-light-surfaces-fit-a-budget-that-holds-one-15": true
+  }
+}

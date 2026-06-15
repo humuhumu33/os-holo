@@ -1,0 +1,21 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Holo Hub — Medusa commerce-math kernel as a Forge κ-transform (ADR-0094 Stage 3)",
+  "passed": 11,
+  "failed": 0,
+  "kernelKappa": "did:holo:sha256:c6ba29cf614e87c24decab484036558784a51c2eedaad7826fbbd6761ad893c7",
+  "checks": {
+    "medusa-commerce-math-bundles-to-a-self-contained-kernel-no-u-1": true,
+    "a-forge-transform-receipt-is-minted-source-esbuild-flags-ker-2": true,
+    "deterministic-rebuild-identical-kernel-re-derivable-l5-3": true,
+    "the-kernel-is-verbatim-medusa-every-source-file-re-hashes-to-4": true,
+    "kernel-exports-medusa-s-verbatim-functions-5": true,
+    "calculatetaxtotal-200-10-20-6": true,
+    "multi-rate-tax-400-8-25-1-75-40-7": true,
+    "amounts-tax-exclusive-100-10-withtax-110-withouttax-100-8": true,
+    "amounts-tax-inclusive-110-incl-10-withtax-110-withouttax-100-9": true,
+    "bignumber-arbitrary-precision-0-1-0-2-0-3-no-float-drift-10": true,
+    "0-network-running-the-kernel-made-no-fetch-serverless-l4-11": true
+  }
+}

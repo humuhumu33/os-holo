@@ -1,0 +1,40 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Holo Widgets snap engine (interact.js) — seamless magnetic position anchoring for every object on a holospace tab",
+  "covers": [
+    "the nearest-line snap is magnetic within range and null beyond (a delightful, non-sticky pull)",
+    "snap targets combine sibling edges + centres (Figma-style alignment) with the canvas golden gridlines 0.382/0.618 + margins + centre",
+    "interact.js is the engine — vendored MIT + tarball-integrity-pinned (Law L5), loaded same-origin (no CDN), driving draggable+resizable+snap/grid modifiers",
+    "graceful fallback — the hand-rolled drag stays active (gated by w._snap) when interact is absent/offline, and tap/double-tap are preserved",
+    "the snap engine applies to EVERY widget on EVERY tab and engages from the first frame once interact is ready"
+  ],
+  "bundlePresent": true,
+  "snapRange": 9,
+  "checks": {
+    "snap-magnetic-within-range": true,
+    "snap-ignores-beyond-range": true,
+    "snap-picks-the-nearest": true,
+    "targets-include-sibling-edges-and-centre": true,
+    "targets-include-golden-gridlines": true,
+    "dragging-near-a-sibling-edge-snaps-to-it": true,
+    "interactjs-vendored-MIT-integrity-pinned": true,
+    "loaded-same-origin-no-CDN": true,
+    "uses-interact-draggable-resizable-snap": true,
+    "snap-targets-sibling-and-golden": true,
+    "legacy-drag-gated-by-snap-flag": true,
+    "loader-is-graceful-on-absence": true,
+    "tap-and-doubletap-preserved": true,
+    "snap-engine-applied-at-mount": true,
+    "guide-lines-render-and-clear": true,
+    "widget-drag-draws-then-clears-guides": true,
+    "shared-HoloSnap-engine-exposed": true,
+    "collectLines-scans-all-objects": true,
+    "snapRect-snaps-edge-and-returns-guide": true,
+    "snapRect-releases-beyond-range": true,
+    "app-windows-snap-via-shared-engine": true,
+    "desktop-icons-snap-via-shared-engine": true
+  },
+  "failed": [],
+  "authority": "interact.js (MIT, vendored unmodified, tarball-integrity-pinned) · φ = golden ratio (1.618) · holospaces Law L1/L2/L5 · ADR-0088/0089 (per-holospace boards)"
+}

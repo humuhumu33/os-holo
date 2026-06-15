@@ -1,0 +1,47 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Holo DevTools κ-CDP backend (ADR-0095) — every CDP handle is an alias for a κ; one backend, three doors",
+  "covers": [
+    "handshake — a holospace scene is one CDP target",
+    "DOM domain ⇄ the scene manifest tree; every node is an alias for a κ (Law L1)",
+    "the node ⇄ κ map round-trips (backendNodeId ⇄ κ) and re-derives identically from the content-addressed scene (Law L1/L5)",
+    "Network domain = the κ-stream timeline with an L5 verify badge (axis · found · verify); a resolvable κ is GREEN",
+    "Law L5 — a tampered κ shows the RED verify badge (re-derivation refuses it)",
+    "Runtime.evaluate is FAIL-CLOSED with no conscience; a blocking conscience refuses; an accepting one routes through Q and seals a PROV-O-shaped receipt (Law L4, mirrors Q.agent / ADR-0091)",
+    "ONE backend, THREE doors — human CDP (serve), the agent MCP tool, and the Holo Q verb all land on the same dispatch with no forked logic",
+    "the agent door is W3C-native — a self-verifying JSON-LD envelope (schema.org ⊕ PROV-O ⊕ DID), NOT a raw CDP frame (ADR-0095 §7 T1: CDP stays the human door's private transport)",
+    "graceful degradation — an unmapped CDP method returns a clean 'unsupported' (a faithful SUBSET, ADR-0095 §8)",
+    "Law L3 — repeat inspection of an unchanged κ is stable (the κ-memo IS the DevTools cache)"
+  ],
+  "scene": {
+    "type": "holo:AppScene",
+    "objects": [
+      "did:holo:sha256:3e9cf71186ac1f1bf05afcc136df6a94b82f0d82b8340db6561e630c3615ae5f",
+      "did:holo:sha256:79bfc4e1dbb089f9f12f3215332af0551d3b8c27ad78e8a48aef141b38416fcc"
+    ]
+  },
+  "checks": {
+    "handshake-scene-is-a-target": true,
+    "dom-is-the-scene-tree": true,
+    "every-node-is-an-alias-for-a-kappa": true,
+    "node-kappa-roundtrips": true,
+    "node-ids-re-derive-from-the-content-addressed-scene": true,
+    "network-resolves-kappa-with-green-verify-badge": true,
+    "tampered-kappa-shows-red-verify-badge": true,
+    "eval-fail-closed-without-conscience": true,
+    "eval-refused-when-conscience-blocks": true,
+    "eval-accepted-routes-through-Q-and-seals-a-receipt": true,
+    "one-backend-three-doors": true,
+    "agent-door-returns-jsonld-not-cdp": true,
+    "unmapped-method-degrades-gracefully": true,
+    "repeat-inspection-is-stable-kappa-memoizable": true,
+    "write-read-only-without-live-editor": true,
+    "write-fail-closed-without-conscience": true,
+    "write-refused-when-conscience-blocks": true,
+    "write-accepted-drives-liveEdit-with-source-and-new-kappa": true,
+    "setOuterHTML-maps-node-to-kappa-then-edits": true
+  },
+  "failed": [],
+  "authority": "Chrome DevTools Protocol (the human UI's private transport) · W3C DID Core · W3C PROV-O · schema.org · IETF RFC 8785 (JCS) · UOR-ADDR · holospaces Law L1/L2/L3/L4/L5"
+}

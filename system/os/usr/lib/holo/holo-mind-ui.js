@@ -46,6 +46,14 @@ const persistLearned = () => { if (durable) durable.set(META_LEARNED, ENC.encode
 const persistMeta = (key, obj) => { if (durable) durable.set(key, ENC.encode(JSON.stringify(obj))).catch(() => {}); };   // objects (JSON)
 const persistStr = (key, str) => { if (durable) durable.set(key, ENC.encode(str || "")).catch(() => {}); };           // bare κ pointers
 
+// Factory's EVOLVING skill (ADR-0097 self-improvement ⊕ ADR-0081 Phase-2): the IN-FORCE lineage head (a κ)
+// and its procedure bytes. Each Q.factory.grow() that yields a VERIFIED generation advances this κ chain
+// (child → prov:wasRevisionOf parent) and re-projects the skill live; the procedure is injected into the
+// factory's change step, so an evolved skill actually changes behaviour (learn → act). DURABLE.
+let factorySkillHead = null, factorySkillBytes = "";
+const META_FACTORY_SKILL = "mind/factory-skill";
+const persistFactorySkill = () => persistMeta(META_FACTORY_SKILL, { head: factorySkillHead, bytes: factorySkillBytes });
+
 // ── SOUL state (Phase 3) — the drives, the running coherence tally, and the user/self models (durable) ──
 let drives = initDrives();
 let userHead = null, selfHead = null;           // durable user-model / self-model chain heads
@@ -84,6 +92,8 @@ async function hydrate() {
     }
     const lb = await durable.get(META_LEARNED);
     if (lb && lb.byteLength) { try { for (const s of JSON.parse(DEC.decode(lb))) if (s && s.name) learnedSkills.set(s.name, s); } catch {} }
+    const fs = await durable.get(META_FACTORY_SKILL);
+    if (fs && fs.byteLength) { try { const o = JSON.parse(DEC.decode(fs)); factorySkillHead = o.head || null; factorySkillBytes = o.bytes || ""; } catch {} }
     const db = await durable.get(META_DRIVES); if (db && db.byteLength) { try { drives = JSON.parse(DEC.decode(db)); } catch {} }
     const ssb = await durable.get(META_SELFSTATS); if (ssb && ssb.byteLength) { try { selfStats = JSON.parse(DEC.decode(ssb)); } catch {} }
     for (const [meta, set] of [[META_USER, (k) => (userHead = k)], [META_SELF, (k) => (selfHead = k)]]) {
@@ -301,7 +311,10 @@ async function _factoryDeps() {
     if (typeof sampler !== "function") return null;                              // no brain in context → no fabrication (honest stop)
     const ctx = context ? `\n\nContext:\n\`\`\`\n${typeof context === "string" ? context : JSON.stringify(context)}\n\`\`\`` : "";
     const hint = (lastEvidence && lastEvidence.error) ? `\n\nThe previous attempt failed: ${lastEvidence.error}. Fix it.` : "";
-    const out = await sampler({ prompt: `You are the change step of a software factory. Signal: ${sig.utterance || ""}.${ctx}${hint}\n\nProduce the corrected ${lang || "code"} ONLY, in a single fenced code block. No prose.`, maxTokens: 700 });
+    // LEARN → ACT: inject the IN-FORCE evolved skill (the procedure + pitfalls + verification steps grown
+    // from past failures) so the change step actually benefits from what the factory has learned (ADR-0097).
+    const proc = factorySkillBytes ? `\n\nApply this learned procedure (evolved from past failures):\n${factorySkillBytes}` : "";
+    const out = await sampler({ prompt: `You are the change step of a software factory. Signal: ${sig.utterance || ""}.${proc}${ctx}${hint}\n\nProduce the corrected ${lang || "code"} ONLY, in a single fenced code block. No prose.`, maxTokens: 700 });
     const src = codeBlock(out);
     return src ? { source: src, lang, targetId: sig.target || null } : null;
   };
@@ -375,14 +388,28 @@ async function factoryDiscover(signal, candidates = null, opts = {}) {
 }
 // target — an app/holospace SELF-REGISTERS as a fixable target in the catalog (the clean opt-in seam).
 async function factoryTarget(id, spec = {}) { await _ensureTender(); return _catalog ? _catalog.target(id, spec) : null; }
-// grow — SELF-IMPROVEMENT: read the factory's accumulated FAILURE traces and run the governed optimizer
-// (Holo Mind Phase 2) to propose an improved skill. Borrows the registered model; in force only when the
-// caller supplies a passing gate (governed). Honest below the failure threshold / with no model.
+// grow — SELF-IMPROVEMENT, loop CLOSED: read the factory's accumulated FAILURE traces, run the governed
+// optimizer (Holo Mind Phase 2) to propose an improved skill, and — when the generation is VERIFIED in
+// force — project it LIVE and advance the κ-addressed evolving-skill lineage (child → wasRevisionOf parent),
+// DURABLY. The next factory run injects the evolved procedure into its change step (learn → act). Borrows
+// the SAME model the planner uses (discoverSampler, not just _sampler). Honest below the failure threshold,
+// with no model, or on a failing gate (the lineage advances ONLY on a verified generation — never on noise).
 async function factoryGrow(opts = {}) {
   await _ensureTender();
+  const sampler = await discoverSampler(await liveRoster());
   const mod = await import("/_shared/q/holo-factory-grow.mjs");
-  return mod.growFromFailures(store, corpusHead, { sampler: _sampler || null, gate: opts.gate || {}, minFailures: opts.minFailures, parentBytes: opts.parentBytes || "", parentKappa: opts.parentKappa || null, optimizerKappa: opts.optimizerKappa || null });
+  const r = await mod.growSkill(store, corpusHead, {
+    skillHead: opts.parentKappa || factorySkillHead, skillBytes: opts.parentBytes || factorySkillBytes,
+    sampler, gate: opts.gate || {}, minFailures: opts.minFailures, optimizerKappa: opts.optimizerKappa || null,
+  });
+  if (r.advanced && r.projected) {                                  // a VERIFIED generation → make it live + advance the lineage (DURABLE)
+    learnedSkills.set(r.projected.name, r.projected); persistLearned();
+    factorySkillHead = r.skillHead; factorySkillBytes = r.skillBytes; persistFactorySkill();
+    selfStats = { ...selfStats, skillsLearned: selfStats.skillsLearned + 1, revisionsAccepted: selfStats.revisionsAccepted + 1 }; persistMeta(META_SELFSTATS, selfStats);
+  }
+  return r;
 }
+const factorySkill = () => ({ head: factorySkillHead, hasProcedure: !!factorySkillBytes, bytes: factorySkillBytes });
 // register an IN-TAB check (the CLOSED loop): a target whose source must parse, or a custom { verify }.
 async function factoryRegister(name, spec = {}) {
   const t = await _ensureTender();
@@ -417,13 +444,13 @@ if (typeof window !== "undefined") {
     delegate, revoke, revocations: () => [...revoked],   // Phase 4: UCAN-scoped, revocable sub-agent authority (ADR-0042)
   });
   // the software-factory door (ADR-0097): the one-verb fix + the autonomous, intent-driven tender
-  window.HoloFactory = { id: "holo-factory", run: factory, tend: factoryTend, watch: factoryWatch, register: factoryRegister, locate: factoryLocate, discover: factoryDiscover, target: factoryTarget, grow: factoryGrow, failures: () => failures(corpusHead) };
+  window.HoloFactory = { id: "holo-factory", run: factory, tend: factoryTend, watch: factoryWatch, register: factoryRegister, locate: factoryLocate, discover: factoryDiscover, target: factoryTarget, grow: factoryGrow, skill: factorySkill, failures: () => failures(corpusHead) };
   try {
     if (window.Q && typeof window.Q === "object" && !window.Q.factory) {
-      const qf = (s, o) => factory(s, o); qf.tend = factoryTend; qf.watch = factoryWatch; qf.register = factoryRegister; qf.locate = factoryLocate; qf.discover = factoryDiscover; qf.target = factoryTarget; qf.grow = factoryGrow;
-      window.Q.factory = qf;                                    // Q.factory(signal) · .watch · .tend · .register · .locate · .discover · .target · .grow
+      const qf = (s, o) => factory(s, o); qf.tend = factoryTend; qf.watch = factoryWatch; qf.register = factoryRegister; qf.locate = factoryLocate; qf.discover = factoryDiscover; qf.target = factoryTarget; qf.grow = factoryGrow; qf.skill = factorySkill;
+      window.Q.factory = qf;                                    // Q.factory(signal) · .watch · .tend · .register · .locate · .discover · .target · .grow · .skill
     }
   } catch (e) {}
 }
 
-export { loop, liveRoster, setSampler, evolve, failures, proposeGoals, runProposals, gc, orchestrate, schedule, delegate, revoke, factory, factoryTend, factoryWatch, factoryRegister, factoryLocate, factoryDiscover, factoryTarget, factoryGrow };
+export { loop, liveRoster, setSampler, evolve, failures, proposeGoals, runProposals, gc, orchestrate, schedule, delegate, revoke, factory, factoryTend, factoryWatch, factoryRegister, factoryLocate, factoryDiscover, factoryTarget, factoryGrow, factorySkill };

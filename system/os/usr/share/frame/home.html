@@ -8,7 +8,7 @@
          so crossOriginIsolated (SharedArrayBuffer / the WASM VMs) works on Pages. It
          no-ops when already isolated (holo-serve / the native engine set real headers). -->
     <script src="coi-serviceworker.min.js"></script>
-    <title>Home — Hologram OS</title>
+    <title>Home Hologram OS</title>
     <!-- The boot chain already plays a power-on; Home's own green "Press Enter" gate is redundant.
          Mark the page to skip it — hidden from the very first paint (no green flash). -->
     <script>try{document.documentElement.classList.add("boot-skip");}catch(e){}</script>
@@ -20,7 +20,8 @@
       "phonemizer": "/_shared/voice/vendor/kokoro/phonemizer.js",
       "path": "/_shared/voice/vendor/kokoro/stub.js",
       "fs": "/_shared/voice/vendor/kokoro/stub.js",
-      "fs/promises": "/_shared/voice/vendor/kokoro/stub.js"
+      "fs/promises": "/_shared/voice/vendor/kokoro/stub.js",
+      "simplex-noise": "/_shared/voice/lib/simplex-noise.js"
     }}
     </script>
     <style>
@@ -171,7 +172,7 @@ Version 0.1
     </div>
     <header>
       <h1>Hologram Platform Manager</h1>
-      <span class="muted">manage your holospaces · enter one to work in it</span>
+      <span class="muted">My spaces. Step into one.</span>
       <span class="op">
         <button id="signin" class="primary sm">Sign in</button>
         <span class="muted">operator</span> <span id="operator" class="k">(signed out)</span>
@@ -188,7 +189,7 @@ Version 0.1
           <input name="q" type="search" autocomplete="off" spellcheck="false" placeholder="Search every holospace, spec, doc and object…" style="flex:1;min-width:16rem;border-radius:999px;padding:.55rem 1rem" aria-label="Search the Hologram OS" />
           <button class="primary" type="submit" style="border-radius:999px">🔍 Holo Search</button>
         </form>
-        <p class="hint" style="margin:.5rem 0 0">Holo Search — one box over the whole OS and the open web. Every result is verified before it opens. Press Enter to open.</p>
+        <p class="hint" style="margin:.5rem 0 0">Holo Search one box over the whole OS and the open web. Every result is verified before it opens. Press Enter to open.</p>
       </div>
 
       <h2>New holospace</h2>
@@ -200,14 +201,14 @@ Version 0.1
           </div>
           <div>
             <label for="harch">Architecture</label>
-            <select id="harch" title="The processor type this space runs on — chosen once when it's created and fixed for its life.">
+            <select id="harch" title="The processor type this space runs on chosen once when it's created and fixed for its life.">
               <option value="riscv64">riscv64 (RV64GC)</option>
               <option value="aarch64">aarch64 (ARMv8-A)</option>
             </select>
           </div>
           <button id="create" class="primary" disabled>Create devcontainer</button>
         </div>
-        <p class="hint">The processor type is chosen once, when the space is created, and can't be changed afterward — it's part of what makes this space itself. Everything else (lifecycle, network, storage, access) you can change anytime in its settings.</p>
+        <p class="hint">The processor type is chosen once, when the space is created, and can't be changed afterward it's part of what makes this space itself. Everything else (lifecycle, network, storage, access) you can change anytime in its settings.</p>
         <label for="dcjson">devcontainer.json (standard Dev Container format)</label>
         <textarea id="dcjson" spellcheck="false">{
   "name": "my-devcontainer",
@@ -222,11 +223,11 @@ Version 0.1
           <tr><th>Name</th><th>Arch</th><th>Source</th><th>Identity</th><th>Status</th><th style="width:20rem">Actions</th></tr>
         </thead>
         <tbody id="rows">
-          <tr><td colspan="6" class="muted">No holospaces yet — sign in and create one.</td></tr>
+          <tr><td colspan="6" class="muted">Nothing here yet sign in and create one.</td></tr>
         </tbody>
       </table>
       <p class="muted" style="margin-top:1rem">
-        Your spaces live in this browser, on your machine — nothing is kept on a server.
+        These live here, on my machine nothing is kept on a server.
       </p>
 
       <h2>Conformance specs</h2>
@@ -244,7 +245,7 @@ Version 0.1
     <aside id="drawer" aria-hidden="true">
       <div class="drawer-head">
         <div>
-          <div id="d-name" class="d-title">—</div>
+          <div id="d-name" class="d-title"></div>
           <div class="muted">guest settings</div>
         </div>
         <button id="d-close" class="sm" style="margin-left:auto">✕ Close</button>
@@ -253,12 +254,12 @@ Version 0.1
         <section>
           <h3>Details <span class="lock">· fixed at launch 🔒</span></h3>
           <dl class="details">
-            <dt>Architecture</dt><dd><span id="d-arch" class="badge arch">—</span></dd>
-            <dt>Identity</dt><dd class="k" id="d-kappa">—</dd>
-            <dt>Source</dt><dd class="muted" id="d-source">—</dd>
-            <dt>Status</dt><dd id="d-status">—</dd>
+            <dt>Architecture</dt><dd><span id="d-arch" class="badge arch"></span></dd>
+            <dt>Identity</dt><dd class="k" id="d-kappa"></dd>
+            <dt>Source</dt><dd class="muted" id="d-source"></dd>
+            <dt>Status</dt><dd id="d-status"></dd>
           </dl>
-          <p class="hint">These define what this space is — so they're set once when it's created and never change.</p>
+          <p class="hint">These define what this space is so they're set once when it's created and never change.</p>
         </section>
 
         <section>
@@ -387,10 +388,10 @@ Version 0.1
       function render() {
         const v = JSON.parse(console0.view());
         $("operator").textContent = v.operator || "(signed out)";
-        { const r = $("roster"); if (r) r.textContent = console0.roster_kappa() || "—"; }
+        { const r = $("roster"); if (r) r.textContent = console0.roster_kappa() || ""; }
         const tbody = $("rows");
         if (v.holospaces.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="muted">No holospaces yet — sign in and create one.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="muted">Nothing here yet sign in and create one.</td></tr>';
           return;
         }
         tbody.innerHTML = v.holospaces.map((k) => {
@@ -450,12 +451,12 @@ Version 0.1
             // workspace via the holospace-fs builtin extension (?id=<κ>).
             openFrame(inner);
           });
-          toast("entering " + m.name + " — opening in the holospace frame");
+          toast("entering " + m.name + " opening in the holospace frame");
         } else if (act === "suspend") {
           // Real: publish a lifecycle configuration the instance applies (no stub).
           const cfg = configure(k, [{ lifecycle: "suspend" }]);
           m.status = "suspended"; render();
-          toast(m.name + " — suspend settings sent; the space will apply them");
+          toast(m.name + " suspend settings sent; the space will apply them");
         } else if (act === "settings") {
           openDrawer(k);
         } else if (act === "remove") {
@@ -507,7 +508,7 @@ Version 0.1
           else if (label === "start" || label === "resume") m.status = "running";
           if (label) $("d-status").innerHTML = `<span class="badge ${m.status}">${m.status}</span>`;
           render();
-          toast(m.name + " — published " + (label || "config") + " " + cfg.slice(0, 22) + "…");
+          toast(m.name + " published " + (label || "config") + " " + cfg.slice(0, 22) + "…");
         } catch (e) {
           toast("configure failed: " + e);
         }
@@ -569,7 +570,7 @@ Version 0.1
         console0.sign_in(new TextEncoder().encode("operator-self-sovereign-key"));
         $("create").disabled = false;
         render();
-        toast("signed in — your identity stays private to you");
+        toast("signed in your identity stays private to you");
       };
 
       $("create").onclick = () => {
@@ -749,7 +750,9 @@ Version 0.1
          a real OS action (open app · show desktop · search · theme), and the OS confirms out loud via
          on-device speechSynthesis. Nothing leaves the device. Hidden behind the boot splash. -->
     <style> html.booting #holo-voice-btn, html.booting #holo-voice-hud, html.booting #holo-voice-menu { display: none; } </style>
-    <script src="_shared/holo-voice.js" defer></script>
+    <!-- Q's 3D orb (VapiBlocks) → Three.js r134 (MIT), vendored same-origin; UMD global before holo-voice.
+         holo-voice loads AFTER holo-widgets (below) so Q registers its "q" widget type before the board restores. -->
+    <script src="_shared/voice/lib/three.min.js" defer></script>
     <!-- Holo Desk: the substrate-native DESKTOP — a wallpaper plane + icon grid over the writable OPFS
          Home (/home/user/Desktop). It feels native in any browser (right-click "New ▸ Folder", inline
          rename, drag to arrange), reskins to the host OS (Windows/macOS) via HoloPlatform, renders every
@@ -765,6 +768,8 @@ Version 0.1
          Add widgets from the desktop's New menu; hidden behind the boot splash. -->
     <style> html.booting .hw-widget { display: none; } </style>
     <script src="_shared/holo-widgets.js" defer></script>
+    <!-- Q (Holo Voice) AFTER the widgets runtime so the "q" orb widget type is registered before the board restores. -->
+    <script src="_shared/holo-voice.js" defer></script>
     <!-- Holo Vinyl: the music disc — now a Holo Widget type for its floating instances (it rides the
          runtime's frame), plus the persistent dock tile so sound keeps flowing across app frames.
          Add it from the desktop's New ▸ Vinyl Player; hidden behind the boot splash. -->

@@ -1,0 +1,27 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Q.fuse default panel — persona/model diversity assembly over the ADR-0096 registry (ADR-0098)",
+  "passed": 18,
+  "failed": 0,
+  "checks": {
+    "w0-describepanel-labels-persona-vs-model-honestl-1": true,
+    "w1-persona-mode-selected-2": true,
+    "w1-three-diverse-panel-members-3": true,
+    "w1-judge-synth-providers-present-4": true,
+    "w1-members-carry-their-lens-role-5": true,
+    "w2-adapter-yields-string-deltas-6": true,
+    "w2-same-input-different-persona-different-output-7": true,
+    "w3-fusion-ok-over-the-default-panel-8": true,
+    "w3-panel-s-are-distinct-diversity-survived-to-co-9": true,
+    "w3-tier-is-local-persona-panel-is-100-serverless-10": true,
+    "w3-the-fusionreceipt-re-derives-11": true,
+    "w4-model-mode-selected-with-2-samplers-12": true,
+    "w4-panel-members-are-the-supplied-models-13": true,
+    "w4-judge-defaults-to-the-reasoner-14": true,
+    "w5-unconfigured-empty-panel-honest-reason-15": true,
+    "w6-configuredefaultfuse-reports-persona-mode-16": true,
+    "w6-it-called-q-configurefuse-with-a-panel-judge--17": true,
+    "w6-with-nothing-loaded-it-refuses-to-wire-18": true
+  }
+}

@@ -11,3 +11,15 @@ _serveq.mjs
 # Holo Voice model weights — content-addressed artifacts, NOT source. Fetched + hash-verified by
 # tools/vendor-voice-model.mjs (run it once after clone). See holo-models for the artifact store.
 system/os/usr/lib/holo/voice/vendor/
+
+# Vendored esbuild-wasm toolchain (content-addressed artifacts — run tools/vendor-esbuild-wasm.mjs)
+system/os/usr/lib/holo/holo-forge/vendor/esbuild-wasm/*.wasm
+system/os/usr/lib/holo/holo-forge/vendor/esbuild-wasm/browser.min.js
+
+# Vendored Chrome devtools-frontend (ADR-0095) — the built front_end/ is a content-addressed artifact,
+# NOT source. Fetched + tarball-integrity-verified by tools/vendor-chrome-devtools.mjs (run once after clone).
+system/os/usr/lib/holo/devtools/vendor/
+
+# Vendored interact.js (MIT) — the widget snap engine. Content artifact, fetched + tarball-integrity-verified
+# by tools/vendor-interactjs.mjs (run once after clone). Served same-origin, SW-content-verified.
+system/os/usr/lib/holo/interactjs/

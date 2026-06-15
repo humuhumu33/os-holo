@@ -829,6 +829,11 @@
       var app = matchApp(m[1]), phrase = m[1];
       if (app && W.HoloDock && W.HoloDock.launch) plan = { ok: true, action: "launch:" + app.id, say: "Opening " + app.name + ".", propose: "Want me to open " + app.name + "?", exec: function () { W.HoloDock.launch(app.id); learnMatch(phrase, app.name); bumpUsage(app.id); } };
       else return { ok: false, say: "I couldn't find an app called " + m[1] + "." };
+    } else if (/\b(my (?:story|journey)|story so far)\b/.test(t) || /\bwhat (?:have|did) i (?:done|do|built|build|made|make|accomplish(?:ed)?)\b/.test(t)) {
+      // "what have I done here?" → Q reflects the journey κ back as a short story (the payoff that ties the
+      // arc together). Pure, on-device, no model: HoloJourney narrates the milestones it witnessed.
+      var story = (W.HoloJourney && W.HoloJourney.story) ? W.HoloJourney.story() : "Your story's just beginning. Make the first thing that's yours.";
+      plan = { ok: true, say: story, propose: story, exec: function () {} };
     } else {
       // a BARE app name ("calculator") — but only for a SHORT utterance, so a sentence isn't hijacked.
       var bare = (t.split(" ").length <= 3) ? matchApp(t) : null;
@@ -1539,20 +1544,20 @@
       // Q's status caption — a single, state-tinted glass line that rises near the orb (placed in JS so it
       // never overlaps Q). The dot's colour IS the state (listening·thinking·speaking·…); the line is the
       // human message. A soft tinted glow + a gentle rise make it feel like a thought surfacing from Q.
-      "#holo-voice-hud{position:fixed;z-index:2147482400;max-width:min(360px,78vw);padding:.6rem .9rem;border-radius:16px;" +
-      "background:var(--holo-glass-acrylic-bg,rgba(16,20,28,.82));-webkit-backdrop-filter:blur(22px) saturate(1.7);backdrop-filter:blur(22px) saturate(1.7);" +
-      "border:1px solid color-mix(in srgb,var(--hv-tint,#5b8cff) 32%,rgba(255,255,255,.14));color:var(--holo-ink,#e9eef7);" +
-      "box-shadow:0 .5rem 2rem rgba(0,0,0,.5),0 0 24px -8px var(--hv-tint,#5b8cff);" +
-      "font:15.5px/1.4 var(--holo-font-sans,system-ui,-apple-system,'Segoe UI',sans-serif);" +
-      "opacity:0;transform:translateY(10px) scale(.97);transform-origin:bottom center;pointer-events:none;" +
-      "transition:opacity .26s cubic-bezier(.2,.8,.2,1),transform .26s cubic-bezier(.2,.8,.2,1)}" +
+      "#holo-voice-hud{position:fixed;z-index:2147482400;max-width:min(330px,76vw);padding:.5rem .9rem;border-radius:999px;" +
+      "background:color-mix(in srgb,var(--holo-surface,#12161f) 50%,transparent);-webkit-backdrop-filter:blur(26px) saturate(1.8);backdrop-filter:blur(26px) saturate(1.8);" +
+      "border:1px solid color-mix(in srgb,var(--hv-tint,#5b8cff) 24%,rgba(255,255,255,.2));color:var(--holo-ink,#eef2f8);" +
+      "box-shadow:0 10px 30px -12px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14),0 0 22px -12px var(--hv-tint,#5b8cff);" +   // light glass: soft drop + inner sheen + faint tint glow
+      "font:500 14.5px/1.35 var(--holo-font-sans,system-ui,-apple-system,'Segoe UI',sans-serif);letter-spacing:.005em;" +
+      "opacity:0;transform:translateY(8px) scale(.96);transform-origin:bottom center;pointer-events:none;" +
+      "transition:opacity .3s cubic-bezier(.2,.8,.2,1),transform .34s cubic-bezier(.2,.85,.25,1)}" +
       "#holo-voice-hud[data-show=\"1\"]{opacity:1;transform:none}" +
-      "#holo-voice-hud .hv-row{display:flex;align-items:center;gap:.55rem}" +
-      "#holo-voice-hud .hv-dot{width:9px;height:9px;border-radius:999px;background:var(--hv-tint,#5b8cff);flex:0 0 auto;box-shadow:0 0 10px var(--hv-tint,#5b8cff)}" +
-      "#holo-voice-hud[data-live=\"1\"] .hv-dot{animation:hv-hud-pulse 1.5s ease-in-out infinite}" +
-      "@keyframes hv-hud-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.68)}}" +
-      "#holo-voice-hud .hv-meter{height:3px;border-radius:999px;background:linear-gradient(90deg,var(--hv-tint,#5b8cff),color-mix(in srgb,var(--hv-tint,#5b8cff) 35%,transparent));width:0;margin-top:.45rem;transition:width .1s linear}" +
-      "#holo-voice-hud .hv-txt{opacity:.96;word-break:break-word;font-weight:500}" +
+      "#holo-voice-hud .hv-row{display:flex;align-items:center;gap:.5rem}" +
+      "#holo-voice-hud .hv-dot{width:8px;height:8px;border-radius:999px;background:var(--hv-tint,#5b8cff);flex:0 0 auto;box-shadow:0 0 8px var(--hv-tint,#5b8cff)}" +
+      "#holo-voice-hud[data-live=\"1\"] .hv-dot{animation:hv-hud-pulse 1.6s ease-in-out infinite}" +
+      "@keyframes hv-hud-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}" +
+      "#holo-voice-hud .hv-meter{height:3px;border-radius:999px;background:linear-gradient(90deg,var(--hv-tint,#5b8cff),color-mix(in srgb,var(--hv-tint,#5b8cff) 35%,transparent));width:0;margin-top:.4rem;transition:width .1s linear}" +
+      "#holo-voice-hud .hv-txt{opacity:.95;word-break:break-word;font-weight:500}" +
       "#holo-voice-menu{position:fixed;right:14px;bottom:calc(120px + var(--holo-dock-h,0px));z-index:2147482401;width:min(300px,80vw);padding:.7rem .8rem;border-radius:14px;" +
       "background:var(--holo-glass-acrylic-bg,rgba(18,22,30,.92));-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);" +
       "border:1px solid var(--holo-glass-border,rgba(255,255,255,.18));box-shadow:0 .6rem 2.4rem rgba(0,0,0,.55);color:var(--holo-ink,#e9eef7);" +
@@ -1687,15 +1692,19 @@
   // top), so it reads as Q's own thought and NEVER overlaps the orb. Falls back to a safe right-side spot.
   function placeHud() {
     if (!hudEl) return;
-    var orb = DOC.querySelector(".hw-q") || btn, pad = 14, gap = 14;
-    if (orb && orb.offsetParent !== null) {
-      var r = orb.getBoundingClientRect(), bw = hudEl.offsetWidth || 280, bh = hudEl.offsetHeight || 56;
-      var left = Math.max(pad, Math.min(r.left + r.width / 2 - bw / 2, W.innerWidth - bw - pad));
-      var top = r.top - gap - bh; if (top < pad) top = r.bottom + gap;  // not enough room above → drop below
+    var pad = 16, gap = 20, bw = hudEl.offsetWidth || 300, bh = hudEl.offsetHeight || 52;
+    // anchor to the orb's ACTUAL box — or, before it can be measured (e.g. during the very first wake), to
+    // its intended resting spot — so the status ALWAYS floats clear ABOVE Q and never covers the orb.
+    var orb = DOC.querySelector(".hw-q") || btn, box = null;
+    if (orb && orb.offsetParent !== null) { var r = orb.getBoundingClientRect(); box = { x: r.left, y: r.top, w: r.width, h: r.height }; }
+    else { try { var p = savedQPos() || orbHome(); if (p) box = { x: p.x, y: p.y, w: p.w || 120, h: p.w || 120 }; } catch (e) {} }
+    if (box) {
+      var left = Math.max(pad, Math.min(box.x + box.w / 2 - bw / 2, W.innerWidth - bw - pad));
+      var top = box.y - gap - bh; if (top < pad) top = box.y + box.h + gap;   // float above; only drop below if there's truly no room
       top = Math.max(pad, Math.min(top, W.innerHeight - bh - pad));
       hudEl.style.left = left + "px"; hudEl.style.top = top + "px"; hudEl.style.right = "auto"; hudEl.style.bottom = "auto";
     } else {
-      hudEl.style.left = "auto"; hudEl.style.top = "auto"; hudEl.style.right = pad + "px"; hudEl.style.bottom = "calc(120px + var(--holo-dock-h,0px))";
+      hudEl.style.left = "auto"; hudEl.style.top = "auto"; hudEl.style.right = pad + "px"; hudEl.style.bottom = "calc(190px + var(--holo-dock-h,0px))";   // clear of the bottom-right orb
     }
   }
 
@@ -2047,12 +2056,93 @@
     (function attempt() {
       if (++tries > 30 || !W.HoloWidgets) return;
       var liveQ = false; try { liveQ = W.HoloWidgets.list().some(function (w) { return w.type === "q"; }); } catch (e) {}
-      if (liveQ) return;                                          // already present (restored or added) — done
+      if (liveQ) { firstMeeting(); return; }                     // already present (restored or added) — done
       if (tries < 8) { setTimeout(attempt, 200); return; }       // let the shell restore its board first (~1.6s)
       var p = savedQPos() || orbHome();
       try { W.HoloWidgets.add("q", null, { x: p.x, y: p.y, w: p.w || 120 }); } catch (e) {}
+      firstMeeting();
     })();
   }
+  // ── Q whisper — the ambient companion's voice: a soft bubble by the orb, one at a time, auto-dismissing.
+  //    The shared primitive behind the first meeting AND the per-stage invitations (Q Companion journey,
+  //    q-companion-journey.md). Visual by default — calm, never forced audio; tap runs opts.onTap. ──
+  function injectWhisperCSS() {
+    if (DOC.getElementById("hv-whisper-css")) return;
+    var s = DOC.createElement("style"); s.id = "hv-whisper-css";
+    s.textContent = ".hv-whisper{position:fixed;z-index:2147483600;max-width:264px;padding:11px 15px;border-radius:15px;"
+      + "font:600 15px/1.42 var(--holo-font,system-ui,sans-serif);color:var(--holo-ink,#e8eef5);"
+      + "background:color-mix(in srgb,var(--holo-bg,#0b0d12) 84%,transparent);"
+      + "border:1px solid color-mix(in srgb,var(--holo-accent,#7b5cff) 42%,transparent);"
+      + "box-shadow:0 12px 44px rgba(0,0,0,.5);backdrop-filter:blur(15px) saturate(1.3);-webkit-backdrop-filter:blur(15px) saturate(1.3);"
+      + "opacity:0;transform:translateY(calc(-100% + 7px));transition:opacity .38s ease,transform .42s cubic-bezier(.2,.85,.25,1);cursor:pointer;}"
+      + ".hv-whisper.on{opacity:1;transform:translateY(-100%);}"
+      + ".hv-whisper::after{content:'';position:absolute;left:22px;bottom:-6px;width:13px;height:13px;background:inherit;"
+      + "border-right:1px solid color-mix(in srgb,var(--holo-accent,#7b5cff) 42%,transparent);"
+      + "border-bottom:1px solid color-mix(in srgb,var(--holo-accent,#7b5cff) 42%,transparent);transform:rotate(45deg);}";
+    (DOC.head || DOC.documentElement).appendChild(s);
+  }
+  function qWhisper(text, opts) {
+    opts = opts || {};
+    try {
+      injectWhisperCSS();
+      var prev = DOC.getElementById("hv-whisper"); if (prev) prev.remove();
+      var p = savedQPos() || orbHome(); var orbW = p.w || 120, vw = W.innerWidth || 1280;
+      var b = DOC.createElement("div"); b.id = "hv-whisper"; b.className = "hv-whisper"; b.setAttribute("role", "status"); b.textContent = text;
+      b.style.left = Math.max(12, Math.min(vw - 288, (p.x + orbW / 2) - 132)) + "px";
+      b.style.top = Math.max(20, p.y - 14) + "px";
+      DOC.body.appendChild(b);
+      requestAnimationFrame(function () { b.classList.add("on"); });
+      var killed = false;
+      function dismiss() { if (killed) return; killed = true; b.classList.remove("on"); setTimeout(function () { try { b.remove(); } catch (e) {} }, 450); }
+      b.addEventListener("click", function () { try { if (opts.onTap) opts.onTap(); } catch (e) {} dismiss(); });
+      if (opts.ms !== 0) setTimeout(dismiss, opts.ms || 8000);
+      return { dismiss: dismiss };
+    } catch (e) { return { dismiss: function () {} }; }
+  }
+  // ── the first meeting — Q introduces itself ONCE, ever (HoloJourney.met). Ambient + visual (autoplay is
+  //    blocked at first paint anyway); a tap opens Q. Calm, then it recedes. ──
+  function firstMeeting() {
+    if (firstMeeting._scheduled) return;
+    try { var J = W.HoloJourney; if (!J || (J.met && J.met())) return; } catch (e) { return; }
+    firstMeeting._scheduled = true;
+    setTimeout(function () {
+      try {
+        var J = W.HoloJourney; if (!J || (J.met && J.met())) return;     // raced elsewhere
+        if (J.markMet) J.markMet(); if (J.mark) J.mark("signed-in");
+        qWhisper("Hello — I'm Q. I'm yours, and I learn as you do. Ask me anything, anytime.",
+          { ms: 10000, onTap: function () { try { openQPanel(); } catch (e) {} } });
+      } catch (e) {}
+    }, 1600);
+  }
+  // ── the per-stage invitations — Q's ONE calm, dismissible move per stage of the journey
+  //    (q-companion-journey.md). All of Q's voice lives HERE; surfaces only mark milestones / cues on the
+  //    sovereign journey κ (HoloJourney). Each invitation fires ONCE, ever, and points to the next horizon;
+  //    a tap follows the thread (opens verify, import, …) through the shell — Q invites, never does it for you.
+  function journeyOffer(key, text, go) {
+    try {
+      var J = W.HoloJourney; if (!J || !J.invited || !J.met || !J.met()) return;   // never before the first meeting
+      if (J.invited(key)) return; J.markInvited(key);                              // once, ever — recorded in the κ
+      qWhisper(text, { ms: 9000, onTap: function () {
+        if (go) { try { W.dispatchEvent(new CustomEvent("holo-journey-go", { detail: { go: go } })); } catch (e) {} }
+        else { try { openQPanel(); } catch (e) {} }
+      } });
+    } catch (e) {}
+  }
+  // the journey crossed a moment → offer the next horizon, once. Milestones come from HoloJourney.mark()
+  // anywhere in this window; "cue" moments (e.g. Create opening, which isn't a milestone) the surface
+  // dispatches directly. Paced by the user's own actions, so the invitations never stack.
+  function onJourney(d) {
+    d = d || {};
+    if (d.kind === "milestone") {
+      if (d.milestone === "first-space") journeyOffer("read", "Everything here is yours — nothing leaves unless you say so.");
+      else if (d.milestone === "first-creation") journeyOffer("own", "Don't take my word for it — check me yourself.", "verify");
+      else if (d.milestone === "first-verify") journeyOffer("explore", "Want to bring something in from the web? I'll make it yours.", "import");
+    } else if (d.kind === "cue" && d.cue === "create-open") {
+      journeyOffer("write", "Describe what you want — I'll build it with you.");
+    }
+  }
+  try { W.addEventListener("holo-journey", function (e) { onJourney(e && e.detail); }); } catch (e) {}
+
   function withHW(fn) { var n = 0; (function p() { if (W.HoloWidgets) return fn(true); if (++n > 16) return fn(false); setTimeout(p, 120); })(); }
 
   function drawOrb() {

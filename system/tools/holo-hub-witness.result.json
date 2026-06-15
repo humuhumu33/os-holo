@@ -1,0 +1,21 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Holo Hub — catalog-as-products κ data layer (ADR-0094 Stage 2)",
+  "passed": 12,
+  "failed": 0,
+  "checks": {
+    "catalog-loads-from-apps-index-jsonld-1": true,
+    "every-app-becomes-a-product-count-matches-catalog-2": true,
+    "bijection-every-app-has-exactly-one-product-no-orphan-3": true,
+    "every-product-re-derives-l5-and-round-trips-by-4": true,
+    "product-app-by-holo-app-external-id-app-did-holo-5": true,
+    "storeproduct-shape-is-faithful-title-handle-status-varia-6": true,
+    "price-is-honestly-unset-until-stage-3-no-fabricated-numb-7": true,
+    "deterministic-rebuild-identical-product-per-app-l3-l5-8": true,
+    "tamper-refused-flipped-product-byte-id-no-longer-re-deri-9": true,
+    "products-bind-to-the-pinned-medusa-store-api-re-hashed-f-10": true,
+    "the-medusa-pin-v2-15-5-commit-is-carried-on-every-produc-11": true,
+    "0-network-building-the-entire-catalog-made-no-fetch-12": true
+  }
+}

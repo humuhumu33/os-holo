@@ -1,42 +1,39 @@
 {
-  "witnessed": true,
-  "passed": 5,
-  "failed": 0,
-  "files": 13244,
-  "objects": 13242,
-  "sampled": 12586,
+  "witnessed": false,
+  "passed": 2,
+  "failed": 3,
+  "files": 28205,
+  "objects": 13399,
+  "sampled": 12733,
   "covers": [
-    "every first-party file in both folders is a firs",
-    "no orphan objects — every index entry exists on ",
     "every object is dual-axis — did:holo:sha256 ⊕ di",
-    "a bounded sample RE-DERIVES to both κ — content ",
     "the index is deterministic (sorted keys, no time"
   ],
   "results": [
     {
       "name": "every first-party file in both folders is a first-class addressed object (full coverage)",
-      "ok": true,
-      "detail": "13242/13244 files indexed · 2 live-churn: holo-mind-ui.js, omni.html"
+      "ok": false,
+      "detail": "13389/28205 files indexed · 14816 live-churn: montage_01.png, MANIFESTO.md, manifesto.html"
     },
     {
       "name": "no orphan objects — every index entry exists on disk",
-      "ok": true,
-      "detail": "13242 entries"
+      "ok": false,
+      "detail": "10 orphan(s): os2/.claude/scheduled_tasks.lock, os2/system/os/usr/lib/holo/voice/vendor/models/onnx-community/Qwen2.5-1.5B-Instruct/added_tokens.json, os2/system/os/usr/lib/holo/voice/vendor/models/onnx-community/Qwen2.5-1.5B-Instruct/config.json"
     },
     {
       "name": "every object is dual-axis — did:holo:sha256 ⊕ did:holo:blake3 (substrate σ-axis)",
       "ok": true,
-      "detail": "13242/13242"
+      "detail": "13399/13399"
     },
     {
       "name": "a bounded sample RE-DERIVES to both κ — content addresses, not arbitrary (Law L5)",
-      "ok": true,
-      "detail": "12574/12586 re-derive · 12 live-churn: settings.local.json, conformance.jsonld, holo-fhs-map.mjs"
+      "ok": false,
+      "detail": "12313/12733 re-derive · 420 live-churn: launch.json, settings.local.json, pages.yml"
     },
     {
       "name": "the index is deterministic (sorted keys, no timestamps) → re-derives byte-for-byte",
       "ok": true,
-      "detail": "count 13242"
+      "detail": "count 13399"
     }
   ],
   "spec": "Every first-party file in Hologram OS2 + Hologram Apps is a first-class attribute-addressed object on the unified UOR substrate (dual-axis did:holo:sha256 ⊕ did:holo:blake3), re-derivable (Law L5)"

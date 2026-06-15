@@ -1,0 +1,27 @@
+{
+  "@type": "earl:TestResult",
+  "witnessed": true,
+  "subject": "Holo DevTools — the remaining CDP domains over the κ substrate + the holo-gov.js cdp branch (ADR-0095)",
+  "covers": [
+    "CSS — the Styles panel resolves the --holo-* design tokens and surfaces the readability FLOOR (--holo-font-min, ADR-0057) as an un-overridable !important rule (WCAG, §7 T2)",
+    "Sources — Debugger.getScriptSource returns the source κ's text (publishSource → SoftwareSourceCode, ADR-0055) with the L5 verify badge; SOURCE-by-κ, not a live V8 debugger (ADR-0095 §8 honest non-goal)",
+    "Memory — the HeapProfiler snapshot IS the κ store: node=κ-object, edges=links[] (the Merkle-DAG, ADR-0060), dedup visible (distinctKappa===store size, one κ stored once)",
+    "Performance — substrate counters (CDP frames · κ resolves · store objects · link edges); wall-clock is HOST-ATTESTED (rederivable=false), never faked (the Holo Telemetry honesty split, ADR-0073)",
+    "Application — Storage.getUsageAndQuota reports κ-store usage + the live scene (type · object count · distinct κ)",
+    "graceful degradation holds across the larger surface — an unmapped method returns a clean 'unsupported' (ADR-0095 §8)",
+    "GOV BRANCH — holo-gov.js routes the human DevTools frame's method:'cdp' to W.HoloDevToolsServe, FAIL-CLOSED (no authority ⇒ refused) with the app identity host-asserted (byWin) — the design's 'holo-gov.js gains ONE branch', asserted against the real edited file"
+  ],
+  "checks": {
+    "css-resolves-tokens-and-enforces-floor": true,
+    "sources-getScriptSource-by-kappa": true,
+    "memory-heap-is-the-kappa-store": true,
+    "performance-substrate-metrics-not-faked-walltime": true,
+    "application-reports-store-usage-and-scene": true,
+    "unmapped-still-degrades": true,
+    "gov-cdp-branch-wired": true,
+    "gov-cdp-branch-fail-closed": true,
+    "gov-cdp-asserts-app-identity": true
+  },
+  "failed": [],
+  "authority": "Chrome DevTools Protocol (the human UI's private transport) · W3C PROV-O · schema.org · ADR-0057 (readability floor / WCAG) · ADR-0060 (link closure) · ADR-0073 (telemetry honesty) · ADR-0091 (the governed bus) · holospaces Law L1/L3/L4/L5"
+}
