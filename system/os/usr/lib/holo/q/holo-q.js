@@ -1,0 +1,232 @@
+// holo-q.js — Q: the single, unified surface for hologram-native intelligence. ONE object every human,
+// app, and external agent touches; behind it sits the whole Holo Q spine — the trinity (create·exist·
+// perceive, ADR-0087) over the Mixture-of-Specialists fabric (ADR-0084/0085), the self-improvement loop
+// (ADR-0086), and the conscience (ADR-0033). Q abstracts that stack into one calm door.
+//
+//   Q.create(intent, {onPartial,id,params}) → a holospace/answer, RIDING THE SPINE (κ-memo O(1) on a
+//                                              repeat, auto-perceived, healable). The verb the Create
+//                                              studio and every app call — same path for all.
+//   Q.ask(intent)                           → await form (the sealed value only).
+//   Q.agent(request, {caller})              → the SINGLE governed point of contact for EXTERNAL agents /
+//                                              non-human entities. FAIL-CLOSED: a conscience must accept,
+//                                              every act seals a receipt, and the caller gets ONLY this
+//                                              door — never raw interior access.
+//   Q.perceive()                            → the live scene feedback (what exists · coherent · drift).
+//   Q.improve() / startEvolving()           → the self-healing loop (bounded, governed, ambient).
+//   Q.remember(signal) / Q.context          → bounded per-user adaptation (recent intents + 👍/👎 bias).
+//
+// installQ() → window.Q singleton; ubiquitous (every app inherits the ONE Q). Q COMPOSES — it does not
+// replace — HoloTrinity/HoloMind/HoloConscience (all kept working); Q is the unified surface over them.
+//
+// HONEST by construction: "self-evolving" is the bounded heal/reevaluate loop, NOT an open-ended learner;
+// "adapts to the user" is recent-intent context + feedback bias; a build runs on-device/template unless a
+// boost model is installed (then it is a network call, governed). Pure ESM, deps injected → Node-witnessed.
+
+import { installTrinity } from "./holo-q-trinity.js";
+import mux from "./holo-q-mux.js";
+
+const intentText = (i) => typeof i === "string" ? i : (i && (i.text || i.utterance || i.input || i.prompt)) || "";
+
+// createQ({ trinity?, mux?, conscience?, clock? }) — all deps injectable (the Holo Atlas isomorphism).
+// `conscience` may be an object ({evaluate}) or a thunk returning one (resolved per call → load-order safe).
+export function createQ({ trinity = null, mux: muxImpl = mux, conscience = null, clock = null } = {}) {
+  const T = trinity || installTrinity();
+  const now = clock || (() => (typeof Date !== "undefined" ? Date.now() : 0));
+  const resolveGate = () => {
+    if (typeof conscience === "function") return conscience();
+    if (conscience) return conscience;
+    return (typeof window !== "undefined") ? window.HoloConscience : null;
+  };
+
+  // ── bounded per-user adaptation: recent intents (continuity) + 👍/👎 (a routing bias signal). This is
+  //    a small preference memory, NOT an open-ended learner — labelled honestly in describe(). ──
+  const ctx = { recent: [], feedback: { up: 0, down: 0 }, intents: 0 };
+  function remember(signal = {}) {
+    const i = intentText(signal.intent != null ? signal.intent : signal);
+    if (i) { ctx.recent = [i, ...ctx.recent.filter((x) => x !== i)].slice(0, 8); ctx.intents++; }
+    if (signal.vote === "up") ctx.feedback.up++; else if (signal.vote === "down") ctx.feedback.down++;
+    return q.context;
+  }
+
+  // ── CREATE — the ONE verb (human · app · internal). Rides trinity.create → the κ-memoized spine. ──
+  // CONTEXT-AWARE: `opts.context` = what the caller is looking at ({ kappa?, source?, name? }). An intent
+  // WITH a focused source EDITS it (the source becomes the edit base — "make this calmer" targets THIS);
+  // WITHOUT context it's a fresh build. The host binds context = the focused holospace, so Q already knows
+  // what "this" is — no copy-paste, no re-describing.
+  async function create(intent, opts = {}) {
+    const input = intentText(intent);
+    if (!input) throw new Error("Q.create: an intent (text) is required");
+    remember({ intent: input });
+    const ctx = opts.context || null;
+    let params = opts.params || {};
+    if (ctx && ctx.source && params.current == null) params = { ...params, current: ctx.source, editing: true };
+    return T.create({
+      id: opts.id || (ctx && ctx.id) || undefined, task: opts.task || "create", input,
+      params, render: opts.render === true, onPartial: opts.onPartial || null,
+    });
+  }
+  // ASK — get an ANSWER (text), not a build. Routes to the `ask` specialist (a generative model with a
+  // Q&A prompt); context-aware (the focused source is what "this" refers to). Returns null if no answer
+  // specialist is bound (the host then shows a graceful notice) — never throws.
+  async function ask(intent, opts = {}) {
+    try { const r = await create(intent, { ...opts, task: opts.task || "ask" }); return r && r.value; }
+    catch (e) { return null; }
+  }
+
+  // ── SUMMON — bind a context once and get a context-locked Q (the ambient surface calls this with the
+  //    focused holospace, so every act resolves against "what you're looking at"). Same spine, same κs. ──
+  function summon(context = null) {
+    return {
+      context,
+      create: (intent, opts = {}) => create(intent, { ...opts, context: opts.context || context }),
+      ask: (intent, opts = {}) => ask(intent, { ...opts, context: opts.context || context }),
+      agent: (request, opts = {}) => agent(request, opts),
+      perceive, improve, remember,
+    };
+  }
+
+  // ── AGENT — the SINGLE governed door for external / non-human callers. Fail-closed: the conscience
+  //    must accept (ADR-0033); with NO gate present, an unknown external caller is DENIED by default
+  //    (only an explicit host opt-in, allowUngoverned, lets an internal trusted caller through). Every
+  //    accepted act returns a receipt (who · verb · the content-addressed effect κ). The interior
+  //    (trinity/fabric/scene) is NEVER handed out — an outside entity gets exactly this function. ──
+  async function agent(request, { caller = "external", allowUngoverned = false, params = {}, delegation = null, capability = "q.agent" } = {}) {
+    const input = intentText(request);
+    if (!input) return { ok: false, refused: true, reason: "empty request", caller };
+    // ── DELEGATION (PC → NPC, ADR-0094): if the agent presents a capability grant, it MUST verify
+    //    (hybrid Ed25519 ‖ ML-DSA, re-derived κ, unexpired — Law L5), NAME this caller as its subject,
+    //    and INCLUDE the capability for this verb. Fail-closed; enforced on TOP of the conscience gate. ──
+    let grant = null;
+    if (delegation) {
+      try {
+        const { verifyDelegation, grants } = await import("../holo-delegate.mjs");
+        grant = verifyDelegation(delegation, { nowIso: new Date().toISOString() });
+        if (!grant) return { ok: false, refused: true, reason: "delegation failed verification (Law L5)", caller };
+        if (caller && caller !== "external" && grant.subject !== caller) return { ok: false, refused: true, reason: "delegation subject ≠ caller", caller };
+        if (!grants(grant, capability)) return { ok: false, refused: true, reason: "capability not granted: " + capability, caller };
+      } catch (e) { return { ok: false, refused: true, reason: "delegation check error: " + (e && e.message), caller }; }
+    }
+    const C = resolveGate();
+    let verdict = { outcome: "accept" };
+    if (C && typeof C.evaluate === "function") {
+      try { verdict = await C.evaluate({ verb: "q.agent", caller, intent: input, capability, delegation: grant ? grant.subject : null }); }
+      catch (e) { return { ok: false, refused: true, reason: "gate error: " + (e && e.message), caller }; }
+    } else if (!allowUngoverned) {
+      return { ok: false, refused: true, reason: "no conscience gate present — external access is fail-closed", caller };
+    }
+    if (verdict.outcome === "block") return { ok: false, refused: true, reason: verdict.reason || "refused by conscience", caller };
+    const r = await create(input, { task: "create", render: false, params });
+    return {
+      ok: true, caller, kappa: r.kappa, value: r.value, cached: r.cached, ms: r.ms,
+      receipt: { who: caller, verb: "q.agent", intent: input, effectKappa: r.kappa, at: now(), ...(grant ? { delegation: delegation.id, subjectType: "npc", capability } : {}) },
+    };
+  }
+
+  const perceive = () => T.state();
+  const improve = (o) => T.improve(o);
+
+  // ── INTENT — the OMNIPOTENT router: a pure, deterministic classifier that sorts a plain-language line
+  //    into what Q should DO — act on the OS (open · close · minimize · maximize), ASK (a question), or
+  //    BUILD (everything else). The host executes the action verbs against the OS's existing open/window
+  //    primitives; Q just decides. Pure → witnessed; reusable by the orb, an app, or an agent. ──
+  function intent(text) {
+    const s = String(text || "").trim();
+    if (!s) return { kind: "build", target: "" };
+    const low = s.toLowerCase();
+    let m;
+    if (/^(?:help|what can (?:you|q) do|what can i (?:say|ask|do|build)|capabilities|commands|\/help)\b/.test(low)) return { kind: "help", target: "" };
+    if ((m = low.match(/^(?:close|quit|exit|dismiss)\b\s*(.*)$/))) return { kind: "close", target: m[1].trim() || "this" };
+    if ((m = low.match(/^(?:minimi[sz]e|hide)\b\s*(.*)$/))) return { kind: "minimize", target: m[1].trim() || "this" };
+    if ((m = low.match(/^(?:maximi[sz]e|full[\s-]?screen|expand)\b\s*(.*)$/))) return { kind: "maximize", target: m[1].trim() || "this" };
+    if (/^(?:tile|arrange|grid)\b/.test(low)) return { kind: "arrange", target: "tile" };
+    if (/^(?:cascade|stack)\b/.test(low)) return { kind: "arrange", target: "cascade" };
+    if (/^(?:focus mode|distraction[\s-]?free|zen)\b/.test(low)) return { kind: "arrange", target: "focus" };
+    if ((m = s.match(/^(?:open|launch|go to|goto|navigate to|take me to|jump to)\s+(.+)$/i))) return { kind: "open", target: m[1].trim() };
+    if (/^(?:https?:\/\/|holo:\/\/|did:holo:|ipfs:\/\/|www\.)/i.test(s) || /^[\w-]+\.(?:com|org|net|io|dev|app|xyz|ai|gov|edu|co|eth)\b/i.test(s)) return { kind: "open", target: s };
+    if (/\?\s*$/.test(s) || /^(?:what|why|how|who|when|where|which|is|are|does|do|can|could|should|would|will|explain|describe|tell me|summari[sz]e|define)\b/i.test(low)) return { kind: "ask", target: s };
+    return { kind: "build", target: s };
+  }
+
+  // ── CAPABILITIES — Q tells you what you can say. Discoverability IS the simplicity: one door, but the
+  //    user shouldn't have to guess its verbs. Pure → witnessed; the orb renders it on "help". ──
+  function capabilities() {
+    return [
+      { id: "build", what: "Build a holospace from a plain prompt", examples: ["a teal pricing page", "a todo app"] },
+      { id: "ask", what: "Answer about what you're looking at, or your whole desktop", examples: ["what is this?", "what's open?"] },
+      { id: "open", what: "Open an app or a link", examples: ["open files", "go to github.com"] },
+      { id: "window", what: "Manage the focused window", examples: ["close this", "minimize", "maximize this"] },
+      { id: "arrange", what: "Arrange the whole desktop", examples: ["tile", "cascade", "focus mode"] },
+    ];
+  }
+
+  // ── ACT — the ONE verb that DOES anything: classify the line (intent), then ask · build · or act on
+  //    the OS. OS actions (open/close/minimize/maximize) execute through host-injected handlers
+  //    (configureActions) and are GOVERNED for non-human callers: an agent (caller set, or governed:true)
+  //    must pass the conscience — fail-closed with no gate — and every executed action mints a receipt.
+  //    The human orb is sovereign (no caller ⇒ ungoverned); an external agent is gated, like Q.agent. ──
+  let _actions = null;
+  function configureActions(handlers) { _actions = handlers || null; return q; }
+  async function act(text, { caller = null, governed = false, context = null } = {}) {
+    const line = intentText(text);
+    const it = intent(line);
+    remember({ intent: line });
+    if (it.kind === "ask") return { kind: "ask", value: await ask(line, { context }) };
+    if (it.kind === "build") { const r = await create(line, { context }); return { kind: "build", kappa: r && r.kappa, value: r && r.value, cached: r && r.cached }; }
+    if (governed || caller != null) {                                  // an OS action by a non-human caller → gate it
+      const C = resolveGate();
+      if (C && typeof C.evaluate === "function") {
+        let v; try { v = await C.evaluate({ verb: "q.act", action: it.kind, target: it.target, caller }); } catch (e) { return { kind: it.kind, refused: true, reason: "gate error: " + (e && e.message), caller }; }
+        if (v && v.outcome === "block") return { kind: it.kind, refused: true, reason: v.reason || "refused by conscience", caller };
+      } else if (governed) {
+        return { kind: it.kind, refused: true, reason: "no conscience gate — OS actions are fail-closed for external callers", caller };
+      }
+    }
+    if (!_actions || typeof _actions[it.kind] !== "function") return { kind: it.kind, target: it.target, error: "no executor bound for action '" + it.kind + "'" };
+    let result; try { result = await _actions[it.kind](it.target); } catch (e) { return { kind: it.kind, target: it.target, error: String((e && e.message) || e) }; }
+    return { kind: it.kind, target: it.target, ok: true, result: result == null ? true : result, receipt: caller ? { who: caller, verb: "q.act", action: it.kind, target: it.target, at: now() } : null };
+  }
+
+  // ── SCOPE — Q's awareness of the WHOLE OS experience: summarize the desktop's open holospaces into a
+  //    compact, model-readable overview (pure — the host passes the live world + focused id). This is
+  //    what makes Q "aware of the entire Hologram OS," not just the one thing in front of you. ──
+  function scope(world = [], focusedId = null) {
+    const items = (world || [])
+      .filter((n) => n && n.state !== "hidden" && (n.kind === "app" || n.kind === "web" || n.kind === "block" || n.appId || n.webAddr || n.src || n.content))
+      .map((n) => ({
+        name: String(n.title || n.name || "holospace").replace(/\s+·.*$/, "").replace(/^🌐\s*/, "").trim() || "holospace",
+        kind: (n.webAddr || n.kind === "web") ? "web" : (n.kind || "app"),
+        focused: focusedId != null && n.id === focusedId,
+      }));
+    const focused = items.find((i) => i.focused) || null;
+    const summary = items.length
+      ? "The desktop has " + items.length + " open holospace" + (items.length === 1 ? "" : "s") + ": " +
+        items.map((i) => i.name + (i.focused ? " (focused)" : "")).join(", ") + "."
+      : "The desktop is empty — no holospaces open.";
+    return { count: items.length, open: items, focused, summary };
+  }
+
+  const q = {
+    create, ask, agent, summon, scope, intent, capabilities, act, configureActions, perceive, improve, remember,
+    get context() { return { recent: ctx.recent.slice(), feedback: { ...ctx.feedback }, intents: ctx.intents }; },
+    route: (task) => muxImpl.routeTask(task),
+    trinity: T, mux: muxImpl,
+    startEvolving: (ms = 2000) => T.startImproving(ms), stopEvolving: () => T.stopImproving(),
+    describe: () => ({
+      what: "Q — the one surface for hologram-native intelligence: humans, apps, and external agents all touch this single door",
+      verbs: "create/ask (build·answer, rides the κ-memo spine) · summon(context) (context-locked Q — resolves intent against what you're looking at) · agent (governed external door, fail-closed + receipted) · perceive/improve (self-healing) · remember (bounded adaptation)",
+      ubiquity: "installQ() → window.Q singleton; every app inherits ONE Q (composes, never replaces, HoloTrinity/HoloMind/HoloConscience)",
+      governance: "external / non-human callers get ONLY Q.agent — conscience-gated (fail-closed), receipted; the interior is never exposed raw",
+      honest: "self-evolving = the bounded heal/reevaluate loop (not open-ended learning); adaptation = recent-intent context + 👍/👎 bias; a build is on-device/template unless boost is installed (then a governed network call)",
+    }),
+  };
+  return q;
+}
+
+// the OS-wide singleton — every native app inherits ONE Q (the shell installs it over the trinity).
+export function installQ(opts = {}) {
+  const g = (typeof window !== "undefined") ? window : globalThis;
+  if (!g.Q) g.Q = createQ(opts);
+  return g.Q;
+}
+
+export default { createQ, installQ };
