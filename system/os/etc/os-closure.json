@@ -751,10 +751,10 @@
       ]
     },
     "splash.html": {
-      "kappa": "did:holo:sha256:2bf9ff69c5b15377cec828a7819cbd98eabbd47e690940039314d4690902e070",
-      "sri": "sha256-K/n/acWxU3fOyCingZy9mOq71H5pCUADkxTUaQkC4HA=",
-      "multibase": "uEiAr-f9pxbFTd87IKKeBnL2Y6rvUfmkJQAOTFNRpCQLgcA",
-      "bytes": 105684
+      "kappa": "did:holo:sha256:2245fabb5f2cd0a1889c39297426dd7f152d7f671d7b82404dd96603a1e15410",
+      "sri": "sha256-IkX6u18s0KGInDkpdCbdfxUtf2cde4JATdlmA6HhVBA=",
+      "multibase": "uEiAiRfq7XyzQoYicOSl0Jt1_FS1_Zx17gkBN2WYDoeFUEA",
+      "bytes": 105779
     },
     "workspace.html": {
       "kappa": "did:holo:sha256:ec0bec8b61b90dbb80d55f30bac5086dcae2227e27f81a04c66a3c1da4269766",
@@ -1279,12 +1279,12 @@
       ]
     },
     "boot/boot-manifest.json": {
-      "kappa": "did:holo:sha256:3378fae7acc184f28cc014a1a01e02f0dd8bcd58de6af3d52710d4cfe5dafc82",
-      "sri": "sha256-M3j656zBhPKMwBShoB4C8N2LzVjeavPVJxDUz+Xa/II=",
-      "multibase": "uEiAzePrnrMGE8ozAFKGgHgLw3YvNWN5q89UnENTP5dr8gg",
+      "kappa": "did:holo:sha256:bd79f87b04026788e8acf590308712548f72c71095146c4270fe2d17f78a0498",
+      "sri": "sha256-vXn4ewQCZ4jorPWQMIcSVI9yxxCVFGxCcP4tF/eKBJg=",
+      "multibase": "uEiC9efh7BAJniOis9ZAwhxJUj3LHEJUUbEJw_i0X94oEmA",
       "bytes": 5406,
       "alsoKnownAs": [
-        "did:holo:blake3:7b88fa927496f287d7b65240cc12fe171f711dbc4463fd990e53d04b654d5ef0"
+        "did:holo:blake3:85ca8e6789787c5c9d5c97797a5fc9900755cd60369ecd01197deb2363e4cee1"
       ]
     },
     "boot/icons/banner.svg": {
@@ -2458,22 +2458,22 @@
       ]
     },
     "shell.html": {
-      "kappa": "did:holo:sha256:2a74bd7fd2f1ab3706b624593af120eefcc5606a0e2730902c8a01e8cbb3b3db",
-      "sri": "sha256-KnS9f9LxqzcGtiRZOvEg7vzFYGoOJzCQLIoB6Muzs9s=",
-      "multibase": "uEiAqdL1_0vGrNwa2JFk68SDu_MVgag4nMJAsigHoy7Oz2w",
-      "bytes": 444586,
+      "kappa": "did:holo:sha256:205eb00a7fd2c63930fbf7d988e35c4b7485179edc60bb7ddaa5e3635147c5c6",
+      "sri": "sha256-IF6wCn/Sxjkw+/fZiONcS3SFF57cYLt92qXjY1FHxcY=",
+      "multibase": "uEiAgXrAKf9LGOTD799mI41xLdIUXntxgu33apeNjUUfFxg",
+      "bytes": 449274,
       "alsoKnownAs": [
-        "did:holo:blake3:dd10f0e2af5b3367768838c70a942ce6bad29f044179e7a77214496520bdbd74"
+        "did:holo:blake3:0e32f34e59bb8ba5e55ff4ffba2247cadf36d0f0ca24f7e8459d592e180adf17"
       ],
       "holo:within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
       "holo:atlasCoordinate": {
         "space": "Φ-Atlas-12288",
         "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
-        "cell": 3444,
-        "page": 13,
-        "byte": 116,
-        "r96": 20,
-        "phi": 3444
+        "cell": 3863,
+        "page": 15,
+        "byte": 23,
+        "r96": 23,
+        "phi": 3863
       }
     },
     "_shared/holo-gov.js": {

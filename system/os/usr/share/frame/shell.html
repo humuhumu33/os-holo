@@ -164,6 +164,11 @@
       #navbar .nav:hover:not(:disabled) { background: color-mix(in srgb, var(--holo-ink) 10%, transparent); }
       #navbar .nav:disabled { opacity: .3; cursor: default; }
       #navbar .nav svg { width: 18px; height: 18px; }
+      /* the holospace you're in — the active tab's app name, next to ⌂ (standardised across every tab) */
+      #scope { flex: 0 0 auto; max-width: 26ch; margin: 0 6px 0 4px; padding: 5px 12px; border-radius: 999rem;
+        font: 650 14px/1 var(--holo-sans, ui-sans-serif, system-ui); letter-spacing: -.01em; color: var(--holo-ink);
+        background: color-mix(in srgb, var(--holo-ink) 8%, transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      @media (max-width: 760px) { #scope { display: none !important; } }
       /* the omnibox — a static Hologram mark (like Chrome's engine glyph) + a SPECTRUM border ring that
          blooms and slowly rotates on focus: one box that unlocks the whole content-addressed spectrum. */
       @property --omni-spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
@@ -252,6 +257,7 @@
         display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 14px; user-select: none; white-space: nowrap;
         font: 600 var(--fs-meta)/1 var(--win-font, ui-sans-serif, system-ui); }
       #holo-credit .cv-left, #holo-credit .cv-right { display: flex; align-items: center; gap: 13px; min-width: 0; }
+      #holo-credit .cv-center { position: absolute; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 6px; pointer-events: none; }
       #holo-credit .pw { color: var(--holo-ink-dim, #8b949e); opacity: .62; letter-spacing: .22em; text-transform: uppercase; }
       #holo-credit .hg { font-weight: 800; letter-spacing: .26em; color: #fff; text-transform: uppercase; filter: drop-shadow(0 1px 6px rgba(0, 0, 0, .35)); }
       @media (prefers-reduced-transparency: reduce) { #holo-credit .hg { filter: none; } }
@@ -267,8 +273,10 @@
       #cv-modal { position: fixed; inset: 0; z-index: 9300; display: none; place-items: center; padding: 20px; background: color-mix(in srgb, #000 62%, transparent); backdrop-filter: blur(4px); }
       #cv-modal.on { display: grid; }
       #cv-modal .cv-card { width: min(384px, 94vw); background: var(--holo-surface, #11151c); border: 1px solid var(--holo-border, #2a313c); border-radius: var(--holo-radius-lg, 18px); padding: 22px; text-align: center; box-shadow: 0 34px 80px -22px rgba(0,0,0,.78); font: var(--holo-text-sm,1rem) var(--win-font, ui-sans-serif, system-ui); }
-      #cv-modal .cv-ic { width: 54px; height: 54px; margin: 2px auto 13px; border-radius: 15px; display: grid; place-items: center; background: color-mix(in srgb, var(--holo-ok, #2fcf6f) 16%, transparent); color: var(--holo-ok, #2fcf6f); }
-      #cv-modal .cv-ic svg { width: 28px; height: 28px; }
+      #cv-modal .cv-brand { display: flex; justify-content: center; margin: 2px 0 13px; }
+      #cv-modal .cv-brand svg { width: 46px; height: 46px; filter: drop-shadow(0 2px 10px rgba(0,0,0,.4)); }
+      #cv-modal .cv-note.why b { color: var(--holo-ink, #e8edf6); font-weight: 700; }
+      #cv-modal .cv-note.why { text-align: left; }
       #cv-modal h2 { margin: 0 0 2px; font-size: 1.24rem; color: var(--holo-ink, #e8edf6); font-weight: 800; }
       #cv-modal .cv-sub { color: var(--holo-ink-dim, #9aa6b8); font-size: .92rem; margin: 0 0 14px; }
       #cv-modal .cv-auth { display: inline-flex; align-items: center; gap: 6px; color: var(--holo-ok, #2fcf6f); font-weight: 700; font-size: .96rem; margin-bottom: 10px; }
@@ -535,6 +543,7 @@
       <button class="nav" id="nav-fwd" type="button" title="Forward" aria-label="Forward" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
       <button class="nav" id="nav-reload" type="button" title="Reload" aria-label="Reload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
       <button class="nav" id="nav-home" type="button" title="Home — this tab's original view" aria-label="Home — this tab's original view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg></button>
+      <span id="scope" hidden aria-live="polite" title="the holospace you're in"></span>
       <div id="omni"><span class="sec" title="Hologram — one address for every object, verified by its hash (Law L5)"><svg class="holomark" viewBox="-104 -104 208 208" width="19" height="19" role="img" aria-label="Hologram"><defs><linearGradient id="omniSpec" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff3b6b"/><stop offset="20%" stop-color="#ff9e2c"/><stop offset="40%" stop-color="#ffe24a"/><stop offset="58%" stop-color="#46e08a"/><stop offset="74%" stop-color="#2bd4ff"/><stop offset="88%" stop-color="#5b8cff"/><stop offset="100%" stop-color="#c77bff"/></linearGradient></defs><g fill="url(#omniSpec)"><circle cx="0.20" cy="-97.39" r="2.61"/><circle cx="-22.86" cy="-86.55" r="2.71"/><circle cx="22.54" cy="-86.32" r="2.81"/><circle cx="-0.03" cy="-76.01" r="2.71"/><circle cx="45.26" cy="-75.92" r="7.80"/><circle cx="-45.82" cy="-75.86" r="2.61"/><circle cx="68.34" cy="-65.13" r="7.70"/><circle cx="-68.83" cy="-65.00" r="2.61"/><circle cx="-22.91" cy="-64.90" r="2.61"/><circle cx="22.71" cy="-64.88" r="2.51"/><circle cx="91.24" cy="-54.34" r="2.61"/><circle cx="-45.94" cy="-54.25" r="7.83"/><circle cx="-91.17" cy="-54.19" r="2.71"/><circle cx="-0.03" cy="-54.19" r="2.71"/><circle cx="45.35" cy="-54.19" r="7.80"/><circle cx="-22.86" cy="-43.64" r="2.71"/><circle cx="22.71" cy="-43.49" r="2.51"/><circle cx="68.29" cy="-43.47" r="7.73"/><circle cx="-68.60" cy="-43.37" r="7.73"/><circle cx="-45.85" cy="-32.63" r="7.77"/><circle cx="45.36" cy="-32.60" r="7.80"/><circle cx="-91.26" cy="-32.55" r="2.71"/><circle cx="0.10" cy="-32.51" r="2.61"/><circle cx="91.24" cy="-32.51" r="2.61"/><circle cx="68.22" cy="-21.95" r="7.83"/><circle cx="22.67" cy="-21.84" r="7.87"/><circle cx="-22.86" cy="-21.82" r="2.71"/><circle cx="-68.57" cy="-21.80" r="7.80"/><circle cx="45.45" cy="-11.06" r="7.73"/><circle cx="-0.19" cy="-11.04" r="7.87"/><circle cx="91.35" cy="-11.01" r="2.81"/><circle cx="-91.54" cy="-10.97" r="2.51"/><circle cx="-45.87" cy="-10.87" r="7.73"/><circle cx="22.71" cy="-0.27" r="8.06"/><circle cx="-22.89" cy="-0.21" r="7.90"/><circle cx="68.28" cy="-0.15" r="7.87"/><circle cx="-68.62" cy="-0.11" r="8.00"/><circle cx="-0.06" cy="10.98" r="7.87"/><circle cx="45.54" cy="11.00" r="7.83"/><circle cx="-45.85" cy="11.02" r="7.77"/><circle cx="-91.26" cy="11.10" r="2.71"/><circle cx="91.24" cy="11.13" r="2.61"/><circle cx="22.71" cy="21.64" r="2.71"/><circle cx="-68.74" cy="21.66" r="7.87"/><circle cx="-22.86" cy="21.67" r="7.87"/><circle cx="68.28" cy="21.67" r="7.87"/><circle cx="-91.54" cy="32.46" r="2.61"/><circle cx="0.15" cy="32.46" r="2.71"/><circle cx="-45.72" cy="32.50" r="7.73"/><circle cx="45.54" cy="32.59" r="7.83"/><circle cx="91.35" cy="32.63" r="2.81"/><circle cx="-23.01" cy="43.23" r="2.61"/><circle cx="68.25" cy="43.31" r="7.83"/><circle cx="-68.71" cy="43.34" r="7.83"/><circle cx="22.71" cy="43.37" r="2.90"/><circle cx="91.39" cy="53.92" r="2.71"/><circle cx="45.48" cy="53.95" r="7.87"/><circle cx="-45.86" cy="53.97" r="7.80"/><circle cx="-91.34" cy="53.99" r="2.61"/><circle cx="0.20" cy="54.09" r="2.61"/><circle cx="-68.57" cy="64.90" r="7.80"/><circle cx="-22.86" cy="64.92" r="2.71"/><circle cx="68.28" cy="64.92" r="2.71"/><circle cx="22.54" cy="65.15" r="2.81"/><circle cx="-45.88" cy="75.56" r="7.80"/><circle cx="0.10" cy="75.62" r="2.61"/><circle cx="45.32" cy="75.62" r="2.61"/><circle cx="22.53" cy="86.47" r="2.71"/><circle cx="-22.86" cy="86.75" r="2.71"/><circle cx="-0.03" cy="97.29" r="2.71"/></g></svg></span><input id="omni-addr" type="text" spellcheck="false" autocomplete="off" aria-label="Search anything" placeholder="Search anything" /><button class="go" id="omni-go" type="button" title="Open" aria-label="Open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
       <div id="verbs" aria-label="Create, Play, Share — the three holospace verbs">
         <button id="verb-build" type="button" title="Create — author a component → a content-addressed κ">✦ <span class="vl">Create</span></button>
@@ -548,9 +557,9 @@
       <!-- desktop credit — pinned bottom-center, behind windows; on every tab's desktop -->
       <div id="holo-credit">
         <div class="cv-left">
-          <button class="cv-pill" id="cv-privacy" type="button" title="Holo Privacy — what apps and agents may learn about you"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.4 8.5-8 11-4.6-2.5-8-6-8-11V5l8-3z"/></svg> Privacy</button>
-          <span><span class="pw">Powered by</span> <span class="hg">HOLOGRAM</span></span>
+          <button class="cv-pill" id="cv-privacy" type="button" title="Your privacy — what apps and agents may see"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.4 8.5-8 11-4.6-2.5-8-6-8-11V5l8-3z"/></svg> Privacy</button>
         </div>
+        <span class="cv-center"><span class="pw">Powered by</span> <span class="hg">HOLOGRAM</span></span>
         <div class="cv-right">
           <span class="cv-timer" id="cv-timer" title="This sign-in session">◷ 0:00:00</span>
           <button class="cv-pill cv-ver" id="cv-version" type="button" title="Self-verified — every byte re-derives to its content address (Law L5). Click to verify + update."><span class="vk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span> <span id="cv-vlabel">Hologram OS</span></button>
@@ -1065,7 +1074,22 @@
         settings: function () { navApp("org.hologram.HoloControl"); },
         resources: function () { navApp("org.hologram.HoloDocs"); },
       });
-      const reflectOmni = () => { const t = tabs[activeTab] || {}; const o = $("#omni-addr"); if (o && document.activeElement !== o) o.value = t.addr || ""; const sec = $("#omni .sec"); if (sec) { sec.dataset.scheme = t.addr ? schemeOf(t.addr).k : "search"; } };   // omnibox keeps the static Hologram mark; the per-tab scheme rides the tab favicon
+      const reflectOmni = () => { const t = tabs[activeTab] || {}; const o = $("#omni-addr"); if (o && document.activeElement !== o) o.value = t.addr || ""; const sec = $("#omni .sec"); if (sec) { sec.dataset.scheme = t.addr ? schemeOf(t.addr).k : "search"; } updateScope(); };   // omnibox keeps the static Hologram mark; the per-tab scheme rides the tab favicon
+      // ── ONE search bar, standardised: the active holospace's name sits by ⌂, and the omnibar's plain-text
+      //    search is forwarded INTO that tab's app (it prioritises its own κ-objects). Address-like input
+      //    (κ · CID · URL · holo://) still navigates globally. Apps opt in via `holo:search:ready`. ──
+      const cleanName = (s) => String(s || "").replace(/^[^\p{L}\p{N}]+/u, "").split("  ·  ")[0].trim();
+      function activeAppFrame() { try { const el = (focusedId && mounted.get(focusedId)) || world.querySelector("holo-window"); return el ? el.querySelector("iframe") : null; } catch { return null; } }
+      function updateScope() {
+        const t = tabs[activeTab] || {}, sc = $("#scope"), o = $("#omni-addr"); if (!sc) return;
+        if (!t.home && t.title && t.title !== "New Tab") { sc.hidden = false; sc.textContent = cleanName(t.title); }
+        else { sc.hidden = true; sc.textContent = ""; }
+        if (o && document.activeElement !== o) o.placeholder = t.appSearch ? ("Search " + (cleanName(t.title) || "this holospace")) : "Search anything";
+      }
+      function isAddrLike(q) { q = (q || "").trim(); if (!q) return false; try { const pr = parseRef(q); if (pr.kind === "kappa" || pr.kind === "cid") return true; } catch {} try { const cls = classify(q, catalog); return cls.kind === "web" || cls.kind === "holo"; } catch { return false; } }
+      function inTabSearch(q) { const t = tabs[activeTab]; return !!(t && t.appSearch && !isAddrLike(q)); }
+      function forwardSearch(q) { const f = activeAppFrame(); if (f && f.contentWindow) { try { f.contentWindow.postMessage({ type: "holo:search", q: q }, "*"); } catch {} } }
+      addEventListener("message", (e) => { const d = e.data; if (!d || d.type !== "holo:search:ready") return; const f = activeAppFrame(); if (f && e.source === f.contentWindow) { const t = tabs[activeTab]; if (t) { t.appSearch = true; t.searchLabel = d.app || cleanName(t.title); updateScope(); } } });
       function selectTab(i) { if (i === activeTab || !tabs[i]) return; exitStudio(true); tabs[activeTab].snap = snapshotWorld(); activeTab = i; restoreWorld(tabs[i].snap); applyWidgets(i); renderTabs(); reflectOmni(); updateNav(); }
       function newTab(title) { exitStudio(true); tabs[activeTab].snap = snapshotWorld(); tabs.push({ id: "t" + tabs.length + Math.random().toString(36).slice(2, 5), title: title || "New Tab", addr: "", snap: null }); activeTab = tabs.length - 1; restoreWorld(null); applyWidgets(activeTab); renderTabs(); reflectOmni(); updateNav(); return activeTab; }
       function closeTab(i) {
@@ -1191,8 +1215,23 @@
         const privBtn = $("#cv-privacy"), verBtn = $("#cv-version"), timerEl = $("#cv-timer"), vlabel = $("#cv-vlabel");
         if (!privBtn || !verBtn) return;
         const REPO = "https://github.com/Hologram-Technologies/hologram-os", VERSION = "0.1.0";
-        // Privacy → open the existing Holo Privacy panel (the floating button is hidden; we trigger it)
-        privBtn.onclick = () => { const b = $("#holo-privacy-btn"); if (b) b.click(); else if (window.HoloPrivacy && window.HoloPrivacy.openControlCenter) window.HoloPrivacy.openControlCenter(); };
+        // the Hologram logo — clone the omnibar holomark (same brand mark), sized for a modal header
+        const holoLogo = (sz) => { const m = $("#omni .holomark"); if (!m) return ""; const c = m.cloneNode(true); c.setAttribute("width", sz); c.setAttribute("height", sz); c.removeAttribute("class"); return c.outerHTML; };
+        // ONE modal, repopulated per screen (version · privacy) — both branded, clean, jargon-free
+        let modal = null;
+        function ensureModal() { if (modal) return modal; modal = document.createElement("div"); modal.id = "cv-modal"; document.body.appendChild(modal); modal.addEventListener("click", (e) => { if (e.target === modal || (e.target.classList && e.target.classList.contains("cv-x"))) modal.classList.remove("on"); }); return modal; }
+        function openModal(inner) { ensureModal().innerHTML = '<div class="cv-card">' + inner + "</div>"; modal.classList.add("on"); return modal; }
+        // Privacy → a clean self-descriptive screen (matches the version screen); "Manage" opens the control
+        privBtn.onclick = () => {
+          const m = openModal(
+            '<div class="cv-brand">' + holoLogo(46) + "</div>" +
+            "<h2>Your privacy</h2><p class=\"cv-sub\">You decide what anyone sees</p>" +
+            '<div class="cv-auth" style="color:var(--holo-accent,#4f8cff)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 2l8 3v6c0 5-3.4 8.5-8 11-4.6-2.5-8-6-8-11V5l8-3z"/></svg> Private by default</div>' +
+            '<p class="cv-note why">Your data stays on this device. Nothing about you leaves it unless you allow it.<br><br>Apps and AI agents have to ask — you approve each thing once, and everything else stays hidden.<br><br>Choose what each one may see, and take it back any time.</p>' +
+            '<button class="cv-btn" id="cv-manage">Manage what’s shared</button>' +
+            '<button class="cv-later cv-x">Close</button>');
+          m.querySelector("#cv-manage").onclick = () => { modal.classList.remove("on"); const b = $("#holo-privacy-btn"); if (b) b.click(); else if (window.HoloPrivacy && window.HoloPrivacy.openControlCenter) window.HoloPrivacy.openControlCenter(); };
+        };
         // session timer — counts from the verified session's issuedAt (else this load)
         let start = Date.now();
         try { const t = JSON.parse(sessionStorage.getItem("holo.session") || "null"); if (t && t.issuedAt) start = new Date(t.issuedAt).getTime(); } catch {}
@@ -1204,25 +1243,18 @@
           rootK = c.root || c.head || null; files = Object.keys(c.closure || {}).length;
           vlabel.textContent = "v" + VERSION + (rootK ? " · " + rootK.split(":").pop().slice(0, 7) : "");
         }).catch(() => { vlabel.textContent = "v" + VERSION; });
-        // version click → authenticity + update
-        let modal = null;
+        // version click → a clean self-descriptive screen: authenticity + update (matches the privacy screen)
         verBtn.onclick = () => {
-          if (!modal) {
-            modal = document.createElement("div"); modal.id = "cv-modal";
-            modal.innerHTML = '<div class="cv-card">' +
-              '<div class="cv-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M12 3l7 3v6c0 4.4-3 7.7-7 9-4-1.3-7-4.6-7-9V6z"/></svg></div>' +
-              '<h2>Hologram OS</h2><p class="cv-sub">v' + VERSION + ' · self-verified</p>' +
-              '<div class="cv-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M20 6 9 17l-5-5"/></svg> Authentic — verified on this device</div>' +
-              '<div class="cv-k" id="cv-k" title="content address — tap to copy">' + (rootK || "—") + '</div>' +
-              '<p class="cv-note">Every byte re-derives to this content address. Change one and boot fails (Law L5). ' + (files ? files + " objects verified." : "") + '</p>' +
-              '<button class="cv-btn" id="cv-update"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg> Check for updates</button>' +
-              '<button class="cv-later" id="cv-close">Close</button></div>';
-            document.body.appendChild(modal);
-            modal.addEventListener("click", (e) => { if (e.target === modal || e.target.id === "cv-close") modal.classList.remove("on"); });
-            modal.querySelector("#cv-k").onclick = () => { try { navigator.clipboard.writeText(rootK || ""); toast("content address copied"); } catch {} };
-            modal.querySelector("#cv-update").onclick = () => window.open(REPO + "/releases", "_blank", "noopener");
-          }
-          modal.classList.add("on");
+          const m = openModal(
+            '<div class="cv-brand">' + holoLogo(46) + "</div>" +
+            "<h2>Hologram OS</h2><p class=\"cv-sub\">v" + VERSION + " · self-verified</p>" +
+            '<div class="cv-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M20 6 9 17l-5-5"/></svg> Authentic — verified on this device</div>' +
+            '<div class="cv-k" id="cv-k" title="content address — tap to copy">' + (rootK || "—") + "</div>" +
+            '<p class="cv-note">Every part of this system re-checks against this address when it starts. Change one byte and it won’t run.' + (files ? " " + files + " objects checked." : "") + "</p>" +
+            '<button class="cv-btn" id="cv-update"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg> Check for updates</button>' +
+            '<button class="cv-later cv-x">Close</button>');
+          m.querySelector("#cv-k").onclick = () => { try { navigator.clipboard.writeText(rootK || ""); toast("content address copied"); } catch {} };
+          m.querySelector("#cv-update").onclick = () => window.open(REPO + "/releases", "_blank", "noopener");
         };
       })();
 
@@ -3495,8 +3527,10 @@
         showSug();
       }
       let sugT;
-      $("#omni-addr").addEventListener("input", (e) => { const q = e.target.value; clearTimeout(sugT); sugT = setTimeout(() => { sug.items = buildSuggestions(q); sug.sel = 0; renderSug(); }, 100); });
-      $("#omni-addr").addEventListener("focus", (e) => { if (e.target.value.trim()) { sug.items = buildSuggestions(e.target.value); sug.sel = 0; renderSug(); } });
+      $("#omni-addr").addEventListener("input", (e) => { const q = e.target.value; clearTimeout(sugT);
+        if (inTabSearch(q)) { forwardSearch(q); hideSug(); return; }   // plain text → filter the app you're in
+        sugT = setTimeout(() => { sug.items = buildSuggestions(q); sug.sel = 0; renderSug(); }, 100); });
+      $("#omni-addr").addEventListener("focus", (e) => { if (e.target.value.trim() && !inTabSearch(e.target.value)) { sug.items = buildSuggestions(e.target.value); sug.sel = 0; renderSug(); } });
       $("#omni-addr").addEventListener("blur", () => setTimeout(hideSug, 160));
       $("#omni-addr").addEventListener("keydown", (e) => {
         if (e.key === "ArrowDown" && sug.open) { e.preventDefault(); sug.sel = Math.min(sug.sel + 1, sug.items.length - 1); paintSel(); }
@@ -3504,10 +3538,11 @@
         else if (e.key === "Escape") { hideSug(); }
         else if (e.key === "Enter") {
           if (sug.open && sug.items[sug.sel]) { e.preventDefault(); runSug(sug.sel); }
+          else if (inTabSearch(e.target.value)) { e.preventDefault(); forwardSearch(e.target.value); }   // stay in-tab
           else { omniGo(e.target.value); e.target.value = ""; e.target.blur(); }
         }
       });
-      $("#omni-go").onclick = () => { const v = $("#omni-addr").value; hideSug(); $("#omni-addr").value = ""; omniGo(v); };
+      $("#omni-go").onclick = () => { const v = $("#omni-addr").value; hideSug(); if (inTabSearch(v)) { forwardSearch(v); return; } $("#omni-addr").value = ""; omniGo(v); };
       addEventListener("resize", () => { if (sug.open) showSug(); });
       // toolbar nav: reload the active tab's content; home opens a fresh tab. (Back/fwd reserved for web history.)
       // ── per-holotab navigation: Back · Forward · Reload · Home (the tab's original view) ──
