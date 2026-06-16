@@ -9,7 +9,7 @@ _serveq.mjs
 .claude/
 
 # Holo Voice model weights — content-addressed artifacts, NOT source. Fetched + hash-verified by
-# tools/vendor-voice-model.mjs (run it once after clone). See holo-models for the artifact store.
+# tools/vendor-voice-model.mjs (run it once after clone). κ-pins: voice/models.manifest.json.
 system/os/usr/lib/holo/voice/vendor/
 
 # Vendored esbuild-wasm toolchain (content-addressed artifacts — run tools/vendor-esbuild-wasm.mjs)
@@ -26,7 +26,7 @@ system/os/usr/lib/holo/interactjs/
 .holo-tor/
 
 # Neural super-resolution scratch (depth/resrgan ONNX experiments) — research scratch, not part of
-# the shell. Purged from history; never commit. Large model blobs belong in the holo-models repo.
+# the shell. Purged from history; never commit. Large model blobs are gitignored runtime artifacts.
 system/_nsr/
 
 # yt-dlp binary — a fetched tool, not source. Vendor it locally; never commit the binary.

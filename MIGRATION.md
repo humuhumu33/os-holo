@@ -1,15 +1,20 @@
 # Migration — Hologram OS → lean shell + satellite repos
 
-Hologram OS is split across three repositories so the OS itself stays a thin,
+Hologram OS is split across two repositories so the OS itself stays a thin,
 canonical holospace shell. This file records what moved where, and why.
 
 ## Repository topology
 
 | Repo | Role |
 |------|------|
-| **os-holo** (this repo) | The lean shell: boot chain, κ-substrate runtime, service workers, the FHS map/serve, the universal core libraries every holo app links against, and the gate/witness machinery that seals them. |
-| **Hologram Apps** | Individual app packages (`apps/<id>/`), each with its own `holospace.json` declaring the OS libraries it needs via `shared[]`, and its own κ-sealed `holospace.lock.json`. |
-| **holo-models** | The content-addressed LLM/ONNX model artifact store. Weights are NOT committed to os-holo — they are gitignored runtime artifacts fetched + hash-verified by `system/tools/vendor-voice-model.mjs`. holo-models holds the canonical κ-manifest. |
+| **hologram-os** (this repo, remote `os-holo`) | The lean shell: boot chain, κ-substrate runtime, service workers, the FHS map/serve, the universal core libraries every holo app links against, and the gate/witness machinery that seals them. Also holds the model κ-manifest (`system/os/usr/lib/holo/voice/models.manifest.json`). |
+| **hologram-apps** (remote `apps-holo`) | Individual app packages (`apps/<id>/`), each with its own `holospace.json` declaring the OS libraries it needs via `shared[]`, and its own κ-sealed `holospace.lock.json`. |
+
+Model weights are **content-addressed runtime artifacts, not source** — gitignored
+under `system/os/usr/lib/holo/voice/vendor/` and fetched + hash-verified on demand by
+`system/tools/vendor-voice-model.mjs`. Their canonical κ-pins live in
+`voice/models.manifest.json` (generated from that script). The earlier separate
+`holo-models` repo was folded into this manifest; there is no third repo.
 
 ## What changed in this restructuring
 
@@ -39,7 +44,7 @@ gate reds** — baseline 18, after 18):
 
 Both removed from the working tree, added to `.gitignore`, and purged from all
 history with `git filter-repo` (the only way to actually shrink `.git`). Large
-model/SR blobs belong in holo-models, not in os-holo history.
+model/SR blobs are gitignored runtime artifacts (see `voice/models.manifest.json`), not committed to history.
 
 ### Kept — build-time tools (left in place deliberately)
 `holo-theme.mjs`, `holo-phi.mjs`, `make-vendor.mjs` are node CLIs (not runtime

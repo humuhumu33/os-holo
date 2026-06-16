@@ -357,7 +357,7 @@ async function vendorKokoroLibs() {
   await writeFile(path.join(VENDOR, "README.md"),
     `# Holo Voice vendored recognizer (serverless, .gitignored)\n\n` +
     `Generated + sha256-verified by tools/vendor-voice-model.mjs (run it after clone). NOT committed —\n` +
-    `these are content-addressed artifacts, not source. See holo-models for the artifact store.\n\n` +
+    `these are content-addressed artifacts, not source. κ-pins: voice/models.manifest.json.\n\n` +
     `- transformers/ — @huggingface/transformers@${TF_VER} ESM entry + bundled onnxruntime-web wasm\n` +
     `  (the .wasm here is set as env.backends.onnx.wasm.wasmPaths, so no CDN wasm fetch)\n` +
     `- models/${MODEL}/ — quantized Whisper-base (encoder + merged decoder) — speech recognition\n` +
