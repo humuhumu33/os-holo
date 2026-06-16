@@ -368,11 +368,13 @@
   .btn{ -webkit-appearance:none; appearance:none; cursor:pointer;
     display:inline-flex; align-items:center; justify-content:center; gap:.55em; border:1px solid transparent;
     border-radius:999px; font:600 var(--u)/1 inherit; white-space:nowrap;
-    padding:1.12em 2.3em; transition:background .15s, border-color .15s, transform .12s; }  /* matched to reference pill width */
+    padding:1.12em 2.3em; transition:background .15s, border-color .15s, transform .16s var(--ease), box-shadow .22s var(--ease); }  /* matched to reference pill width */
   /* both CTAs share ONE golden width — u·φ⁵ — so they're identical pills, centred, on the φ¹ gap above */
-  .cta .btn{ min-width:calc(var(--u-phi4) * var(--phi)); }                                  /* = u·φ⁵ ≈ 11.09u */
+  .cta .btn{ min-width:calc(var(--u-phi4) * var(--phi)); position:relative; isolation:isolate; }   /* = u·φ⁵ ≈ 11.09u; isolate → glossy sheen stacks correctly */
   .btn span{ line-height:1; }                              /* equal cap-height line box → equal pill height */
-  .btn:active{ transform:translateY(1px); }
+  /* hyper-real: the pills LIFT off the screen on hover and press IN on click */
+  .cta .btn:hover{ transform:translateY(-2px); }
+  .btn:active{ transform:translateY(1px) scale(.992); }
   .btn-primary{ background:var(--btn-p-bg); color:var(--btn-p-fg); }
   .btn-primary:hover{ background:var(--btn-p-hover); }
   /* power-button glyph: a crisp IEC power symbol, sized to the label's cap height and optically centred */
@@ -390,7 +392,17 @@
   @property --pwr-spin{ syntax:"<angle>"; inherits:false; initial-value:0deg; }
   @keyframes pwr-spin{ to{ --pwr-spin:360deg; } }
   :root[data-immersive="full"] .btn-primary{ position:relative; color:#fff; border:0;
-    background:var(--panel); box-shadow:0 .35em 1.5em rgba(0,0,0,.45); }
+    background:linear-gradient(180deg, #1b1b21 0%, #0a0a0d 58%, #050507 100%);   /* glossy black glass */
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.20),       /* top gloss rim */
+      inset 0 -2px 6px rgba(0,0,0,.65),          /* inner base shade → curved button */
+      0 2px 5px rgba(0,0,0,.5),                  /* contact shadow */
+      0 16px 32px -10px rgba(0,0,0,.62),         /* ambient elevation — floats off the screen */
+      0 40px 70px -28px rgba(0,0,0,.5); }
+  /* glossy specular sheen across the top half (sits under the spectrum ring, over the glass) */
+  :root[data-immersive="full"] .btn-primary::after{ content:""; position:absolute; inset:1px; z-index:0; border-radius:inherit; pointer-events:none;
+    background:linear-gradient(180deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,.02) 42%, transparent 58%); }
+  :root[data-immersive="full"] .btn-primary > *{ position:relative; z-index:2; }   /* label + glyph above sheen/ring */
   :root[data-immersive="full"] .btn-primary::before{ content:""; position:absolute; inset:0; z-index:1;
     border-radius:inherit; padding:1.6px; pointer-events:none;
     background:conic-gradient(from var(--pwr-spin), #ff3b6b,#ff9e2c,#ffe24a,#46e08a,#2bd4ff,#5b8cff,#c77bff,#ff3b6b);
@@ -398,26 +410,48 @@
             mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);         mask-composite:exclude;
     animation:pwr-spin 7s linear infinite;
     filter:drop-shadow(0 0 4px rgba(255,80,140,.42)) drop-shadow(0 0 7px rgba(90,140,255,.42)); }   /* spectrum glow */
-  :root[data-immersive="full"] .btn-primary:hover{ background:var(--panel-hover);
-    box-shadow:0 0 26px -6px rgba(120,140,255,.55), 0 .45em 1.8em rgba(0,0,0,.5); }
+  :root[data-immersive="full"] .btn-primary:hover{ background:linear-gradient(180deg, #232329 0%, #0d0d11 58%, #060608 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.24),
+      inset 0 -2px 6px rgba(0,0,0,.6),
+      0 3px 7px rgba(0,0,0,.5),
+      0 24px 44px -10px rgba(0,0,0,.66),         /* lifts higher → bigger, softer shadow */
+      0 0 30px -6px rgba(120,140,255,.5); }       /* a faint spectrum bloom */
   @media (prefers-reduced-motion: reduce){ :root[data-immersive="full"] .btn-primary::before{ animation:none; } }
 
   /* the OS-detected download glyph sits like the power glyph — cap-height, optically centred */
   .btn .os-ic{ display:inline-flex; width:1.16em; height:1.16em; flex:none; margin-top:-0.04em; }
   .btn .os-ic svg{ width:100%; height:100%; }
-  /* Free Download is frosted glass: a translucent pane that blurs the cloudscape behind it, with a
-     soft inner highlight and hairline edge so it reads as a real pane of glass, not a flat panel. */
-  #download{ background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.28);
-    -webkit-backdrop-filter:blur(14px) saturate(1.3); backdrop-filter:blur(14px) saturate(1.3);
-    box-shadow:0 .4em 1.4em rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.35); }
-  #download:hover{ background:rgba(255,255,255,.2); border-color:rgba(255,255,255,.45); }
-  /* Immersive sits on the bright cloudscape — black ink + a darker glass edge so the pill reads clearly */
-  :root[data-immersive="full"] #download{ color:#000; border-color:rgba(0,0,0,.22);
-    box-shadow:0 .4em 1.4em rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.5); }
-  :root[data-immersive="full"] #download:hover{ background:rgba(255,255,255,.28); border-color:rgba(0,0,0,.34); }
-  :root[data-theme="light"] #download{ background:rgba(20,20,28,.06); border-color:rgba(20,20,28,.14);
-    box-shadow:0 .4em 1.4em rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.6); }
-  :root[data-theme="light"] #download:hover{ background:rgba(20,20,28,.1); border-color:rgba(20,20,28,.22); }
+  /* Free Download is a real pane of TRANSLUCENT GLASS: it blurs the cloudscape behind it, carries a
+     glossy top sheen + a beveled rim, and floats on layered shadows so it reads as a button lifted
+     off the screen — not a flat panel. */
+  #download{ background:linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.06));
+    border:1px solid rgba(255,255,255,.34);
+    -webkit-backdrop-filter:blur(18px) saturate(1.7); backdrop-filter:blur(18px) saturate(1.7);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,.7),       /* bright top rim */
+      inset 0 -2px 5px rgba(0,0,0,.16),           /* base shade → curved glass */
+      inset 0 0 16px rgba(255,255,255,.10),       /* internal glow */
+      0 2px 5px rgba(0,0,0,.16),                  /* contact shadow */
+      0 16px 30px -10px rgba(0,0,0,.5),           /* ambient elevation */
+      0 38px 64px -30px rgba(0,0,0,.42); }        /* far soft shadow */
+  /* the glossy reflection across the top half, behind the label */
+  #download::before{ content:""; position:absolute; inset:1px; z-index:-1; border-radius:inherit; pointer-events:none;
+    background:linear-gradient(180deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,.08) 44%, transparent 60%); }
+  #download:hover{ background:linear-gradient(180deg, rgba(255,255,255,.32), rgba(255,255,255,.1)); border-color:rgba(255,255,255,.5);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,.8), inset 0 -2px 5px rgba(0,0,0,.16), inset 0 0 18px rgba(255,255,255,.14),
+      0 3px 7px rgba(0,0,0,.18), 0 24px 42px -10px rgba(0,0,0,.55), 0 44px 74px -32px rgba(0,0,0,.45); }
+  /* Immersive sits on the bright cloudscape — black ink + a slightly cooler glass + blue-tinted shadows */
+  :root[data-immersive="full"] #download{ color:#0a0c12; border-color:rgba(255,255,255,.55);
+    background:linear-gradient(180deg, rgba(255,255,255,.36), rgba(255,255,255,.14));
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,.9), inset 0 -2px 5px rgba(0,0,0,.10), inset 0 0 18px rgba(255,255,255,.16),
+      0 2px 6px rgba(18,38,76,.2), 0 18px 34px -10px rgba(18,38,76,.42), 0 42px 70px -30px rgba(10,22,52,.46); }
+  :root[data-immersive="full"] #download:hover{ background:linear-gradient(180deg, rgba(255,255,255,.46), rgba(255,255,255,.2)); border-color:rgba(255,255,255,.7); }
+  :root[data-theme="light"] #download{ color:var(--fg); background:linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.28)); border-color:rgba(20,20,28,.14);
+    box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9), inset 0 -2px 4px rgba(0,0,0,.06), 0 2px 5px rgba(0,0,0,.08), 0 16px 30px -10px rgba(0,0,0,.18), 0 36px 60px -30px rgba(0,0,0,.14); }
+  :root[data-theme="light"] #download:hover{ background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.4)); border-color:rgba(20,20,28,.22); }
 
   /* boot status — empty until the user acts, then carries the boot progress text */
   .status{ min-height:0; color:var(--muted-2); font-weight:500;
@@ -1007,7 +1041,7 @@
     // VANTA.CLOUDS2 is a FACTORY, not the class — the shader lives on the prototype of the instances it makes.
     // So we mount one throwaway probe, patch the prototype it exposes (every later instance inherits it), and
     // discard it. Done once, lazily, only when Immersive actually needs the field.
-    const HOLO_HORIZON = "0.52";   // shader vertical offset (stock Vanta = 0.65); HIGHER ⇒ horizon up / less dark sky above. 0.52 ⇒ cloud bank ~62% from top (taller blue, narrower dark)
+    const HOLO_HORIZON = "0.58";   // shader vertical offset (stock Vanta = 0.65); HIGHER ⇒ horizon up / less dark sky above. 0.58 ⇒ cloud bank ~55% from top (more blue sky, narrower dark)
     let horizonPatched = false;
     function patchHorizon() {
       if (horizonPatched) return;
