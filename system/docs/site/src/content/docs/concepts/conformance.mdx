@@ -1,0 +1,68 @@
+---
+title: Proof, not promises
+description: How Hologram OS proves correctness instead of claiming it — witnesses, the fail-closed gate, and the W3C EARL report.
+audience: [developers, agents]
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+In Hologram OS a thing is not "done" because someone says so. It is done when a
+**witness** proves it against an outside authority and the **gate** stays green.
+This is the discipline that lets the docs promise behaviour and mean it.
+
+## Why: claims rot, proofs don't
+
+Documentation drifts from code, and "it works" is unfalsifiable. The fix is to make
+every important claim executable: pair it with a script that re-derives the result
+from first principles. If the script passes, the claim is true right now; if it
+fails, the build cannot ship.
+
+## What: the three pieces
+
+- **Witness** — a deterministic script (`tools/<name>-witness.mjs`) that proves one
+  claim against an external standard (a W3C spec, Linux FHS, a crypto vector) and
+  writes a result file.
+- **Conformance row** — one entry in
+  [`system/os/etc/conformance.jsonld`](https://github.com/humuhumu33/os-holo/blob/main/system/os/etc/conformance.jsonld)
+  pairing a claim with its witness, its authority, and whether it is `required`.
+- **Gate** — [`system/tools/gate.mjs`](https://github.com/humuhumu33/os-holo/blob/main/system/tools/gate.mjs)
+  re-runs the witnesses, joins them to the catalog, emits a W3C EARL report, and
+  **exits non-zero if any required row is unproven**.
+
+A real row:
+
+```json
+{
+  "@id": "https://hologram.os/conformance/os2#fhs-graph",
+  "@type": "hosc:ConformanceAssertion",
+  "name": "The Linux FHS root is one self-verifying, AI-navigable semantic graph",
+  "hosc:authority": "Linux Foundation FHS 3.0 · W3C JSON-LD 1.1 · W3C SHACL · PROV-O · W3C DID Core",
+  "hosc:witness": "tools/fhs-graph-witness.mjs",
+  "hosc:required": true
+}
+```
+
+## How: run it yourself
+
+```sh
+cd system
+npm install
+npm run gate                       # the release gate — exits 0 only if every required row is proven
+node tools/fhs-graph-witness.mjs   # run one witness; writes tools/fhs-graph.result.json
+```
+
+The gate writes a standard EARL report to
+[`system/os/etc/earl-report.jsonld`](https://github.com/humuhumu33/os-holo/blob/main/system/os/etc/earl-report.jsonld),
+where each row resolves to `earl:passed` or `earl:failed` — a machine-readable
+record an agent can consume directly.
+
+<Aside type="caution" title="Why this matters">
+  The gate is fail-closed: a build with any required row unwitnessed cannot ship.
+  This is also the honesty rule for the runtime — code never fakes a green state
+  (Law L5). When something is unverified, the system says so rather than pretend.
+</Aside>
+
+## Next
+
+- [Conformance rows](/reference/conformance) — every proven claim, generated from the catalog.
+- [Build, run, share an app](/build/an-app) — where the gate meets your own work.

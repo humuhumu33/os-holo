@@ -1,0 +1,63 @@
+---
+title: The five Laws
+description: The five constraints every object in Hologram OS obeys — content identity, no duplication, offline-first, no foreign runtime, and verify by re-derivation.
+audience: [developers, agents]
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Five laws hold across the whole system. They are not features you opt into — they
+are the constraints that make a serverless, self-verifying computer possible at
+all. Everything else in these docs is a consequence of one of them.
+
+<Aside type="note">
+  The laws come from the holospaces engine and are cited throughout the
+  [architecture decisions](/architecture/adrs). The short forms below link to the
+  ADR that defines each one.
+</Aside>
+
+## L1 — Identity is content, not location
+
+An object's name is derived from its bytes, never from where it lives. A bare URL
+cannot be an identity; a content address (`did:holo:sha256:…`) can. Move the bytes
+anywhere and the name is unchanged; change one byte and it is a different object.
+<br />*Source: [ADR-0022](https://github.com/humuhumu33/os-holo/blob/main/system/docs/adr/0022-w3c-addressing.md), [ADR-0025](https://github.com/humuhumu33/os-holo/blob/main/system/docs/adr/0025-uor-object.md).*
+
+## L2 — One primitive, no duplication
+
+There is exactly one canonical object per concept; every surface binds its κ, none
+copies its values. One adapter per format, one Profile, one source of truth. Change
+the κ and the whole system changes at once — there is nothing to keep in sync.
+<br />*Source: [ADR-0028](https://github.com/humuhumu33/os-holo/blob/main/system/docs/adr/0028-holo-ux-profile.md), [ADR-0029](https://github.com/humuhumu33/os-holo/blob/main/system/docs/adr/0029-adopt-the-desktop.md).*
+
+## L3 — Offline-first; the local store is primary
+
+Verified bytes are persisted to the browser's cache by κ. The second boot — and a
+fully offline boot — is served entirely from the local κ-store. The network is an
+optimisation, not a dependency.
+<br />*Source: [ADR-0026](https://github.com/humuhumu33/os-holo/blob/main/system/docs/adr/0026-sovereign-delivery.md).*
+
+## L4 — Everything through the substrate; no foreign runtime
+
+Never import a foreign framework or widget toolkit as a dependency — no Qt, GTK, or
+UI framework. Adopt a published *format or asset*, re-derived to its κ, through one
+canonical adapter. No parallel configuration medium exists.
+<br />*Source: [ADR-0029](https://github.com/humuhumu33/os-holo/blob/main/system/docs/adr/0029-adopt-the-desktop.md).*
+
+## L5 — Verify by re-derivation
+
+To trust anything, re-derive its hash and compare; refuse a mismatch. On the open
+web this *is* Subresource Integrity. It is the enforcement mechanism for all the
+others: the worker re-hashes every byte on receipt and stops on any mismatch.
+<br />*Source: [ADR-0025](https://github.com/humuhumu33/os-holo/blob/main/system/docs/adr/0025-uor-object.md), [ADR-0022](https://github.com/humuhumu33/os-holo/blob/main/system/docs/adr/0022-w3c-addressing.md).*
+
+<Aside type="tip" title="Why this matters">
+  L5 turns every other law into something you can check rather than believe. The
+  Constitution itself is a κ-object, so a single altered byte in *it* is refused
+  too — the conscience cannot be quietly rewritten.
+</Aside>
+
+## Next
+
+- [The substrate](/concepts/substrate) — κ, self-verifying, sealed, in concrete bytes.
+- [Proof, not promises](/concepts/conformance) — how the laws are witnessed, not asserted.

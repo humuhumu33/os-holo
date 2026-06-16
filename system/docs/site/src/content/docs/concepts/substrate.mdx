@@ -1,0 +1,108 @@
+---
+title: The substrate
+description: How Hologram OS names, verifies, and seals every object by the hash of its content (κ) — and what self-verifying, re-derived, and sealed mean in concrete bytes.
+audience: [developers, agents]
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Every file in Hologram OS is named by the hash of its own bytes. That one decision
+removes the need to trust any server: instead of asking a location for a file and
+believing the answer, you re-compute the hash yourself and check it matches. This
+page explains the three words you will meet everywhere — **κ**, **self-verifying**,
+and **sealed** — with a runnable example for each.
+
+## Why: trust a name, not a place
+
+A normal URL points at a *location* — a server you cannot inspect. Whatever it
+returns, you accept. The substrate replaces the location with a **content
+address**: the object's identity is derived from its bytes alone, so a wrong or
+tampered byte produces a different name and is refused. Identity is intrinsic, not
+granted (Law L1).
+
+## What: κ, the content address
+
+A **κ** ("kappa") is the address of an object — `did:holo:<algo>:<hex>`, where the
+hex is the cryptographic hash of the object's canonical bytes. Two axes carry the
+same object:
+
+- `did:holo:sha256:…` — the open-web axis (a W3C DID; equals Subresource Integrity).
+- `did:holo:blake3:…` — the fast native axis, byte-identical content, different hash.
+
+A real example — the whole OS, sealed to a single root κ:
+
+```
+did:holo:sha256:8d285623c33b039ce5661e0aaccd7eb23f2f9cab2f444f162d5003b9b338f7ad
+```
+
+And one file, carried on both axes (from `system/os/etc/os-closure.json`):
+
+```
+shell.html
+  did:holo:sha256:9942bc4628c3e1635504cc72c6485fc25d624917af8a4a946796c1e82e9e072b
+  did:holo:blake3:9601169b558b478af1ad1e5483bae5a97bf655e930580f6179bd1e18238514e3
+```
+
+## How: self-verifying — re-derived on receipt (Law L5)
+
+**Self-verifying** means the receiver re-computes the hash and compares it to the
+κ before trusting the bytes. There is no signature to check against a key you must
+trust — the name *is* the proof. This happens inside the κ Service Worker
+(`system/os/holo-fhs-sw.js`) on every request:
+
+```js
+// Law L5: re-derive the bytes against the pinned κ; refuse a mismatch.
+const got = axis === 'blake3' ? blake3hex(bytes) : await sha256hex(buf);
+if (got !== expect) {
+  const healed = await heal(rel, expect, axis, resp);  // recover the SAME κ from a peer/IPFS
+  return healed || refuse(rel, expect, got, axis);      // else stop — HTTP 409, never served
+}
+```
+
+You can re-derive any object yourself and confirm the OS would accept it:
+
+```sh
+# the hex after sha256: must equal the κ the OS pins for that file
+node -e "import('node:crypto').then(c=>import('node:fs').then(f=>console.log('sha256:'+c.createHash('sha256').update(f.readFileSync(process.argv[1])).digest('hex'))))" system/os/usr/share/frame/shell.html
+```
+
+<Aside type="note" title="Why this matters">
+  A mismatch is not a warning — it is a hard stop. The worker first tries to
+  **self-heal** (fetch the *same* κ from a neighbouring peer or IPFS and re-verify
+  it); only if no source can produce matching bytes does it refuse with a calm
+  HTTP 409 page. One altered byte, and nothing opens.
+</Aside>
+
+## How: sealed — the closure that commits to everything
+
+**Sealing** records an object's κ so the worker can verify it later. The OS keeps
+one closure file, `system/os/etc/os-closure.json`, that pins every served file's κ
+and is itself committed by a single **root κ**. Change any file and its κ changes,
+so the closure no longer matches — the seal is broken until you re-seal.
+
+```sh
+node system/tools/reseal-drift.mjs --check   # CI/pre-commit: fail if any κ drifted
+node system/tools/reseal-drift.mjs           # reconcile: re-pin only what changed, old→new printed
+```
+
+Sealing is auditable by construction: every re-pin prints `old κ → new κ`, so an
+edit to a served file can never be silent. An app seals the same way — its
+`holospace.lock.json` pins every asset byte, and the app's identity is that lock's
+root κ.
+
+## The κ-route
+
+The worker exposes content addresses directly over HTTP. Ask for any object by its
+hash and the result is self-verifying:
+
+```http
+GET os/.holo/sha256/8d285623c33b039ce5661e0aaccd7eb23f2f9cab2f444f162d5003b9b338f7ad
+```
+
+See the [κ-route reference](/reference/kappa-route) for the full contract (200,
+404, 409, healing, and the `blake3` axis).
+
+## Next
+
+- [The five Laws](/concepts/the-five-laws) — the constraints κ enforces.
+- [Proof, not promises](/concepts/conformance) — how the whole OS is witnessed.

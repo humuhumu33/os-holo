@@ -1,0 +1,140 @@
+---
+title: The Q door
+description: Hologram OS's intelligence surface — recall, fuse, factory, hermes. Each verb's call signature, return shape, the receipt it seals, and what it refuses to fake.
+audience: [developers, agents]
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**Q** is the one door to hologram-native intelligence. Every verb runs on the
+device, seals a self-verifying PROV-O receipt, and — by Law L5 — refuses to fabricate
+a result rather than fake one. This page gives each verb's exact signature, return
+shape, and refusal behaviour, so you (or an agent) can call it with no guessing.
+
+<Aside type="note">
+  Receipts are re-derivable objects: every Q run links its inputs (`prov:used`) and
+  output (`prov:generated`) so the answer can be audited, not just trusted.
+</Aside>
+
+## Q.fuse — compound model: panel → judge → synthesize
+
+Runs N specialist models in parallel on the **same** input, has a judge compare them,
+then a synthesizer writes one new answer none of the panel produced. The lift is the
+synthesis step, so small on-device models, judged and synthesized, can beat any one
+of them. Seals a `holoq:FusionReceipt`. Source:
+[`holo-q-fuse.js`](https://github.com/humuhumu33/os-holo/blob/main/system/os/usr/lib/holo/q/holo-q-fuse.js).
+
+**Construct, then call:**
+
+```js
+import { createFuse } from './q/holo-q-fuse.js';
+const { fuse, configure } = createFuse({ fabric, panel, judge, synth, clock });
+
+const out = await fuse(input, {
+  params = {}, panel = _panel, judge = _judge, synth = _synth,
+  onEvent = null, signal = null, app = null, conscience = null,
+});
+```
+
+**Returns (success):**
+
+```js
+{
+  ok: true,
+  answer: '<the synthesized text>',
+  kappa: 'did:holo:sha256:…',     // κ of the synthesis
+  tier: 'local' | 'hybrid',        // 'hybrid' if any panel member is remote
+  cached: boolean,                 // true on an exact repeat (κ-memo, O(1), zero network)
+  ms: number,
+  panel: [{ id, value, kappa, cached, ms }],
+  judge: { value, kappa, cached },
+  receipt,                          // holoq:FusionReceipt (PROV-O)
+  stats,
+}
+```
+
+**When to reach for it:** you want the lift of diverse reasoning — panel members
+should span model families or personas.
+
+<Aside type="caution" title="What it refuses to fake">
+  No panel configured → `{ ok: false, refused: true, reason: 'Q.fuse: no panel configured…' }`.
+  A panel of fewer than two members → refused (`a panel needs ≥2 members (diversity is the point)`).
+  It never claims a synthesized answer it did not produce.
+</Aside>
+
+## Q.recall — retrieval over your private corpus
+
+Semantic ⊕ lexical ⊕ graph-expanded search over **your own** indexed objects, with
+optional cited-answer synthesis. The retrieval core runs zero models and is
+deterministic; `synthesize: true` is the only step that calls one. Seals a
+`holoq:RecallReceipt`. Source:
+[`holo-q-recall.js`](https://github.com/humuhumu33/os-holo/blob/main/system/os/usr/lib/holo/q/holo-q-recall.js).
+
+```js
+import { createRecall } from './q/holo-q-recall.js';
+const { recall } = createRecall({ corpus, synth, clock });   // note: returns { recall }, call .recall
+
+const out = await recall(query, {
+  k = 8, candidates = 20, expand = true, expandMax = 6,
+  synthesize = false, app = null, conscience = null,
+});
+// → { ok, mode, query, results: [{ kappa, text, rank, via, shared? }], answer?, receipt, ms, stats }
+```
+
+**When to reach for it:** searching a user's own notes, docs, or memories without
+touching the open web.
+
+<Aside type="caution" title="What it refuses to fake">
+  Empty corpus → `{ ok: false, refused: true, reason: 'Q.recall: the corpus is empty — index pages first' }`.
+  `synthesize: true` with no synthesizer bound → `answer: null` (an honest null, never a fabricated answer).
+</Aside>
+
+## Q.factory — signal → change → verify → seal → learn
+
+The software factory as one verb: a red signal (a failing check, a bug, a request)
+becomes a located target, a proposed change, a verification, a sealed receipt, and a
+learned skill. Source:
+[`holo-mind-ui.js`](https://github.com/humuhumu33/os-holo/blob/main/system/os/usr/lib/holo/holo-mind-ui.js).
+
+```js
+await Q.factory(signal, opts);          // one-shot fix; signal is natural language
+Q.factory.watch(intent, opts);          // autonomous tender, armed by user intent (no self-firing timer)
+Q.factory.tend(opts);                   // run every registered check; red ones auto-drive a verified fix
+Q.factory.locate(signal, candidates?);  // semantic triage — which target the signal refers to
+Q.factory.discover(signal, candidates?);// locate + register a check per target
+Q.factory.grow(opts);                   // governed self-improvement over accumulated failures
+Q.factory.register(name, spec);         // register an in-tab check
+```
+
+**When to reach for it:** `Q.factory(signal)` for a manual fix; `Q.factory.watch(intent)`
+for a hands-off loop a user has explicitly armed.
+
+<Aside type="caution" title="What it refuses to fake">
+  With no verifier bound it returns `outcome: 'unverified'` — it never claims a fix
+  it did not prove. If the conscience blocks, no attempt seals and no effect mints.
+</Aside>
+
+## Q.hermes — native in-tab agent
+
+A native, serverless Hermes-compatible agent loop on the Q door
+([ADR-0100](https://github.com/humuhumu33/os-holo/blob/main/system/docs/adr/0100-holo-hermes.md)).
+
+<Aside type="note" title="Status: design only">
+  Q.hermes is specified but not yet implemented. The design declares the six terminal
+  backends (Docker, SSH, Modal, Daytona, Singularity) **incompatible in-tab** and
+  promises never to fake them — listed here so its absence is documented, not implied.
+</Aside>
+
+## At a glance
+
+| Verb | Call | Returns | Receipt | Status |
+| --- | --- | --- | --- | --- |
+| `Q.fuse` | `fuse(input, opts)` | `{ ok, answer, kappa, tier, panel, judge, receipt }` | `holoq:FusionReceipt` | Shipped |
+| `Q.recall` | `recall(query, opts)` | `{ ok, results[], answer?, receipt }` | `holoq:RecallReceipt` | Shipped |
+| `Q.factory` | `factory(signal, opts)` + verbs | `{ outcome, traceHead?, … }` | `holo:FactoryRun` | Shipped |
+| `Q.hermes` | `hermes(intent, opts)` | `{ ok, answer?, receipt }` | `holoq:HermesReceipt` | Design |
+
+## Next
+
+- [Conformance rows](/reference/conformance) — the witnessed claims behind these verbs.
+- [Build, run, share an app](/build/an-app) — wire Q into your own holospace.

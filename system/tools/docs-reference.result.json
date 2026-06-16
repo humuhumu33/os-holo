@@ -1,0 +1,18 @@
+{
+  "spec": "The docs Reference asserts only contracts that exist in the implementation (no stale names/paths).",
+  "witnessed": true,
+  "passed": 10,
+  "failed": 0,
+  "checks": {
+    "Q.fuse export ← os/usr/lib/holo/q/holo-q-fuse.js": true,
+    "Q.recall export ← os/usr/lib/holo/q/holo-q-recall.js": true,
+    "Q.factory wiring ← os/usr/lib/holo/holo-mind-ui.js": true,
+    "κ-route (sha256) ← os/holo-fhs-sw.js": true,
+    "κ-route (blake3) ← os/holo-fhs-sw.js": true,
+    "scaffold() ← os/usr/lib/holo/holo-scaffold.js": true,
+    "capabilitiesToSandbox() ← os/lib/holo-launch.mjs": true,
+    "reseal-drift --check ← tools/reseal-drift.mjs": true,
+    "conformance catalog ← os/etc/conformance.jsonld": true,
+    "agent door: agents.json ← os/.well-known/agents.json": true
+  }
+}

@@ -1,0 +1,66 @@
+---
+title: Agent doors
+description: How an AI agent enters Hologram OS — the .well-known discovery map, MCP, NANDA, A2A, and Agent Skills. Every result is a self-verifying object.
+audience: [agents, developers]
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+An agent does not need a key or an account to use Hologram OS. It starts at one
+self-verifying discovery document, reads the live list of doors, and acts — every
+result is an object it re-derives before trusting (Law L5). Don't trust; re-derive.
+
+## Start here
+
+```http
+GET /.well-known/agents.json
+```
+
+[`agents.json`](https://github.com/humuhumu33/os-holo/blob/main/system/os/.well-known/agents.json)
+is the single entry point. It is authoritative — read the doors from it, not from
+this page, because the live document changes as the OS grows.
+
+## The doors
+
+| Door | Endpoint | What it is |
+| --- | --- | --- |
+| **Discovery** | [`/.well-known/agents.json`](https://github.com/humuhumu33/os-holo/blob/main/system/os/.well-known/agents.json) | The agent interface — lists every protocol and the agent-stack verbs. |
+| **MCP** | [`/.well-known/mcp.json`](https://github.com/humuhumu33/os-holo/blob/main/system/os/.well-known/mcp.json) | The live, self-describing Model Context Protocol tool list. |
+| **Facts / passport** | [`/.well-known/agent-facts.json`](https://github.com/humuhumu33/os-holo/blob/main/system/os/.well-known/agent-facts.json) | The agent's verifiable facts. |
+| **Card** | [`/.well-known/agent-card.json`](https://github.com/humuhumu33/os-holo/blob/main/system/os/.well-known/agent-card.json) | The A2A agent card. |
+| **Constitution** | [`/.well-known/constitution.json`](https://github.com/humuhumu33/os-holo/blob/main/system/os/.well-known/constitution.json) | The fail-closed conscience every action is checked against. |
+| **Skills** | [`/.well-known/skills`](https://github.com/humuhumu33/os-holo/tree/main/system/os/.well-known/skills) | Agent Skills as content-addressed objects. |
+
+## Connect over MCP
+
+The κ Service Worker answers MCP with no origin server. Read the live tools, then
+call them:
+
+```sh
+npx hologram-mcp
+```
+
+```jsonc
+// list the live, self-describing tools
+{ "method": "tools/list" }
+// e.g. verify_object · resolve_object · own_verify · own_settle · own_passport
+//      holo_build · holo_run · holo_share
+```
+
+## Re-derive everything
+
+Every tool result and every resource is content-addressed. Before you act on a
+result, re-derive its hash and compare it to the κ it claims — see
+[the κ-route](/reference/kappa-route). A mismatch is refused, not warned.
+
+<Aside type="tip" title="Machine-readable docs">
+  These docs ship their own agent index at
+  [`/docs/llms.txt`](/llms.txt), plus the reference as data:
+  [`conformance.json`](/reference/conformance.json) and
+  [`adrs.json`](/reference/adrs.json). Consume the docs as structure, not prose.
+</Aside>
+
+## Next
+
+- [The Q door](/reference/q) — the intelligence verbs, with signatures.
+- [Proof, not promises](/concepts/conformance) — how every claim here is witnessed.

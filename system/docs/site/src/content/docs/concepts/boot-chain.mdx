@@ -1,0 +1,73 @@
+---
+title: The boot chain
+description: How Hologram OS powers on — index → boot → splash → login → shell — and what each stage owns, mapped to the real files.
+audience: [developers, agents]
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Opening one file boots a whole computer. The boot chain mirrors a real Linux desktop
+— bootloader, splash, greeter, desktop — but every stage runs in the browser and
+verifies itself by content (Law L5). This page maps each stage to the file that
+owns it, so you can read the real thing.
+
+## Why: a familiar shape, made verifiable
+
+Booting is where trust usually leaks: you run whatever the boot medium hands you.
+Here each stage is a content-addressed object whose bytes are re-derived before it
+runs, and the boot manager pins every loader by hash — its **Secure Boot** is κ
+re-derivation, not a vendor key.
+
+## How: the chain
+
+```
+index.html  ──►  boot.html  ──►  splash.html  ──►  login.html  ──►  shell.html
+ gateway          rEFInd          Plymouth         SDDM             PrimeOS
+```
+
+The default path is frictionless: `index.html` registers the worker and goes
+straight to the shell as a non-persistent guest. The boot menu, splash, and greeter
+are reached on demand (`?boot`, `?signin`) or by the boot manager.
+
+## What: each stage
+
+| Stage | File | Owns |
+| --- | --- | --- |
+| **Gateway** | [`system/os/index.html`](https://github.com/humuhumu33/os-holo/blob/main/system/os/index.html) | Registers the κ Service Worker, verifies the Constitution, routes onward. |
+| **Boot (rEFInd)** | [`system/os/boot/index.html`](https://github.com/humuhumu33/os-holo/blob/main/system/os/boot/index.html) | Scans the κ-store and boots a loader after re-deriving it against the pinned manifest. |
+| **Splash (Plymouth)** | [`system/os/usr/share/frame/splash.html`](https://github.com/humuhumu33/os-holo/blob/main/system/os/usr/share/frame/splash.html) | Boot animation and progress, a faithful Plymouth-script interpreter. |
+| **Login (SDDM)** | [`system/os/usr/share/frame/login.html`](https://github.com/humuhumu33/os-holo/blob/main/system/os/usr/share/frame/login.html) | The greeter — biometric/password unlock binding a device-local key. |
+| **Shell (PrimeOS)** | [`system/os/usr/share/frame/shell.html`](https://github.com/humuhumu33/os-holo/blob/main/system/os/usr/share/frame/shell.html) | The running desktop — chrome, windows, app lifecycle, the create·play·share SDK. |
+
+### The gateway starts everything
+
+```js
+// system/os/index.html — bring up the substrate gateway, then route
+const reg = await navigator.serviceWorker.register('holo-fhs-sw.js', { type: 'module', scope: './' });
+// …Constitution verified (fail-closed)…
+return location.replace('shell.html' + location.search + location.hash);  // default: straight to the desktop
+```
+
+### Secure Boot is κ re-derivation
+
+The boot manager pins every loader by hash in
+[`system/os/boot/boot/boot-manifest.json`](https://github.com/humuhumu33/os-holo/blob/main/system/os/boot/boot/boot-manifest.json)
+and refuses any loader whose bytes do not re-derive to its pin:
+
+```json
+"loaders": {
+  "shell.html":  "sha256:9942bc4628c3e1635504cc72c6485fc25d624917af8a4a946796c1e82e9e072b",
+  "splash.html": "sha256:17f7ffb636cee5be6bd47c5f43b4259e69d645cf0a81f41dabc87f4b9401a7c6"
+}
+```
+
+<Aside type="note" title="Why this matters">
+  Deny the origin gateway entirely and the byte-identical, verified OS still boots
+  from the local κ-store or a neighbouring peer (Law L3). The origin is one CDN
+  among peers, not an authority.
+</Aside>
+
+## Next
+
+- [The substrate](/concepts/substrate) — what κ, self-verifying, and sealed mean.
+- [The κ-route](/reference/kappa-route) — the worker's content-address API.

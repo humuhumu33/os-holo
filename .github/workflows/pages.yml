@@ -60,6 +60,26 @@ jobs:
             git commit -m "chore(changelog): regenerate from history [skip ci]"
             git push
           fi
+      # ── Documentation: build from source, so the published docs always match the code ──────────
+      # The docs are authored in system/docs/site (Astro Starlight). The build first regenerates the
+      # machine-readable reference FROM source — conformance.jsonld → the gate's rows, docs/adr/*.md →
+      # the ADR index, plus llms.txt — then emits static HTML into the repo-root docs/ that the stage
+      # step below publishes. Rebuilding here means a push that changes the OS auto-updates the docs
+      # with no manual step. A drift gate runs first and fails closed if a doc names something the
+      # code no longer has.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: system/docs/site/package-lock.json
+      - name: Docs reference drift gate (fail-closed)
+        run: node system/tools/docs-reference-witness.mjs   # a stale documented name/path blocks the deploy
+      - name: Build docs site (Astro Starlight)
+        run: |
+          cd system/docs/site
+          npm ci
+          npm run build   # prebuild regenerates the reference; Astro emits into ../../../docs
       - uses: actions/configure-pages@v5
         with:
           enablement: true   # self-enable Pages (GitHub Actions source) on a fresh repo, so the first push deploys with no manual settings toggle

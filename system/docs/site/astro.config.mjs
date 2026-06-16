@@ -30,17 +30,56 @@ export default defineConfig({
         {
           icon: 'github',
           label: 'GitHub',
-          href: 'https://github.com/Hologram-Technologies/hologram-os',
+          href: 'https://github.com/humuhumu33/os-holo',
         },
       ],
       tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
+      // Every page links back to its source on GitHub ("Edit this page").
+      editLink: {
+        baseUrl: 'https://github.com/humuhumu33/os-holo/edit/main/system/docs/site/',
+      },
       // Pagefind full-text search and dark mode ship by default.
       // Code blocks get copy buttons via Expressive Code by default.
+      // Diátaxis nav: Get started → Concepts (why) → Build (how) → Reference (what)
+      // → Architecture. Two Reference pages and the Architecture index are GENERATED
+      // from source by scripts/gen-reference.mjs (prebuild), so they cannot drift.
       sidebar: [
-        { label: 'Introduction', link: '/' },
-        { label: 'Quickstart', link: '/quickstart' },
-        // The rest of the IA is authored in the next increment:
-        // Core concepts · For developers · For AI agents · Reference · Architecture / ADRs
+        {
+          label: 'Get started',
+          items: [
+            { label: 'What is Hologram OS?', link: '/' },
+            { label: 'Quickstart', link: '/quickstart' },
+          ],
+        },
+        {
+          label: 'Concepts',
+          items: [
+            { label: 'The substrate', link: '/concepts/substrate' },
+            { label: 'The five Laws', link: '/concepts/the-five-laws' },
+            { label: 'The boot chain', link: '/concepts/boot-chain' },
+            { label: 'Proof, not promises', link: '/concepts/conformance' },
+          ],
+        },
+        {
+          label: 'Build an app',
+          items: [{ label: 'Build, run, share', link: '/build/an-app' }],
+        },
+        {
+          label: 'Reference',
+          items: [
+            { label: 'The κ-route', link: '/reference/kappa-route' },
+            { label: 'The Q door', link: '/reference/q' },
+            { label: 'App manifest', link: '/reference/app-manifest' },
+            { label: 'Agent doors', link: '/reference/agent-doors' },
+            { label: 'Conformance rows', link: '/reference/conformance', badge: 'generated' },
+          ],
+        },
+        {
+          label: 'Architecture',
+          items: [
+            { label: 'Architecture decisions', link: '/architecture/adrs', badge: 'generated' },
+          ],
+        },
       ],
     }),
   ],

@@ -6,7 +6,11 @@
   "description": "Hologram OS documentation — static, serverless, deployable as κ objects.",
   "license": "MIT",
   "scripts": {
+    "gen": "node scripts/gen-reference.mjs",
+    "gen:check": "node scripts/gen-reference.mjs --check",
+    "predev": "node scripts/gen-reference.mjs",
     "dev": "astro dev",
+    "prebuild": "node scripts/gen-reference.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"

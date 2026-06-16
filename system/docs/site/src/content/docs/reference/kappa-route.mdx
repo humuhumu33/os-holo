@@ -1,0 +1,70 @@
+---
+title: The κ-route
+description: Resolve any object by its content hash over HTTP. The route, the two axes, and every status code — 200, 404, 409 — with the self-healing behaviour.
+audience: [developers, agents]
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The κ Service Worker exposes content addresses directly over HTTP. Ask for an object
+by its hash; the worker resolves it, re-derives the bytes, and serves them only if
+they match (Law L5). Implemented in
+[`system/os/holo-fhs-sw.js`](https://github.com/humuhumu33/os-holo/blob/main/system/os/holo-fhs-sw.js).
+
+## Request
+
+```http
+GET os/.holo/sha256/<64-hex>
+GET os/.holo/blake3/<64-hex>
+```
+
+- `<64-hex>` — the lowercase hex hash of the object's canonical bytes.
+- Two axes carry the same content: `sha256` (open-web, W3C SRI) and `blake3` (fast native).
+
+Example:
+
+```http
+GET os/.holo/sha256/8d285623c33b039ce5661e0aaccd7eb23f2f9cab2f444f162d5003b9b338f7ad
+```
+
+## Responses
+
+| Status | Meaning |
+| --- | --- |
+| **200** | The κ resolved and the bytes re-derived to it. Cross-origin-isolation headers are stamped; the verified bytes are cached by κ for a network-free next read (Law L3). |
+| **404** | The κ is not in the closure index and not a content-addressed object in the local κ-store. |
+| **409** | The bytes did **not** re-derive to the requested κ and no source could supply matching bytes. The object is refused, never served. |
+
+The match is exact: the worker re-computes the hash on its axis and compares.
+
+```js
+// system/os/holo-fhs-sw.js — the route matcher
+const m = rel.match(/^\.holo\/sha256\/([a-f0-9]{64})(?:\.\w+)?$/i);
+```
+
+## Self-healing before refusal
+
+On a mismatch the worker does not fail immediately. It first tries to recover the
+**same κ** from a non-origin source — a neighbouring WebRTC peer or an IPFS
+trustless gateway — re-derives that copy, and serves it if it matches. Only if no
+source can produce matching bytes does it return 409. Healing is time-boxed
+(6 seconds) so the boot happy-path never regresses.
+
+```js
+if (got !== expect) {
+  const healed = await heal(rel, expect, axis, resp);  // same κ from a peer/IPFS, re-verified
+  return healed || refuse(rel, expect, got, axis);     // 409 only when nothing matches
+}
+```
+
+<Aside type="note" title="Why this matters">
+  The origin is one CDN among peers, not an authority. A wrong byte from the origin
+  is treated exactly like a wrong byte from anywhere — recovered if possible,
+  refused otherwise. Trust is in the name, not the host.
+</Aside>
+
+## Related
+
+- Machine-readable: the worker also answers serverless MCP and a REST κ-stream API
+  under the same scope. See [agent doors](/reference/agent-doors).
+- Concept: [the substrate](/concepts/substrate) explains κ, sealing, and the closure.
