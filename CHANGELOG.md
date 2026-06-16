@@ -11,6 +11,10 @@ automatically from [Conventional Commits](https://www.conventionalcommits.org/) 
 
 ### Added
 
+- First-run immersive default, dock polish, notify action labels
+- Dedup notifications by sender/title/body key
+- Golden-ratio Play rail restyle + stable bundle catalog wrapper
+- Calm the homepage sky — drop pointer parallax, brighten stars
 - Calm the homepage sky — drop pointer parallax, brighten stars
 - Hyper-real moving starfield that flies in lockstep with the clouds
 - Add crisp distant stars in the dark sky
