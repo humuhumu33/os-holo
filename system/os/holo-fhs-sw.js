@@ -31,6 +31,12 @@ const COI = {
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Embedder-Policy": "credentialless",
   "Cross-Origin-Resource-Policy": "cross-origin",
+  // Clickjacking floor on EVERY κ-served byte. A substrate page may be framed SAME-ORIGIN (shell →
+  // holospace iframes) but never by a foreign site. frame-ancestors is header-only (ignored in <meta>),
+  // so it is stamped here, where every response passes; X-Frame-Options is the legacy belt for older
+  // engines. Law L5 proves WHAT the bytes are — this governs WHO may frame the proven bytes.
+  "Content-Security-Policy": "frame-ancestors 'self'",
+  "X-Frame-Options": "SAMEORIGIN",
 };
 const KCACHE = "holo-kappa-v2";   // content-addressed response cache: key = κ-route URL, so identical bytes are stored ONCE and shared across every app (dedup), and a re-open is network-free. Only VERIFIED bytes are ever cached. (bumped v1→v2 to force a SW re-activate so the fresh closure — new wallet κ — is served.)
 const IMPORTS = "holo-imports-v1";   // IMPORTED-app surfaces (ADR-0093): the page caches an imported app's holospace.json + its self-verifying κ-objects here, so /~<id>/mcp + /~<id>/api answer for an in-memory import with NO origin server. Must match holo-import-agent.SW_IMPORTS_CACHE + swCacheEntries.
@@ -106,6 +112,8 @@ function subpathHtml(text) {
 // passes everything else straight through. When it rewrites, it drops content-length (the body grew) and
 // content-encoding (the bytes are now identity) so the browser does not truncate or mis-decode the response.
 function finalize(buf, resp, rel, extra = {}) {
+  const cspro = CSPRO && CSPRO.get(rel);                 // a strict, hash-derived CSP for this boot screen?
+  if (cspro) extra = { ...extra, "Content-Security-Policy-Report-Only": cspro };   // observe-only; promoted to enforcing after a browser pass
   if (BASE !== "/" && HTMLISH(rel)) {
     try {
       const body = new TextEncoder().encode(subpathHtml(new TextDecoder().decode(buf)));
@@ -153,6 +161,7 @@ let BYBLAKE = null;   // blake3 hex → os-relative path (the unified-substrate 
 let ARCHIVES = null;  // lazy .holo κ-store (ADR-0101): content-addressed models in IndexedDB, not the OS closure
 const archiveStore = () => (ARCHIVES ||= makeArchiveStore());   // shares db/store names with the page's ingest
 let BYPATH = null;    // os-relative path → sha256 hex (the verification pins)
+let CSPRO = null;     // serve-rel HTML name → strict CSP, served Report-Only (etc/boot-csp.json, tools/csp-hashes.mjs)
 const APPLOCK = new Set();   // app-ids whose lock closure has been folded into the pins (lazy, L5 for app bytes)
 function foldClosure(closure) {
   for (const [p, v] of Object.entries(closure || {})) {
@@ -164,9 +173,14 @@ function foldClosure(closure) {
 }
 async function loadClosure() {
   if (BYPATH) return;
-  BYHEX = new Map(); BYBLAKE = new Map(); BYPATH = new Map();
+  BYHEX = new Map(); BYBLAKE = new Map(); BYPATH = new Map(); CSPRO = new Map();
   try { foldClosure((await (await fetch(BASE + "etc/os-closure.json", { cache: "no-store" })).json()).closure); }
   catch { /* no closure → serve unverified (flat mapping still works) */ }
+  // Strict per-page CSP for the boot screens, served REPORT-ONLY (observe, never block) until a browser
+  // pass confirms zero violations — then promoted to the enforcing header. Hash-derived (not nonce-based)
+  // so it composes with content addressing: a per-response nonce would change the bytes and break L5.
+  try { for (const [k, v] of Object.entries(await (await fetch(BASE + "etc/boot-csp.json", { cache: "no-store" })).json())) { if (k.endsWith(".html") && typeof v === "string") CSPRO.set(k, v); } }
+  catch { /* no CSP manifest → boot pages serve without the Report-Only header (unchanged behaviour) */ }
 }
 // Lazily fold an app's OWN lock closure into the pins, so app bytes are VERIFIED too (not just OS bytes) —
 // the app's holospace.lock.json keys are already serve-rel paths (apps/<id>/* and the _shared/* runtime).

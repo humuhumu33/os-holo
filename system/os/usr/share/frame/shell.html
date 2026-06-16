@@ -644,7 +644,7 @@
     <script src="/_shared/holo-gov.js" data-holo-shared="holo-gov.js"></script>
   </head>
   <body>
-    <div id="tabstrip" role="tablist" aria-label="Tabs"><button id="newtab" type="button" title="New tab" aria-label="New tab">+</button><button id="identity-btn" type="button" title="Sign in to access your wallet" aria-label="Sign in to access your wallet"><span class="ib-av" id="ib-av"></span><span class="ib-nm" id="ib-nm">Sign in</span></button><button id="fullscreen-btn" type="button" title="Full screen" aria-label="Full screen"></button></div>
+    <div id="tabstrip" role="tablist" aria-label="Tabs"><button id="newtab" type="button" title="New tab" aria-label="New tab">+</button><button id="identity-btn" type="button" title="Sign in to access your wallet" aria-label="Sign in to access your wallet"><span class="ib-av" id="ib-av"></span><span class="ib-nm" id="ib-nm">Sign in</span></button><button id="notif-btn" type="button" title="Notifications" aria-label="Notifications" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button><button id="fullscreen-btn" type="button" title="Full screen" aria-label="Full screen"></button></div>
     <div id="navbar">
       <button class="nav" id="nav-back" type="button" title="Back" aria-label="Back" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
       <button class="nav" id="nav-fwd" type="button" title="Forward" aria-label="Forward" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
@@ -657,7 +657,6 @@
         <button id="verb-run" type="button" title="Play explore the Holo Hub, the store for every holospace">▶ <span class="vl">Play</span></button>
         <button id="share-btn" type="button" title="Share a link anyone can open instantly, no sign-in">❤️ <span class="vl">Share</span></button>
       </div>
-      <button class="nav" id="notif-btn" type="button" title="Notifications" aria-label="Notifications" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
     </div>
     <div id="world">
       <div id="wallpaper" aria-hidden="true"></div>
@@ -5316,6 +5315,24 @@
       #fullscreen-btn:hover { background: color-mix(in srgb, var(--holo-ink) 10%, transparent); color: var(--holo-ink); }
       #fullscreen-btn:active { transform: scale(.92); }
       #fullscreen-btn svg { width: 18px; height: 18px; }
+      /* notifications bell — sits to the LEFT of fullscreen, wearing the SAME calm icon-button (light,
+         ink-dim, thin glyph). A small accent DOT marks unread — no heavy count chip. The #tabstrip prefix
+         out-specifies the notify module's own #notif-btn rules so the chrome wins. */
+      #tabstrip #notif-btn { flex: 0 0 auto; width: 30px; height: 30px; margin-left: 6px; align-self: center; position: relative;
+        display: grid; place-items: center; border: 0; border-radius: 9px; background: transparent; color: var(--holo-ink-dim);
+        cursor: pointer; transition: background .12s ease, color .12s ease, transform .12s ease; }
+      #tabstrip #notif-btn:hover { background: color-mix(in srgb, var(--holo-ink) 10%, transparent); color: var(--holo-ink); }
+      #tabstrip #notif-btn:active { transform: scale(.92); }
+      #tabstrip #notif-btn.has-unread { color: var(--holo-ink); }
+      #tabstrip #notif-btn svg { width: 18px; height: 18px; }
+      #tabstrip #notif-btn .hn-badge { position: absolute; top: 4px; right: 4px; min-width: 0; width: 8px; height: 8px; padding: 0;
+        border-radius: 50%; font-size: 0; line-height: 0; background: var(--holo-accent); box-shadow: 0 0 0 2px var(--holo-bg); }
+      /* sovereign-vault identity — the signed-in avatar is a sharp SHIELD emblem (not a flat disc): a tinted
+         vault plate with a crisp rim, a top sheen and the operator's initial — reading as secure and OWNED. */
+      #identity-btn .ib-av.is-vault { width: 23px; height: 25px; background: transparent; box-shadow: none; border-radius: 0; overflow: visible; }
+      #identity-btn .ib-av.is-vault .vault { width: 100%; height: 100%; display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+      #identity-btn .ib-av.is-vault .vault text { font-family: var(--win-font); letter-spacing: .01em; }
+      #identity-btn:hover .ib-av.is-vault .vault { filter: drop-shadow(0 1px 3px rgba(0,0,0,.55)) brightness(1.06); }
       /* Wallet — an ASIDE CARRIER (like a browser side panel / Copilot): it does NOT overlay or dim the
          world; it SQUEEZES the whole holospace left by --holo-aside-w (mirrors --holo-dock-w on the right
          edge) and docks itself in the freed space. Content stays live the whole time — crisp, immersive. */
@@ -5481,6 +5498,19 @@
         try { window.dispatchEvent(new CustomEvent("holo-identity", { detail: window.HoloIdentity })); } catch {}
 
         const WALLET_GLYPH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2"/><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2Z"/><path d="M16 13h.01"/></svg>';
+        // vaultEmblem — the signed-in identity as a sharp SHIELD: a κ-hued vault plate (vertical gradient =
+        // depth), a crisp lighter rim, a faint top sheen, and the operator's initial. Sovereign + secure by
+        // shape, tinted by the operator's own content address.
+        function vaultEmblem(label, hue) {
+          const ch = String(label || "?").trim().slice(0, 1).toUpperCase().replace(/[&<>"]/g, "");
+          const h = Math.round(Number(hue) || 220);
+          return '<svg class="vault" viewBox="0 0 24 26" aria-hidden="true">'
+            + '<defs><linearGradient id="ibVault" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(' + h + ' 64% 56%)"/><stop offset="1" stop-color="hsl(' + h + ' 58% 33%)"/></linearGradient></defs>'
+            + '<path d="M12 1.2 21.6 5.1 V13 C21.6 19.4 17.4 23.4 12 25.2 6.6 23.4 2.4 19.4 2.4 13 V5.1 Z" fill="url(#ibVault)" stroke="hsl(' + h + ' 85% 80%)" stroke-opacity=".5" stroke-width="1"/>'
+            + '<path d="M12 2.9 20 6.1 V12.9 C20 18.3 16.5 21.7 12 23.4" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="1"/>'
+            + '<text x="12" y="15.7" text-anchor="middle" font-weight="800" font-size="11" fill="#fff">' + ch + '</text>'
+            + '</svg>';
+        }
         // ONE dynamic chrome control. Guest → an inviting "Sign in" (avatar shows the wallet glyph) that
         // opens the sign-in overlay; signed in → your initialled avatar + name, opening your wallet (which
         // holds your identity). Identity and wallet are the same κ, so this is the same control.
@@ -5491,13 +5521,14 @@
             btn.classList.toggle("guest", guest);
             btn.classList.toggle("npc", subjectType === "npc");
             if (guest) {
+              av.classList.remove("is-vault");
               av.innerHTML = WALLET_GLYPH; av.style.background = "";
               nm.textContent = "Sign in";
               btn.title = "Sign in to access your wallet"; btn.setAttribute("aria-label", "Sign in to access your wallet");
               btn.onclick = open;                                   // → the sign-in overlay (mints your κ + wallet)
             } else {
-              av.innerHTML = ""; av.textContent = (body.label || "?").slice(0, 1).toUpperCase();
-              av.style.background = `hsl(${hueOf(body.operator)} 55% 46%)`;
+              av.classList.add("is-vault");                         // sovereign-vault shield, tinted by the operator's κ-hue
+              av.innerHTML = vaultEmblem(body.label, hueOf(body.operator)); av.style.background = "";
               nm.textContent = body.label;
               btn.title = "Open your wallet · " + body.label; btn.setAttribute("aria-label", "Open your wallet");
               btn.onclick = () => { try { window.HoloWallet && window.HoloWallet.toggle(); } catch (_) {} };

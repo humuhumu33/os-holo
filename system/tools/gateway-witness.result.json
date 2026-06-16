@@ -19,14 +19,9 @@
       "detail": "flat=404 phys=200 sw=200"
     },
     {
-      "name": "opening the gateway renders the boot window (mark · title · enter · live self-κ · agent links)",
+      "name": "playwright available",
       "ok": false,
-      "detail": "title=\"Your Personal Supercomputer\" κ=true"
-    },
-    {
-      "name": "the gateway boots → the Plymouth splash (κ SW controls, F2 → Boot Menu prompt, isolated)",
-      "ok": false,
-      "detail": "url=/ controlled=false splash=false prompt=false isolated=false"
+      "detail": "Cannot find module 'playwright'\nRequire stack:\n- C:\\Users\\pavel\\Desktop\\hologram-os\\os\\package.json"
     }
   ]
 }
