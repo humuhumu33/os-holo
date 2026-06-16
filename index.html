@@ -247,15 +247,13 @@
      Both ride a shared parallax offset (--par-x/--par-y), set by a lerped pointer/scroll handler. */
   .bg-sun{ inset:0; opacity:0; mix-blend-mode:screen; transition:opacity .7s ease;
     background:
-      radial-gradient(58% 40% at 50% 30%, rgba(255,247,234,.55), rgba(255,238,214,.16) 40%, transparent 66%),
-      radial-gradient(130% 86% at 50% 6%, rgba(150,198,255,.20), transparent 60%);
+      radial-gradient(130% 86% at 50% 6%, rgba(150,198,255,.16), transparent 60%);   /* faint blue horizon only — the warm-white bloom (a strange top halo) is removed */
     transform:translate3d(var(--par-x,0px), var(--par-y,0px), 0); will-change:transform, opacity; }
   :root[data-immersive="full"] .bg-sun{ opacity:1; animation:sunbreath 9s ease-in-out infinite; }
   @keyframes sunbreath{ 0%,100%{ opacity:.9; } 50%{ opacity:1; } }
   :root[data-theme="light"] .bg-sun{ mix-blend-mode:soft-light;
     background:
-      radial-gradient(58% 40% at 50% 26%, rgba(255,250,236,.70), transparent 60%),
-      radial-gradient(130% 86% at 50% 4%, rgba(120,170,236,.16), transparent 60%); }
+      radial-gradient(130% 86% at 50% 4%, rgba(120,170,236,.16), transparent 60%); }   /* faint blue horizon only — white bloom removed */
   .bg-grain{ inset:0; pointer-events:none; opacity:.05; mix-blend-mode:overlay;
     transform:translate3d(calc(var(--par-x,0px) * -0.4), calc(var(--par-y,0px) * -0.4), 0);
     background-size:240px 240px;
