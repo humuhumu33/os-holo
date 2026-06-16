@@ -103,6 +103,8 @@ A few words this README uses, kept short:
 * **Sovereign** means it is wholly yours and answers only to you.
 * **Serverless** means it simply runs, with nothing to host and nothing to keep alive.
 
+**Open standards.** Hologram OS conforms to the open standards of the W3C Semantic Web, the shared, machine readable web of linked data and meaning where people and AI agents alike can discover, understand, trust, and exchange information with no central middleman. Objects are expressed as linked data (JSON-LD and RDF), named with Decentralized Identifiers (DIDs), and attested with Verifiable Credentials, and nothing ships until it is witnessed against these public standards.
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## The usual computer, and this one
