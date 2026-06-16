@@ -237,6 +237,31 @@
       radial-gradient(40% 46% at 50% 50%, rgba(99,102,241,.08), transparent 72%); }
   :root[data-theme="light"] .bg-stars{ opacity:0; }
   :root[data-theme="light"] .bg-scrim{ background:radial-gradient(95% 75% at 50% 44%, transparent 46%, rgba(255,255,255,.5) 100%); }
+
+  /* ── DEPTH & LIGHT (immersive only) ──────────────────────────────────────────────────────────
+     Two thin, inline layers lift the cloudscape from "a texture" to "inside the sky", with zero
+     external assets (so the gateway's own bytes still hold the whole scene, Law L5):
+     · .bg-sun  — a directional sun/horizon bloom that rim-lights the cloud tops where the hero sits,
+                  screen-blended over the clouds and parallaxed a few px against the pointer for depth.
+     · .bg-grain — a faint dithered noise that breaks gradient BANDING in the scrim/sky on 8-bit panels.
+     Both ride a shared parallax offset (--par-x/--par-y), set by a lerped pointer/scroll handler. */
+  .bg-sun{ inset:0; opacity:0; mix-blend-mode:screen; transition:opacity .7s ease;
+    background:
+      radial-gradient(58% 40% at 50% 30%, rgba(255,247,234,.55), rgba(255,238,214,.16) 40%, transparent 66%),
+      radial-gradient(130% 86% at 50% 6%, rgba(150,198,255,.20), transparent 60%);
+    transform:translate3d(var(--par-x,0px), var(--par-y,0px), 0); will-change:transform, opacity; }
+  :root[data-immersive="full"] .bg-sun{ opacity:1; animation:sunbreath 9s ease-in-out infinite; }
+  @keyframes sunbreath{ 0%,100%{ opacity:.9; } 50%{ opacity:1; } }
+  :root[data-theme="light"] .bg-sun{ mix-blend-mode:soft-light;
+    background:
+      radial-gradient(58% 40% at 50% 26%, rgba(255,250,236,.70), transparent 60%),
+      radial-gradient(130% 86% at 50% 4%, rgba(120,170,236,.16), transparent 60%); }
+  .bg-grain{ inset:0; pointer-events:none; opacity:.05; mix-blend-mode:overlay;
+    transform:translate3d(calc(var(--par-x,0px) * -0.4), calc(var(--par-y,0px) * -0.4), 0);
+    background-size:240px 240px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  body.vanta-on .bg-sun, body.vanta-on .bg-grain{ display:block; }  /* keep the light + dither over the real clouds (only the flat fallback layers drop) */
+
   /* Light & Dark are plain; only Immersive shows the holo-field (full + animated). */
   :root[data-immersive="off"] .bg{ opacity:0; }
   /* PERF: when the genuine WebGL cloud sky is live (vanta-on), the CSS fallback layers below it are fully
@@ -722,7 +747,9 @@
   <div class="bg-aurora"></div>
   <div class="bg-stars"></div>
   <div class="bg-gl" id="vanta"></div>
+  <div class="bg-sun"></div>
   <div class="bg-scrim"></div>
+  <div class="bg-grain"></div>
 </div>
 
 <!-- ── TOP BAR ────────────────────────────────────────────────────────────────────────────── -->
@@ -1001,9 +1028,16 @@
       } catch (e) {}
     }
 
-    const STEPS = [1, 1.5, 2, 3];                         // adaptive load: 1 = native sharp → higher = fewer pixels (lighter)
+    // CRISPNESS: Vanta sets renderer pixelRatio = devicePixelRatio / scale. We CAP the effective
+    // pixel ratio at 2 — sharp on any HiDPI panel without paying for a 9× buffer on a DPR-3 phone —
+    // by making the SHARPEST step `max(1, DPR/2)`. Lightening multiplies from there. We also drop the
+    // old ×3 step: that buffer is mush, never worth it. (Was [1,1.5,2,3] with no DPR cap → on a retina
+    // screen the cold-start probe tripped the watchdog and it downscaled to soft FOREVER, monotonic.)
+    const DPR = Math.max(1, window.devicePixelRatio || 1);
+    const BASE = Math.max(1, DPR / 2);                    // sharpest scale that keeps pixelRatio ≤ 2
+    const STEPS = [BASE, BASE * 1.5, BASE * 2];           // Vanta `scale` = resolution divisor; smaller = sharper
     let si = 0, inst = null, fpsRAF = 0;
-    const scaleNow = () => STEPS[si];                     // Vanta `scale` = resolution divisor; 1 = native px (sharp), >1 = lighter
+    const scaleNow = () => STEPS[si];
     const on = () => document.documentElement.getAttribute("data-immersive") === "full" && !document.hidden;
     function apply() { if (!inst) return; const ns = scaleNow(); try { inst.setOptions({ scale: ns, scaleMobile: ns }); inst.scale = ns; inst.resize(); } catch {} }
     function start() {
@@ -1022,19 +1056,27 @@
       } catch (e) { inst = null; }
     }
     function lighten() { if (!inst || si >= STEPS.length - 1) return; si++; apply(); }   // fewer pixels, LIVE (no destroy → no flicker)
+    function sharpen() { if (!inst || si <= 0) return; si--; apply(); }                  // climb BACK toward crisp once the GPU proves it can
+    // The watchdog now has HYSTERESIS and RECOVERY, so a cold-start hitch can't soften the sky forever:
+    //  · longer warm-up + ~2s windows → one-off texture/compile stutters are ignored,
+    //  · two consecutive heavy windows (<45fps) before lightening → no twitchy downscale,
+    //  · two consecutive smooth windows (>57fps) → step back to sharper; the 45↔57 gap stops oscillation.
     function watchFps() {
       cancelAnimationFrame(fpsRAF);
-      let frames = 0, t0 = 0;
+      let frames = 0, t0 = 0, lowStreak = 0, highStreak = 0;
       const tick = (now) => {
         if (!inst) return;
         if (!t0) { t0 = now; frames = 0; fpsRAF = requestAnimationFrame(tick); return; }
         frames++;
-        if (now - t0 < 1400) { fpsRAF = requestAnimationFrame(tick); return; }
-        if ((frames * 1000) / (now - t0) < 45) lighten();   // too heavy → fewer pixels; keep measuring (monotonic)
+        if (now - t0 < 2000) { fpsRAF = requestAnimationFrame(tick); return; }
+        const fps = (frames * 1000) / (now - t0);
+        if (fps < 45) { highStreak = 0; if (++lowStreak >= 2) { lighten(); lowStreak = 0; } }       // sustained heavy → lighten
+        else if (fps > 57) { lowStreak = 0; if (++highStreak >= 2) { sharpen(); highStreak = 0; } } // sustained smooth → recover sharpness
+        else { lowStreak = highStreak = 0; }
         t0 = 0; fpsRAF = requestAnimationFrame(tick);
       };
-      // warm up first so one-off texture-load hitches don't trigger a needless downscale
-      setTimeout(() => { if (inst && on()) fpsRAF = requestAnimationFrame(tick); }, 800);
+      // warm up longer so cold texture-load / shader-compile hitches don't judge the steady state
+      setTimeout(() => { if (inst && on()) fpsRAF = requestAnimationFrame(tick); }, 1600);
     }
     function stop() { cancelAnimationFrame(fpsRAF); document.body.classList.remove("vanta-on"); if (inst) { try { inst.destroy(); } catch {} inst = null; } }
     function sync() { if (on()) start(); else stop(); }
@@ -1042,6 +1084,30 @@
     document.addEventListener("visibilitychange", sync);
     addEventListener("resize", () => { if (inst) { try { inst.resize(); } catch {} } }, { passive: true });
     sync();
+  })();
+
+  // ── PARALLAX — the sky responds to the viewer ───────────────────────────────────────────────
+  // A few px of lerped drift on the light + dither layers (set via --par-x/--par-y), so the scene
+  // has depth against the static cloud bank and feels alive without ever competing with the hero.
+  // rAF runs ONLY while settling (no idle cost); a still sky under reduced-motion never drifts.
+  (function () {
+    const bg = document.querySelector(".bg");
+    if (!bg || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const MAX = 10;                                       // felt, not noticed
+    let px = 0, py = 0, tx = 0, ty = 0, raf = 0;
+    const frame = () => {
+      raf = 0; tx += (px - tx) * 0.08; ty += (py - ty) * 0.08;
+      bg.style.setProperty("--par-x", tx.toFixed(2) + "px");
+      bg.style.setProperty("--par-y", ty.toFixed(2) + "px");
+      if (Math.abs(px - tx) > 0.1 || Math.abs(py - ty) > 0.1) raf = requestAnimationFrame(frame);
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+    addEventListener("pointermove", (e) => {
+      px = (0.5 - e.clientX / innerWidth) * 2 * MAX;
+      py = (0.5 - e.clientY / innerHeight) * 2 * MAX;
+      kick();
+    }, { passive: true });
+    addEventListener("scroll", () => { py = Math.max(-MAX, Math.min(MAX, -scrollY * 0.04)); kick(); }, { passive: true });
   })();
 
   // ── SELF-CERTIFICATION (Law L5) — the gateway must PROVE its own bytes before it will boot ─────────
