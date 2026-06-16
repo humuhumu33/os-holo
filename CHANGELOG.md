@@ -11,6 +11,7 @@ automatically from [Conventional Commits](https://www.conventionalcommits.org/) 
 
 ### Added
 
+- Calm the homepage sky — drop pointer parallax, brighten stars
 - Hyper-real moving starfield that flies in lockstep with the clouds
 - Add crisp distant stars in the dark sky
 - Hyper-real glass CTA buttons, and raise the sky horizon further
