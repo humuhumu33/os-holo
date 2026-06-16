@@ -1248,12 +1248,12 @@
       ]
     },
     "holo-fhs-sw.js": {
-      "kappa": "did:holo:sha256:7ea3b09130fbc4c4a426d5383cd6150781687ff0722ea51bf3f0f05d7b74b5cc",
-      "sri": "sha256-fqOwkTD7xMSkJtU4PNYVB4Fof/ByLqUb8/DwXXt0tcw=",
-      "multibase": "uEiB-o7CRMPvExKQm1Tg81hUHgWh_8HIupRvz8PBde3S1zA",
-      "bytes": 34631,
+      "kappa": "did:holo:sha256:0157aeb2d20bc65da98738c090ef65dbff64a79d34bdf92f176a5f0bcd1b6e1e",
+      "sri": "sha256-AVeustILxl2phzjAkO9l2/9kp500vfkvF2pfC80bbh4=",
+      "multibase": "uEiABV66y0gvGXamHOMCQ72Xb_2SnnTS9-S8Xal8LzRtuHg",
+      "bytes": 40037,
       "alsoKnownAs": [
-        "did:holo:blake3:753e58c98308522234cb160566b7c0eab074ef2499c3f5cc072a99fa88bacf94"
+        "did:holo:blake3:1be0083b8d71492d8cfb2aa4120ad4e14b783de22030f559aa441cc00f829732"
       ]
     },
     "_shared/holo-fhs-map.mjs": {
