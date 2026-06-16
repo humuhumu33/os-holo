@@ -14,30 +14,30 @@
   ],
   "metrics": {
     "hash": {
-      "blake3_MBps": 45.52,
-      "sha256_MBps": 142.5,
+      "blake3_MBps": 42.76,
+      "sha256_MBps": 129.02,
       "sample_MB": 4
     },
     "sealVerify": {
       "ops": 5000,
-      "total_ms": 50.29,
+      "total_ms": 57.04,
       "ms_per_op": 0.01,
-      "ops_per_sec": 99416
+      "ops_per_sec": 87655
     },
     "verifyDeep": {
       "nodes": 101,
-      "ms": 4.73
+      "ms": 5.5
     },
     "dualResolve": {
       "objects": 2000,
       "resolves": 4000,
-      "total_ms": 19.37,
-      "resolves_per_sec": 206530
+      "total_ms": 41.63,
+      "resolves_per_sec": 96074
     },
     "scaling": {
-      "t_1MB_ms": 17.37,
-      "t_4MB_ms": 87.46,
-      "ratio_4x_input": 5.03
+      "t_1MB_ms": 19.1,
+      "t_4MB_ms": 72.63,
+      "ratio_4x_input": 3.8
     }
   },
   "checks": {

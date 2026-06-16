@@ -674,7 +674,7 @@
       import { defineBlock, defineBlockFromSource } from "/_shared/holo-blocks.js";
       import { HoloRepo } from "/_shared/holo-blocks-repo.mjs";
       import { createLiveEditor } from "/_shared/holo-live-edit.mjs";   // liveEdit: the ONE primitive chat·DevTools·agents edit through
-      import { createPlaygroundHost } from "/_shared/holo-playground-agent.mjs";   // Holo Playground: in-app element edits route to that ONE primitive
+      import { createPlaygroundHost, createPlaygroundAgent } from "/_shared/holo-playground-agent.mjs";   // Holo Playground: in-app (iframe) AND in-shell element edits route to that ONE primitive
       import { capabilitiesToSandbox, linkFor } from "/holo-launch.mjs";
       import { classify, matches } from "/holo-omni.mjs";
       import { resolveAny, parseRef } from "/sbin/holo-omni.mjs";   // the discovery-backed κ-resolver (trustless gateways + Delegated Routing V1)
@@ -916,6 +916,11 @@
           :host([frameless]) .nav{position:absolute;top:0;left:0;right:0;z-index:8;opacity:0;transition:opacity .12s;background:#161b22e6;backdrop-filter:blur(6px);border-radius: var(--holo-radius-sm, 8px);border-bottom:0}
           :host([frameless]:hover) .nav{opacity:1}
           :host([frameless]) .body{background:transparent}
+          /* browser content (web · IPFS · κ object) renders on a SOLID page like a real browser tab — never
+             transparent over the wallpaper. The OS tab + omnibar are the browser chrome; this is the viewport. */
+          :host([browser]) .frame{background:#fff;border:0}
+          :host([browser]) .body{background:#fff}
+          :host([browser]) iframe,:host([browser]) ::slotted(iframe){background:#fff}
           /* TAB-FILLING holospace — a maximized app fills its tab as the tab's own content, so it drops
              ALL inner window chrome (no titlebar, border, shadow or resize handles): one frame = the tab,
              the Chrome model. The isolated window frame returns when the tab is detached (state → normal). */
@@ -989,7 +994,10 @@
             el = document.createElement("holo-window"); el.id = n.id;
             el.setAttribute("title", n.title || "Window");
             el.setAttribute("cstyle", P.controlStyle); el.setAttribute("cside", P.controlsSide);
-            if (n.kind === "app") { const f = document.createElement("iframe"); if (n.sandbox) f.setAttribute("sandbox", n.sandbox); if (n.allow) f.setAttribute("allow", n.allow); if (n.srcdoc) f.srcdoc = n.srcdoc; else f.src = n.src; el.appendChild(f);
+            // Playground-edited IN-SHELL surface: re-render from the edited HTML κ (additive — only when set by a
+            // Playground edit; existing surfaces are byte-unchanged). The wrapper is display:contents so layout is unaffected.
+            if (n.htmlOverride != null) { const wrap = document.createElement("div"); wrap.className = "holo-play-html"; wrap.style.cssText = "display:contents"; try { wrap.innerHTML = n.htmlOverride; } catch (e) {} el.appendChild(wrap); }
+            else if (n.kind === "app") { const f = document.createElement("iframe"); if (n.sandbox) f.setAttribute("sandbox", n.sandbox); if (n.allow) f.setAttribute("allow", n.allow); if (n.browser) f.style.background = "#fff"; if (n.srcdoc) f.srcdoc = n.srcdoc; else f.src = n.src; el.appendChild(f);
               // Holo governance (holo-gov.js): bind this frame's VERIFIED identity so the host privacy
               // broker stamps disclosures AS this app (un-forgeable) and the shields reflect it. Every app.
               const idn = govIdentity(n); f.addEventListener("load", () => { try { if (window.HoloGov && f.contentWindow) { window.HoloGov.register(f.contentWindow, idn); if (focusedId === n.id) window.HoloGov.focus(idn); } } catch (e) {}
@@ -1016,6 +1024,7 @@
           }
           el.toggleAttribute("locked", !!n.locked);
           el.toggleAttribute("frameless", !!n.frameless);       // bare object on the desktop (chrome on hover)
+          el.toggleAttribute("browser", !!n.browser);           // web/IPFS/κ content → a solid browser-page viewport (never transparent)
           el.dataset.state = n.state || "normal";
           el.dataset.kind = n.kind || "";                        // so a tab-filling app (max) drops its inner chrome (the tab is its frame)
           holoTag(el, n);                                        // content-address the object → remixable (Inspect · Edit · Share)
@@ -2548,7 +2557,7 @@
         const src = ipfs.landing + "?go=" + encodeURIComponent(route.address || ("ipfs://" + route.hex));
         const label = route.label || route.address || route.hex || "web";
         if ((tabs[activeTab] && tabs[activeTab].home) || desktop.doc().world.length > 0) newTab("🌐 " + label);   // the page gets its OWN tab; Home stays
-        addNode({ kind: "app", title: "🌐  " + label, src, sandbox, allow, state: "max", webAddr: (route.address || ("ipfs://" + route.hex)) });
+        addNode({ kind: "app", title: "🌐  " + label, src, sandbox, allow, state: "max", browser: true, webAddr: (route.address || ("ipfs://" + route.hex)) });
         setActiveTabTitle("🌐 " + label); setActiveTabAddr(route.address || ("ipfs://" + route.hex) || label); recordNav();   // the tab carries its real web/ipfs/eth address · history entry
       }
       $("#open").onclick = openSpot;
@@ -3534,7 +3543,7 @@
         const blob = doc != null ? new Blob([doc], { type: "text/html" }) : new Blob([c.bytes], { type });
         const url = pushBlob(URL.createObjectURL(blob));
         if ((tabs[activeTab] && tabs[activeTab].home) || desktop.doc().world.length > 0) newTab("⬡ " + label);
-        addNode({ kind: "app", title: "⬡  " + label, src: url, sandbox: "", allow: "", state: "max", webAddr: tabAddr });
+        addNode({ kind: "app", title: "⬡  " + label, src: url, sandbox: "", allow: "", state: "max", browser: true, webAddr: tabAddr });
         setActiveTabTitle("⬡ " + label); setActiveTabAddr(tabAddr);
         const detail = c.type === "directory" ? `${c.entries.length} entries` : `${c.bytes.length.toLocaleString()} B`;
         toast(`✓ verified · ${detail} · via ${via} · ${out.ms} ms`);
@@ -3562,7 +3571,7 @@
         const addr = "ipfs://" + t.cid + (t.path ? "/" + t.path : "");
         const label = shortAddr(addr);
         if ((tabs[activeTab] && tabs[activeTab].home) || desktop.doc().world.length > 0) newTab("⬡ " + label);
-        addNode({ kind: "app", title: "⬡  " + label, src, sandbox: "allow-scripts allow-same-origin allow-forms allow-popups allow-modals", allow: "", state: "max", webAddr: addr });
+        addNode({ kind: "app", title: "⬡  " + label, src, sandbox: "allow-scripts allow-same-origin allow-forms allow-popups allow-modals", allow: "", state: "max", browser: true, webAddr: addr });
         setActiveTabTitle("⬡ " + label); setActiveTabAddr(addr); recordNav();
         toast("⬡ browsing IPFS · every block re-derived to its CID (Law L5)");
         return true;
@@ -3574,7 +3583,7 @@
         if (typeof closeSpot === "function") closeSpot();
         const src = "/find.html?q=" + encodeURIComponent(query);
         if ((tabs[activeTab] && tabs[activeTab].home) || desktop.doc().world.length > 0) newTab("⌕ " + query);
-        addNode({ kind: "app", title: "⌕  " + query, src, sandbox: "allow-scripts allow-same-origin allow-forms allow-popups", allow: "", state: "max", webAddr: "find:" + query });
+        addNode({ kind: "app", title: "⌕  " + query, src, sandbox: "allow-scripts allow-same-origin allow-forms allow-popups", allow: "", state: "max", browser: true, webAddr: "find:" + query });
         setActiveTabTitle("⌕ " + query); setActiveTabAddr(query);
       }
       // web3Label(out) — a short tab label for a resolved web3 card.
@@ -4003,9 +4012,36 @@
         pgMode = !!on;
         try { localStorage.setItem("holo.playground", pgMode ? "1" : "0"); } catch (e) {}
         try { document.documentElement.toggleAttribute("data-holo-playground", pgMode); } catch (e) {}   // shell chrome can reflect edit mode
-        broadcastPlayground(pgMode);
+        broadcastPlayground(pgMode);                                   // app frames (iframes)
+        try { _pgShell.setActive(pgMode); } catch (e) {}              // IN-SHELL surfaces (pure components, manim, κ-objects, native blocks)
         try { toast(pgMode ? "✦ Playground on — right-click any object in any app to edit it as code" : "Playground off"); } catch (e) {}
       }
+      // ── IN-SHELL Playground: non-iframe surfaces render directly in the shell document, so a host-mode agent
+      //    (same module, same UI/serialiser) makes their elements right-click-editable too — every visual component
+      //    a κ-object editable as code. No cross-frame boundary, so it commits DIRECTLY through the ONE primitive. ──
+      const pgFirstContent = (winEl) => { for (const c of winEl.children) { if (c.nodeType === 1 && !c.hasAttribute("data-holo-ephemeral") && c.tagName !== "STYLE") return c; } return null; };
+      function pgResolveSurface(elTarget) {
+        try {
+          const winEl = elTarget && elTarget.closest && elTarget.closest("holo-window"); if (!winEl) return null;
+          const id = winEl.id, n = findNode(id); if (!n) return null;
+          if (n.kind === "app" || n.kind === "folder") return null;     // apps = iframes (in-frame agent); folders aren't content
+          const wrap = winEl.querySelector(":scope > .holo-play-html");
+          const root = wrap ? wrap.firstElementChild : pgFirstContent(winEl);
+          if (!root || !root.contains(elTarget)) return null;           // chrome / titlebar → fall through to the window menu
+          return { surfaceId: id, root };
+        } catch (e) { return null; }
+      }
+      function pgCommitInShell(id, source) {                            // the ONE primitive: reseal in-shell source → new κ
+        try {
+          if (!window.HoloLiveEdit.has(id)) window.HoloLiveEdit.register(id, { name: (findNode(id) || {}).name || "object", render: (src) => {
+            try { desktop.change((d) => { const w = d.world.find((x) => x.id === id); if (w) { w.htmlOverride = src; w.content = src; } }); } catch (e) {}   // persist; mutate-in-place ⇒ no rebuild now
+          } });
+          return window.HoloLiveEdit.edit(id, String(source || ""));
+        } catch (e) { return {}; }
+      }
+      const _pgShell = createPlaygroundAgent({ doc: document, win: window, badge: false, resolveSurface: pgResolveSurface, commit: pgCommitInShell,
+        postUp: (msg) => { try { if (msg && msg.op === "playground-request") setPlaygroundMode(false); } catch (e) {} } });   // Esc / element-menu exit → turn the GLOBAL mode off
+      try { _pgShell.mount(); if (pgMode) _pgShell.setActive(true); } catch (e) {}
       try { if (pgMode) document.documentElement.toggleAttribute("data-holo-playground", true); } catch (e) {}   // restore persisted edit mode on boot (new mounts arm via the injector)
       function srcKappa() { const s = srcTa.value; if (!s.trim()) { srcK.textContent = ""; return null; } const obj = repo.publishSource({ name: "pasted", source: s }); srcK.textContent = "holo://" + obj.id.split(":").pop().slice(0, 16) + "…"; return obj; }
       // ════ Ambient Q — the omnipresent ORB (bottom-left) that expands into a light, NON-BLOCKING

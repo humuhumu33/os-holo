@@ -66,6 +66,13 @@ ok("serialize() drops the transient .holo-pg-hot glow class", !/holo-pg-hot/.tes
 ok("serialize() KEEPS the user content (the actual app source)", /<h1 class="title">Hello<\/h1>/.test(src) && /<p>world<\/p>/.test(src), src);
 ok("serialize() is a full document (doctype + html root)", /^<!doctype html>\n<html /.test(src));
 
+// ── 1b) HOST / IN-SHELL mode: serialise a SUB-TREE (a non-iframe surface root, e.g. a pure component) ──────
+// no doctype (it's an element, not a document), and the ephemeral + glow strip still applies (Law L5).
+const subRoot = mkEl("section", { class: "card holo-pg-hot" }, [mkEl("h2", {}, [mkText("Title")]), mkEl("style", { "data-holo-ephemeral": "" }, [mkText("x{}")])]);
+const subHtml = agent.serialize(subRoot);
+ok("host mode: serialize(subtree) is the element HTML, no doctype", /^<section class="card">/.test(subHtml) && !/doctype/i.test(subHtml), subHtml);
+ok("host mode: subtree serialize strips ephemeral + glow, keeps content", !/data-holo-ephemeral|holo-pg-hot|x\{\}/.test(subHtml) && /<h2>Title<\/h2>/.test(subHtml));
+
 // ── 2) ONE edit path: the agent emits ONLY a postUp message; it has NO sealer of its own ──────────────────
 const msg = agent.requestReseal();
 ok("requestReseal posts the clean source UP (the only outbound effect)", posted.length === 1 && posted[0].op === "reseal" && posted[0].surfaceId === "win-1" && posted[0].source === src);

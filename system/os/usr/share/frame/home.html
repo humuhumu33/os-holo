@@ -3,6 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Canonical-landing guard: shell.html is THE single Hologram OS desktop (refind.conf + the SDDM
+         default session both boot it). home.html is the Platform Manager surface (home.html?manage) — it is
+         NOT a landing. So if it is ever reached bare and top-level (a stale tab, a bookmark, a legacy link),
+         hand straight off to the desktop. ?manage (the manager) and any embedded use are left untouched. -->
+    <script>try{var _q=new URLSearchParams(location.search);if(window.top===window.self&&!_q.has("manage")&&!_q.has("embed")){location.replace("shell.html"+location.hash);}}catch(e){}</script>
     <!-- Cross-origin isolation for static hosts (GitHub Pages can't send COOP/COEP):
          this shim registers a service worker that adds the headers and reloads once,
          so crossOriginIsolated (SharedArrayBuffer / the WASM VMs) works on Pages. It

@@ -49,15 +49,22 @@ export function parseIpfsPath(rel) {
 
 // makeGetBlock(fetchImpl, cfg) → async (cidStr) => Uint8Array | null. Races the trustless gateways, accepts
 // the FIRST block that re-derives against its CID (Law L5), and falls back to Delegated-Routing discovery.
-export function makeGetBlock(fetchImpl, { gateways = IPFS_GATEWAYS, discover = true } = {}) {
+export function makeGetBlock(fetchImpl, { gateways = IPFS_GATEWAYS, discover = true, timeoutMs = 9000 } = {}) {
   const f = fetchImpl || (typeof fetch !== "undefined" ? fetch : null);
   const pull = async (gws, cidStr) => {
     const tasks = gws.map(async (g) => {
-      const r = await f(`${String(g).replace(/\/$/, "")}/ipfs/${cidStr}?format=raw`, { headers: { accept: "application/vnd.ipld.raw" } });
-      if (!r || !r.ok) throw new Error("gateway " + (r && r.status));
-      const bytes = new Uint8Array(await r.arrayBuffer());
-      if (!(await holoIpfs.verifyBlock(cidStr, bytes))) throw new Error("cid mismatch — gateway not trusted");
-      return bytes;
+      // Time-box each gateway: a slow/blocked endpoint (e.g. a browser shield dropping the cross-origin
+      // fetch) must FAIL FAST so Promise.any can settle and the caller surfaces a clear error, not a blank
+      // hang. AbortController works in both the SW and Node.
+      const ac = (typeof AbortController !== "undefined") ? new AbortController() : null;
+      const to = ac ? setTimeout(() => ac.abort(), timeoutMs) : null;
+      try {
+        const r = await f(`${String(g).replace(/\/$/, "")}/ipfs/${cidStr}?format=raw`, { headers: { accept: "application/vnd.ipld.raw" }, ...(ac ? { signal: ac.signal } : {}) });
+        if (!r || !r.ok) throw new Error("gateway " + (r && r.status));
+        const bytes = new Uint8Array(await r.arrayBuffer());
+        if (!(await holoIpfs.verifyBlock(cidStr, bytes))) throw new Error("cid mismatch — gateway not trusted");
+        return bytes;
+      } finally { if (to) clearTimeout(to); }
     });
     try { return await Promise.any(tasks); } catch { return null; }
   };

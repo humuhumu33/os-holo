@@ -57,14 +57,40 @@ function serializeNode(node) {
   return open + inner + "</" + tag + ">";
 }
 
-// ── createPlaygroundAgent — the IN-FRAME half. Lives inside a same-origin holo app frame. ─────────────────
-// { doc, win, surfaceId, postUp(msg), isKappa } → { mount, unmount, serialize, requestReseal, onContextMenu }
-export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp = () => {}, isKappa = isKappaDefault } = {}) {
+// ── createPlaygroundAgent — TWO modes over the SAME UI/serialiser (the Atlas discipline). ─────────────────
+//   IN-FRAME (default): lives inside a same-origin app frame; serialises the WHOLE document and posts the bytes
+//     UP to the shell (postUp) → createPlaygroundHost → createLiveEditor.edit. One surface, one fixed surfaceId.
+//   IN-SHELL/HOST (resolveSurface + commit): lives in the shell's OWN document, where non-iframe surfaces (pure
+//     components, manim, κ-objects, native blocks) render directly. There is NO cross-frame boundary, so it
+//     calls `commit(surfaceId, source)` DIRECTLY (the shell wires that to HoloLiveEdit.edit — still the ONE path).
+//     `resolveSurface(targetEl) → { surfaceId, root } | null` tells the agent which surface an element belongs to
+//     (and the sub-tree `root` to serialise); a null means "not an editable surface" (shell chrome) → ignored.
+// { doc, win, surfaceId, postUp, root, resolveSurface, commit, badge, isKappa } → { mount, unmount, serialize, setActive, isActive, … }
+export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp = () => {}, root = null, resolveSurface = null, commit = null, badge = true, isKappa = isKappaDefault } = {}) {
   if (!doc) throw new Error("createPlaygroundAgent needs a doc");
   win = win || doc.defaultView || null;
+  let curRoot = null, curSurfaceId = surfaceId;        // the surface resolved for the CURRENT interaction (host mode)
 
-  // serialise the host document MINUS all agent UI/decoration — the exact bytes the shell will seal (L5).
-  function serialize() { return "<!doctype html>\n" + serializeNode(doc.documentElement); }
+  // serialise a node MINUS all agent UI/decoration — the exact bytes the shell will seal (L5). A whole document
+  // gets a doctype; a sub-tree (in-shell surface root) is serialised as its own element.
+  function serialize(node) {
+    const n = node || root || doc.documentElement;
+    const isDoc = n === doc.documentElement;
+    return (isDoc ? "<!doctype html>\n" : "") + serializeNode(n);
+  }
+  // commit an edit: in-shell calls the injected `commit` DIRECTLY (same document); in-frame hands the bytes UP.
+  function commitEdit() {
+    if (typeof commit === "function") {
+      try {
+        const id = curSurfaceId || surfaceId;
+        const r = commit(id, serialize(curRoot)) || {};
+        const k = r.kappa ? String(r.kappa).split(":").pop() : "";
+        if (r.changed && k) toast("✦ sealed · κ " + k.slice(0, 8) + "…");
+        return r;
+      } catch (e) { return {}; }
+    }
+    return requestReseal();
+  }
 
   // the ONLY outbound effect: hand the clean source UP. The shell calls createLiveEditor.edit — the ONE path.
   function requestReseal() {
@@ -136,12 +162,12 @@ export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp 
     closeMenu(); if (!target) return;
     try {
       target.setAttribute("contenteditable", "true"); target.focus();
-      const done = () => { try { target.removeAttribute("contenteditable"); } catch (e) {} target.removeEventListener("blur", done); requestReseal(); };
+      const done = () => { try { target.removeAttribute("contenteditable"); } catch (e) {} target.removeEventListener("blur", done); commitEdit(); };
       target.addEventListener("blur", done);
     } catch (e) {}
   }
-  function actDuplicate() { closeMenu(); try { const c = target.cloneNode(true); target.parentNode.insertBefore(c, target.nextSibling); requestReseal(); } catch (e) {} }
-  function actDelete() { closeMenu(); try { target.remove(); requestReseal(); } catch (e) {} }
+  function actDuplicate() { closeMenu(); try { const c = target.cloneNode(true); target.parentNode.insertBefore(c, target.nextSibling); commitEdit(); } catch (e) {} }
+  function actDelete() { closeMenu(); try { target.remove(); commitEdit(); } catch (e) {} }
 
   function openSourceEditor(el) {
     if (!el || !win) return;
@@ -157,7 +183,7 @@ export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp 
         const frag = tmp.content || tmp; const nodes = [...(frag.childNodes || [])];
         if (nodes.length) { for (const nn of nodes) el.parentNode.insertBefore(nn.cloneNode(true), el); el.remove(); }
       } catch (e) {}
-      closeEditor(); requestReseal();
+      closeEditor(); commitEdit();
     };
     row.appendChild(cancel); row.appendChild(apply);
     editorEl.appendChild(ta); editorEl.appendChild(row);
@@ -190,16 +216,23 @@ export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp 
     menuEl.style.top = Math.min(y, (win ? win.innerHeight : 1e4) - h - 8) + "px";
   }
 
+  // host mode: resolve the surface (and its serialise root) for an element; null ⇒ not editable (shell chrome) ⇒ ignore.
+  function resolveFor(el) {
+    if (typeof resolveSurface !== "function") return true;     // in-frame mode: the whole document is editable
+    const s = resolveSurface(el); if (!s) return false;
+    curSurfaceId = s.surfaceId; curRoot = s.root || null; return true;
+  }
   function onContextMenu(e) {
     if (!active) return;                    // DORMANT: let the app's / browser's native right-click work
     if (inUI(e.target)) return;            // let the agent's own UI use the native menu
+    if (!resolveFor(e.target)) return;     // host mode: chrome / non-surface → native right-click
     e.preventDefault(); e.stopPropagation();
     target = e.target && e.target.nodeType === 1 ? e.target : (e.target && e.target.parentElement);
     if (target) openMenu(e.clientX, e.clientY);
   }
-  function onDblClick(e) { if (!active || inUI(e.target)) return; target = e.target && e.target.nodeType === 1 ? e.target : null; if (target) actText(); }
+  function onDblClick(e) { if (!active || inUI(e.target)) return; if (!resolveFor(e.target)) return; target = e.target && e.target.nodeType === 1 ? e.target : null; if (target) actText(); }
   function onKeyDown(e) { if (e.key === "Escape") { if (menuEl || editorEl) { closeMenu(); closeEditor(); } else if (active) userExit(); } }
-  function onOver(e) { if (!active) return; const t = e.target; if (inUI(t) || t === hot || !t || t.nodeType !== 1) return; if (hot) hot.classList.remove(HOT); hot = t; try { t.classList.add(HOT); } catch (x) {} }
+  function onOver(e) { if (!active) return; const t = e.target; if (inUI(t) || t === hot || !t || t.nodeType !== 1) return; if (typeof resolveSurface === "function" && !resolveSurface(t)) return; if (hot) hot.classList.remove(HOT); hot = t; try { t.classList.add(HOT); } catch (x) {} }
   function onOut(e) { if (e.target === hot && hot) { hot.classList.remove(HOT); hot = null; } }
   function onPointerDown(e) { if (menuEl && !inUI(e.target)) closeMenu(); }
   function onDown(e) {   // host → frame messages: toggle Playground mode, or the resulting κ after a reseal
@@ -214,7 +247,7 @@ export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp 
 
   // ── the opt-in switch. OFF by default; the shell's window menu turns it ON for a surface. ──
   function showBadge() {
-    if (!doc.body || typeof doc.createElement !== "function" || badgeEl) return;
+    if (!badge || !doc.body || typeof doc.createElement !== "function" || badgeEl) return;
     badgeEl = doc.createElement("div"); badgeEl.className = "holo-pg-badge"; badgeEl.setAttribute(EPHEMERAL, "");
     badgeEl.textContent = "✦ Playground · right-click to edit · Esc to exit";
     badgeEl.title = "Exit Playground"; badgeEl.onclick = () => userExit();
