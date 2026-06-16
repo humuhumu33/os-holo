@@ -7,11 +7,18 @@ import starlight from '@astrojs/starlight';
 // served as content-addressed κ objects — keeping Law L5 true of the docs.
 //
 // Deploys under /docs of the gateway's web root: the build is emitted straight
-// into the repo-root `docs/` directory and all links carry the `/docs` base, so
-// `index.html`'s "Docs" link → `docs/` resolves with no extra plumbing.
+// into the repo-root `docs/` directory and all links carry the base, so
+// `index.html`'s relative "Docs" link → `docs/` resolves with no extra plumbing.
+//
+// BASE is deployment-relative. On a ROOT site (localhost via holo-serve-fhs, a
+// <user>.github.io site, or a custom domain) the docs live at `/docs`. On a GitHub
+// PROJECT page they live under `/<repo>/docs` — so the absolute asset/link refs Astro
+// bakes in (`/docs/_astro/…`) would otherwise escape the project subpath and 404,
+// rendering the docs unstyled. The Pages workflow sets DOCS_BASE=/<repo>/docs; local
+// builds keep the `/docs` default.
 export default defineConfig({
   site: 'https://hologram.os',
-  base: '/docs',
+  base: process.env.DOCS_BASE || '/docs',
   outDir: '../../../docs',
   // Mirror the OS's own flat URL space; trailing-slash-free, hashable pages.
   trailingSlash: 'never',
