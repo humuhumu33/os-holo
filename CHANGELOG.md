@@ -11,6 +11,7 @@ automatically from [Conventional Commits](https://www.conventionalcommits.org/) 
 
 ### Added
 
+- Scrollable in embed, wider readable measure, reading progress + reveals
 - First-run immersive default, dock polish, notify action labels
 - Dedup notifications by sender/title/body key
 - Golden-ratio Play rail restyle + stable bundle catalog wrapper
