@@ -76,6 +76,11 @@ jobs:
       - name: Docs reference drift gate (fail-closed)
         run: node system/tools/docs-reference-witness.mjs   # a stale documented name/path blocks the deploy
       - name: Build docs site (Astro Starlight)
+        # Project-page deploys serve under /<repo>/, so the docs base must be /<repo>/docs —
+        # otherwise Astro's absolute asset refs (/docs/_astro/…) escape the subpath and the docs
+        # render unstyled. On a root site (custom domain / <user>.github.io) drop DOCS_BASE.
+        env:
+          DOCS_BASE: /${{ github.event.repository.name }}/docs
         run: |
           cd system/docs/site
           npm ci
