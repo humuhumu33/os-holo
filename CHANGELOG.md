@@ -20,6 +20,7 @@ automatically from [Conventional Commits](https://www.conventionalcommits.org/) 
 
 ### Fixed
 
+- Open doc windows at the same size as the app launcher
 - Re-pin the OS closure so shell.html and the worker verify, unblocking boot
 [unreleased]: https://github.com/humuhumu33/os-holo/commits/main
 
