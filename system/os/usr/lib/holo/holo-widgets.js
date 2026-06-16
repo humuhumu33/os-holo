@@ -679,7 +679,7 @@
     return made;
   }
 
-  // ── desktop modes — switch the whole board between curated presets (Focused · Learn · Work · Play). ──
+  // ── desktop modes — switch the whole board between curated presets (Welcome · Focused · Learn · Work · Play · Clarity). ──
   // A mode is just a scene flagged {mode:true}. Switching REPLACES the board, but each mode REMEMBERS its
   // own layout (per-mode localStorage), so flipping between them is non-destructive — your customised Work
   // board is still there when you come back from Play. Active only on a persisting board (the Home desktop).

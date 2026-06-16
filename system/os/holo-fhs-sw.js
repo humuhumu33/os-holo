@@ -19,6 +19,7 @@ import { handleApi as handleHoloApi, collectNdjson as apiNdjson, collectSse as a
 import { resolveByKappa } from "./sbin/holo-resolver.mjs";    // the κ-verified multi-source resolver (Law L5) — accept the FIRST copy that re-derives
 import { ipfsPeer, bridgePeer } from "./sbin/holo-peers.mjs"; // recovery transports: IPFS Trustless Gateways · WebRTC mesh (page bridge)
 import * as holoIpfs from "./usr/lib/holo/holo-ipfs.js";      // a sha-256 κ IS a CIDv1 sha2-256 — IPFS adopted, not bridged (import-safe: no network, no top-level effects)
+import { parseIpfsPath, makeGetBlock, resolveIpfsPath, directoryListingHtml, ipfsErrorHtml, injectNavReporter } from "./sbin/holo-ipfs-gateway.mjs";   // the VERIFIED /ipfs/<cid>/<path> path gateway — browse the object graph natively, every block re-derived (L5)
 
 const BASE = new URL(self.registration.scope).pathname;       // "/" at a root/user site, "/<repo>/" under a project site
 // DEV (localhost) — live source is edited on disk, so the closure's κ pins are intentionally stale.
@@ -58,7 +59,7 @@ const mimeOf = (rel) => MIME[String(rel).split(".").pop().toLowerCase()] || "app
 // Applied to a COPY *after* κ re-derivation, so Law L5 still guards the canonical bytes (the pins are on the
 // un-rewritten file). No-op at a root deploy (BASE === "/"), so dev + user-site boots are byte-unchanged.
 const HTMLISH = (rel) => rel === "" || rel.endsWith("/") || /\.html?$/i.test(rel);
-const SUBPATH_PREFIXES = ["_shared", "sbin", "usr", "lib", "lib64", "pkg", "apps", "etc", "var", "opt", "srv", "boot", "bin", "home", "root", "mnt", "media", ".well-known", ".holo"];
+const SUBPATH_PREFIXES = ["_shared", "sbin", "usr", "lib", "lib64", "pkg", "apps", "etc", "var", "opt", "srv", "boot", "bin", "home", "root", "mnt", "media", ".well-known", ".holo", "ipfs", "ipns"];
 const TOPLEVEL_MODULES = ["holo-resolver.mjs", "holo-sources.mjs", "holo-peers.mjs", "holo-uor.mjs", "holo-object.mjs", "holo-wire.mjs", "holo-sw.js", "holo-launch.mjs", "holo-omni.mjs", "holo-boot-sw-register.mjs", "holo-heal-boot.mjs", "browser-sw.js"];   // OS modules imported as a bare-root specifier "/holo-*.mjs" (fhsMap routes them to sbin/ or lib/)
 const FLAT_SRC = "^/(?:" + SUBPATH_PREFIXES.map((p) => p.replace(/[.]/g, "\\.")).join("|") + ")(?:/|$)";   // matches an origin-absolute OS-flat path "/usr/…", "/.holo/…" — NOT a BASE-rooted one
 const reroot = (v) => (typeof v === "string" && /^\/(?!\/)/.test(v)) ? BASE + v.slice(1) : v;   // origin-absolute "/x" → "BASE x"; leaves //, https://, bare, relative alone
@@ -244,6 +245,39 @@ async function apiRespond(req, rel) {
   return new Response(out.body || "", { status: out.status, headers: { ...COI, "access-control-allow-origin": "*", "cache-control": "no-store", ...(out.headers || {}) } });
 }
 
+// ── SERVERLESS IPFS PATH GATEWAY — /ipfs/<cid>/<path> resolves through the UnixFS DAG, every block
+// re-derived against its CID (Law L5), so an IPFS site browses NATIVELY: a page's relative ./assets and its
+// <a href> links resolve back through this same gateway. A directory serves its index.html (else a native
+// listing); HTML gets the nav-reporter (a verified copy) so the omnibox tracks the journey. Immutable by
+// construction (CID = content), so the assembled response is cached by URL — re-visits are network-free.
+const IPFSCACHE = "holo-ipfs-v1";
+const isIpfsRoute = (rel) => /^ipfs\/[^/?#]+/i.test(rel) || /^ipns\/[^/?#]+/i.test(rel);
+async function ipfsRespond(req, rel, url) {
+  const p = parseIpfsPath(rel);
+  if (!p) return new Response("bad ipfs path", { status: 400, headers: COI });
+  if (p.ns === "ipns") return new Response(ipfsErrorHtml(p, { reason: "IPNS names are not yet wired in this build", status: 501 }), { status: 501, headers: { ...COI, "content-type": "text/html; charset=utf-8" } });
+  const cache = await caches.open(IPFSCACHE);
+  const hit = await cache.match(req.url);
+  if (hit) return hit;                                         // immutable content → URL-keyed cache, network-free
+  let out; try { out = await resolveIpfsPath(p.root, p.path, makeGetBlock(fetch)); }
+  catch (e) { out = { kind: "error", reason: (e && e.message) || String(e), status: 502 }; }
+  // a directory addressed WITHOUT a trailing slash → redirect to add it, so the page's relative links resolve
+  if (out.kind === "directory" && !url.pathname.endsWith("/")) {
+    return new Response(null, { status: 308, headers: { ...COI, location: url.pathname + "/" + (url.search || "") } });
+  }
+  if (out.kind === "error") return new Response(ipfsErrorHtml(p, out), { status: out.status || 502, headers: { ...COI, "content-type": "text/html; charset=utf-8" } });
+  let body, ct;
+  if (out.kind === "directory") { body = new TextEncoder().encode(injectNavReporter(directoryListingHtml(p.root, p.path, out.entries))); ct = "text/html; charset=utf-8"; }
+  else {
+    ct = out.contentType || "application/octet-stream";
+    body = /^text\/html/i.test(ct) ? new TextEncoder().encode(injectNavReporter(new TextDecoder().decode(out.bytes))) : out.bytes;
+    if (/^(text\/|application\/(json|xml|javascript))/i.test(ct) && !/charset/i.test(ct)) ct += "; charset=utf-8";
+  }
+  const resp = new Response(body, { status: 200, headers: { ...COI, "content-type": ct, "x-holo-ipfs": out.kind, "x-holo-cid": out.cidStr || p.root, "cache-control": "public, max-age=31536000, immutable" } });
+  try { await cache.put(req.url, resp.clone()); } catch {}
+  return resp;
+}
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
@@ -252,6 +286,7 @@ self.addEventListener("fetch", (event) => {
   const relMcp = decodeURIComponent(url.pathname.slice(BASE.length)).replace(/^\/+/, "");
   if (MCP_API.test(relMcp)) { event.respondWith(apiRespond(req, relMcp)); return; }   // serverless REST κ-stream API
   if (isMcpRoute(relMcp)) { event.respondWith(mcpRespond(req, relMcp)); return; }   // serverless MCP endpoint
+  if (req.method === "GET" && isIpfsRoute(relMcp)) { event.respondWith(ipfsRespond(req, relMcp, url)); return; }   // verified IPFS path gateway → native browsing
   if (req.method !== "GET") return;
 
   event.respondWith((async () => {

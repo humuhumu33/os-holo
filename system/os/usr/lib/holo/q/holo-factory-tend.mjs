@@ -20,7 +20,11 @@ const HOLO = { holo: "https://hologram.os/ns/mind#" };
 // A CHECK: { name, read?() → source, verify(source) → { pass, failureKind?, evidence? }, write?(source),
 //            signal?, lang?, target?, signalFields? }. read()/write() bind it to a real target (a κ-object,
 //            a liveEdit surface, a fetched file). verify() is the pure oracle (parse · a test · a witness).
-export function createTender({ factory, store, triage, onSignal } = {}) {
+// getHead/setHead (optional) thread the SHARED, advancing trace-corpus head through every factory.run, so a
+// watch session's failures accumulate on ONE chain (the factory + ambient loop learn into one memory, L3) —
+// and `failures(head)` actually sees them. Without them the tender's factory would chain every run off a
+// frozen head (siblings, not a chain), and accumulated failures would be invisible to self-improvement.
+export function createTender({ factory, store, triage, onSignal, getHead, setHead } = {}) {
   if (!factory || typeof factory.run !== "function") throw new Error("tender needs a factory (createFactory)");
   const S = store || factory.store || new Map();
   const checks = new Map();
@@ -53,6 +57,7 @@ export function createTender({ factory, store, triage, onSignal } = {}) {
   // one pass: monitor every check; each RED one ⇒ a factory.run verified by that same check; ship on green.
   async function tend(opts = {}) {
     const budget = opts.budget ?? 3;
+    let head = (typeof getHead === "function" ? getHead() : null) ?? opts.corpusHead ?? null;   // the shared corpus head, threaded
     const results = [];
     for (const c of checks.values()) {
       const cur = c.read ? await c.read() : (c.context ?? null);
@@ -63,12 +68,14 @@ export function createTender({ factory, store, triage, onSignal } = {}) {
       const res = await factory.run(
         { utterance: c.signal || `${c.name} is red${probe && probe.failureKind ? " (" + probe.failureKind + ")" : ""}`,
           source: "environment", target: c.target || c.name, lang: c.lang, ...(c.signalFields || {}) },
-        { verify: async (ctx) => c.verify(ctx.source), budget, context: cur, intent });
+        { verify: async (ctx) => c.verify(ctx.source), budget, context: cur, intent, corpusHead: head });
+      if (res.traceHead) head = res.traceHead;                        // advance the ONE chain (every run learns into the same memory)
       // SHIP — a verified fix is persisted durably through the check's own write() (the loop closes)
       let shipped = false;
       if (res.ok && c.write && res.change != null) { try { await c.write(res.change); shipped = true; } catch (e) { res.shipError = String(e && e.message || e); } }
       results.push({ name: c.name, status: res.ok ? "fixed" : res.outcome, receipt: res.receipt, shipped, runKappa: res.runKappa });
     }
+    if (typeof setHead === "function" && head) try { setHead(head); } catch (e) {}   // publish the advanced head (durable, owned by the host)
     // seal a FactoryTend receipt over the standing intent + this pass (re-derivable, Law L5)
     const links = [];
     if (intent) { const i = resolve(S, intent.id) || intent; links.push(linkTo(S, "prov:used", i)); }
@@ -78,7 +85,7 @@ export function createTender({ factory, store, triage, onSignal } = {}) {
       "holo:fixed": results.filter((r) => r.status === "fixed").length, "holo:results": results,
       ...(links.length ? { links } : {}),
     });
-    return { results, receipt: rec.id, intentKappa: intent ? intent.id : null, green: results.every((r) => r.status === "green" || r.status === "fixed") };
+    return { results, receipt: rec.id, intentKappa: intent ? intent.id : null, corpusHead: head, green: results.every((r) => r.status === "green" || r.status === "fixed") };
   }
 
   // watch(utterance, { intervalMs, onTend }) — the OPT-IN autonomous loop. Seals the user's standing intent

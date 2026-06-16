@@ -1248,12 +1248,12 @@
       ]
     },
     "holo-fhs-sw.js": {
-      "kappa": "did:holo:sha256:7b8d39f0d4ae7bb2caa9271672512609b6b91cac8aa32952c6ccc8447d68f822",
-      "sri": "sha256-e4058NSue7LKqScWclEmCba5HKyKoylSxszIRH1o+CI=",
-      "multibase": "uEiB7jTnw1K57ssqpJxZyUSYJtrkcrIqjKVLGzMhEfWj4Ig",
-      "bytes": 28094,
+      "kappa": "did:holo:sha256:3c9b04a70cf54bb88573d934266cd17c7948c5f1895f1db63a761bfd5dc02b0b",
+      "sri": "sha256-PJsEpwz1S7iFc9k0JmzRfHlIxfGJXx22OnYb/V3AKws=",
+      "multibase": "uEiA8mwSnDPVLuIVz2TQmbNF8eUjF8YlfHbY6dhv9XcArCw",
+      "bytes": 31214,
       "alsoKnownAs": [
-        "did:holo:blake3:98c19cfe9e7f88c0ad646e748058ad7635c82d105bd27f50277ad3063ab6e7a5"
+        "did:holo:blake3:ec3c6a50607048c1f2172a9e2bd6308c88fa5f3a00b12881c6d26d4ec25b2372"
       ]
     },
     "_shared/holo-fhs-map.mjs": {
@@ -2472,22 +2472,22 @@
       ]
     },
     "shell.html": {
-      "kappa": "did:holo:sha256:2cf3f97707094236bb266fb730cf76768fd7c7bb5352498b3b963b0c1469d3c1",
-      "sri": "sha256-LPP5dwcJQja7Jm+3MM92do/Xx7tTUkmLO5Y7DBRp08E=",
-      "multibase": "uEiAs8_l3BwlCNrsmb7cwz3Z2j9fHu1NSSYs7ljsMFGnTwQ",
-      "bytes": 467486,
+      "kappa": "did:holo:sha256:da7a95eca056d6172c9cc2701faf80b9f47d26a53d4d2aadfca56be28f0029d6",
+      "sri": "sha256-2nqV7KBW1hcsnMJwH6+AufR9JqU9TSqt/KVr4o8AKdY=",
+      "multibase": "uEiDaepXsoFbWFyycwnAfr4C59H0mpT1NKq38pWvijwAp1g",
+      "bytes": 474879,
       "alsoKnownAs": [
-        "did:holo:blake3:23c6064f89554164117fa3bf3e922b621c4024fd5054e865df38e220a2e01a6d"
+        "did:holo:blake3:bdbb3dd42bf3d6ba7c8c27e5f3680795d334b5e85c0b67af7baa6391115476a8"
       ],
       "holo:within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
       "holo:atlasCoordinate": {
         "space": "Φ-Atlas-12288",
         "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
-        "cell": 2669,
-        "page": 10,
-        "byte": 109,
-        "r96": 13,
-        "phi": 2669
+        "cell": 5800,
+        "page": 22,
+        "byte": 168,
+        "r96": 72,
+        "phi": 5800
       }
     },
     "_shared/holo-gov.js": {

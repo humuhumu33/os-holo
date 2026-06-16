@@ -22,5 +22,8 @@ import { createPlaygroundAgent } from "./holo-playground-agent.mjs";
     });
     agent.mount();
     window.__holoPlayground = agent;
+    // OFF by default. If this surface was already in Playground mode when the frame (re)loaded, the shell
+    // stamps data-pg-active="1" on the injector so the mode survives a reload; otherwise stay dormant.
+    if (tag.dataset.pgActive === "1") agent.setActive(true);
   } catch (e) { /* an app that refuses injection simply isn't element-editable — honest, no crash */ }
 })();

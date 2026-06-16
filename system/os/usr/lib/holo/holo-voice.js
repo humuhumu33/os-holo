@@ -870,8 +870,7 @@
             await gpuEng.load(function () { hud("loading", "Loading Q's GPU coder — first time…"); });
             _brain = { engine: gpuEng, gpu: true };
             bindMind(gpuEng);
-            var Qg = await ensureQVAC();
-            if (Qg && Qg.useBrain) { try { Qg.useBrain({ id: "holo-q-ternary-gpu", generate: function (h, p) { return gpuEng.generate(h, p); } }); } catch (e) {} }
+            bindSeamBrain(2, gpuEng);                                  // full brain → the QVAC completion seam (tier 2)
             return _brain;
           } catch (e) { console.warn("[HoloVoice] GPU coder brain unavailable — using the WASM floor:", e && e.message || e); }
         }
@@ -882,8 +881,7 @@
           await engine.load(function () { hud("loading", "Waking Q up — first time only…"); });
           _brain = { engine };
           bindMind(engine);                                            // give the OS orchestrator Q's mind (sampler)
-          var Q = await ensureQVAC();
-          if (Q && Q.useBrain) { try { Q.useBrain({ id: "holo-voice-llm", generate: function (h, p) { return engine.generate(h, p); } }); } catch (e) {} }
+          bindSeamBrain(2, engine);                                    // full brain → the QVAC completion seam (tier 2)
           return _brain;
         } catch (e) { console.warn("[HoloVoice] agent LLM unavailable (run tools/vendor-voice-model.mjs to enable chat):", e && e.message || e); return null; }
         finally { _brainLoading = null; }
@@ -892,7 +890,49 @@
     return _brainLoading;
   }
   // drop the loaded brain so the next ensureBrain() rebuilds with the current CFG (e.g. after a tier switch).
-  function resetBrain() { _brain = null; _brainTried = false; _brainLoading = null; try { var Q = W.HoloQVAC; if (Q && Q.useBrain) Q.useBrain(null); } catch (e) {} }
+  function resetBrain() { _brain = null; _brainTried = false; _brainLoading = null; _boundTier = 0; try { var Q = W.HoloQVAC; if (Q && Q.useBrain) Q.useBrain(null); } catch (e) {} }
+
+  // ── PROGRESSIVE BRAIN (cold-start) — Q must feel alive the instant the desktop paints, not after a 1.7GB
+  //    download. Conversation is served in TIERS: the lightweight STARTER (SmolLM2-360M, already vendored) is
+  //    warmed at boot and bound to the QVAC completion seam so the FIRST turn lands in ~1s; the FULL brain
+  //    (1.5B Coder) upgrades SILENTLY in the background and rebinds when ready. DO (the command router) needs
+  //    no model and works at t=0. Honest: until a real model is bound Q says it's waking — never word-salad.
+  //    Respectful: the heavy tier auto-upgrades only on capable (WebGPU), non-metered devices — so a WASM-only
+  //    machine stays on the safe starter (which never freezes the tab) instead of compiling 1.7GB in the heap. ──
+  var _boundTier = 0;                                    // 0 none · 1 starter (360M) · 2 full brain (1.5B)
+  function bindSeamBrain(tier, engine) {                 // bind the best-available engine to HoloQVAC.completion
+    if (!engine || tier < _boundTier) return;
+    _boundTier = tier;
+    ensureQVAC().then(function (Q) { if (Q && Q.useBrain) { try { Q.useBrain({ id: "holo-brain-t" + tier, generate: function (h, p) { return engine.generate(h, p); } }); } catch (e) {} } });
+  }
+  function metered() {                                   // honor data-saver / 2g — don't burn mobile data on first touch
+    try { var c = navigator.connection; return !!(c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || ""))); } catch (e) { return false; }
+  }
+  function hasWebGPUSafe() {
+    try { return (navigator.gpu && navigator.gpu.requestAdapter) ? navigator.gpu.requestAdapter().then(function (a) { return !!a; }).catch(function () { return false; }) : Promise.resolve(false); }
+    catch (e) { return Promise.resolve(false); }
+  }
+  // warm the conversational STARTER (tier 1) and bind it — small, fast, runs in the ORT worker (never freezes).
+  function warmStarter() { return ensureQuick().then(function (q) { if (q && q.engine) bindSeamBrain(1, q.engine); return q || null; }); }
+  // upgrade to the FULL brain (tier 2) in the background, then rebind — only when the device can take it.
+  var _upgrading = false;
+  function upgradeBrain() {
+    if (_upgrading || _brain || metered()) return;
+    _upgrading = true;
+    hasWebGPUSafe().then(function (gpu) {
+      if (!gpu) { _upgrading = false; return; }          // WASM-only device → stay on the starter (safe + plenty for chat)
+      CFG.preferWebGPU = true;                            // run the 1.5B on GPU memory, not the WASM heap that froze the tab
+      ensureBrain().then(function (b) { if (b && b.engine) bindSeamBrain(2, b.engine); }).catch(function () {}).finally(function () { _upgrading = false; });
+    });
+  }
+  // the conversational brain resolver — NON-BLOCKING on the heavy tier: serve with whatever's warm now (full
+  // brain if present, else the starter) and kick the silent upgrade. converseAgent awaits THIS, not ensureBrain.
+  function resolveBrain() {
+    if (_brain) return Promise.resolve(_brain);
+    upgradeBrain();                                       // silent, guarded tier-2 — does not block this turn
+    return warmStarter();                                 // tier-1 now → the first turn lands fast
+  }
+  function brainTier() { return _boundTier; }
 
   // ── the FAST BASE model (SmolLM2-360M q8, ADR-0096) — Q's cheap-task helper for routing · titling ·
   // compression · approval · curation, so those don't wake the 1.8GB coder brain. A separate, lazy ~376MB
@@ -1209,7 +1249,7 @@
     _history.push({ role: "user", content: text });
     _convoSink.user(text); _convoSink.qStart();                       // render in the Q panel transcript (no-op when closed)
     if (_history.length > 12) _history = [_history[0]].concat(_history.slice(-10));   // bound context
-    var brain = await ensureBrain();                                  // lazy-load + bind the on-device LLM
+    var brain = await resolveBrain();                                 // tiered: serve with the warm starter NOW, upgrade the full brain in the background
     var Q = await ensureQVAC(), reply = "", acted = [], spoken = false;
     // Q speaks as the reply STREAMS: each finished sentence is pushed to a gapless speaker the moment it
     // lands, so the time-to-first-word is one sentence — not the whole answer + its full synthesis. A TYPED
@@ -1219,7 +1259,7 @@
     function emit(delta) { tmark("firstToken"); reply += delta; hud("speaking", reply); _convoSink.qDelta(delta); if (speaker) sent.feed(delta).forEach(function (s) { speaker.push(s); spoken = true; }); }
     // 1. governed seam — conscience gate + sealed receipt (active when the SDK is loaded). Streams the
     //    bound LLM if present, else the reference floor. A blocked verdict emits completionError (pre-stream).
-    if (Q && Q.completion) {
+    if (Q && Q.completion && _boundTier > 0) {                        // only stream the seam once a REAL model is bound — never the gibberish reference floor
       try {
         var run = Q.completion({ history: _history, stream: true, tools: buildTools() }), errored = false;
         for await (var ev of run.events) {
@@ -1239,9 +1279,13 @@
     if (!reply && brain && brain.engine) {
       try { for await (var d of brain.engine.generate(_history, {})) { if (ctl && ctl.aborted) break; emit(d); } reply = reply.trim(); } catch (e) {}
     }
-    // 3. deterministic reference floor — the loop always closes, even with no model.
-    if (!reply) { try { var mod = await import(BASE + "holo-qvac.mjs"); reply = (mod.referenceComplete(_history, {}) || "").trim(); } catch (e) {} }
-    if (!reply) reply = "No language model is bound yet — I can navigate the OS, but vendor an on-device model to chat. (tools/vendor-voice-model.mjs is the pattern.)";
+    // 3. no model is warm yet (the starter is still waking, or this device can't run one) — be HONEST, never
+    //    word-salad. DO still works (commands route without a model); only free-form chat waits for the brain.
+    if (!reply) {
+      reply = _boundTier === 0
+        ? "Still waking up — give me a moment, then ask again. You can already tell me what to do: “open files”, “change the theme”."
+        : "I couldn’t form an answer just now — try once more?";
+    }
     _history.push({ role: "assistant", content: reply });
     _convoSink.qDone(reply, acted);                                   // finalize the Q bubble + action trail in the panel
     hud("done", reply + (acted.length ? "  ·  " + acted.join(", ") : ""));
@@ -2109,8 +2153,18 @@
       try {
         var J = W.HoloJourney; if (!J || (J.met && J.met())) return;     // raced elsewhere
         if (J.markMet) J.markMet(); if (J.mark) J.mark("signed-in");
-        qWhisper("Hello — I'm Q. I'm yours, and I learn as you do. Ask me anything, anytime.",
-          { ms: 10000, onTap: function () { try { openQPanel(); } catch (e) {} } });
+        // the magical beat: Q "comes alive" the instant its starter brain is warm — the orb blooms with the
+        // greeting, so the hello coincides with Q actually being able to think. Capped so it always lands,
+        // even if the model is slow to warm or this device can't run one.
+        var greeted = false;
+        var greet = function () {
+          if (greeted) return; greeted = true;
+          try { flareWake(); } catch (e) {}                             // the orb's "I'm awake" bloom
+          qWhisper("Hello — I'm Q. I'm yours, and I learn as you do. Ask me anything, anytime.",
+            { ms: 10000, onTap: function () { try { openQPanel(); } catch (e) {} } });
+        };
+        try { warmStarter().then(greet); } catch (e) { greet(); }       // bloom when the starter is ready
+        setTimeout(greet, 6000);                                        // …but never wait on the model to say hello
       } catch (e) {}
     }, 1600);
   }
@@ -2279,7 +2333,7 @@
     try { DOC.documentElement.style.setProperty("--holo-aside-w", (qPanel.offsetWidth || 420) + "px"); DOC.documentElement.classList.add("q-panel-open"); } catch (e) {}
     if (btn) btn.setAttribute("data-on", "1");
     flareWake();                                                       // a teal "I'm here" beat as it slides in
-    ensureMode(true); try { ensureBrain(); } catch (e) {}              // warm recognizer + brain in the background
+    ensureMode(true); try { resolveBrain(); } catch (e) {}             // warm recognizer + tiered brain (starter now, full brain upgrades silently)
     setTimeout(function () { qInput && qInput.focus(); }, 140);
   }
   function closeQPanel() {
@@ -2495,6 +2549,10 @@
     try {
       var pq = new URLSearchParams(location.search), deep = pq.has("app") || pq.has("open") || pq.has("run");
       if (!deep && !localStorage.getItem("holo.voice.welcomed")) setTimeout(welcome, 1400);
+      // COLD-START: warm the conversational STARTER now so Q's first turn lands the moment you open it — the
+      // boot film masks the load; the full brain upgrades silently later. Skipped on shared deep links (run the
+      // shared space first) and on metered links (don't burn mobile data on first touch).
+      if (!deep && !metered()) setTimeout(function () { try { warmStarter(); } catch (e) {} }, 300);
     } catch (e) {}
   }
   try { registerQWidget(); } catch (e) {}   // register the "q" widget TYPE at eval — before the board restores, so a saved Q remounts (shell loads widgets first)

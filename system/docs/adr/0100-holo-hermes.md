@@ -1,6 +1,21 @@
 # ADR-0100 — Holo Hermes: a native, in-tab, κ-anchored Hermes-compatible agent on the Q door (+ bidirectional interop)
 
-Status: **DRAFT — DESIGN ONLY, awaiting acceptance.** Findings sourced from deep-research run `wf_259d3784-e6f` (23 primary sources, 22 verified claims, 3 refuted). Pin any implementation to a specific Hermes commit/tag — the project is fast-moving (tags v0.2.0→v0.16.0 / v2026.5.16 seen within months) and backend/provider counts drift.
+Status: **DRAFT — DESIGN ONLY**, EXCEPT the "biggest unlock" (the GEPA-style evolving-skill loop), which is **LANDED + witnessed (9/9)**. Findings sourced from deep-research run `wf_259d3784-e6f` (23 primary sources, 22 verified claims, 3 refuted). Pin any implementation to a specific Hermes commit/tag — the project is fast-moving (tags v0.2.0→v0.16.0 / v2026.5.16 seen within months) and backend/provider counts drift.
+
+> **Implementation note (landed 2026-06-16).** Investigating the strongest additive borrow (GEPA reflective
+> evolving skills) revealed the optimizer ALREADY EXISTS in Hologram: `holo-mind-evolve.mjs` (ADR-0081
+> Phase-2) is a GEPA/DSPy-style reflective optimizer (`failures → evolvePrompt/proposeRevision → evolve →
+> sealSkillRevision` with κ-lineage `prov:wasRevisionOf` + governed `isInForce` + agentskills.io
+> `projectSkill`), and `holo-factory-grow.mjs` already bridged failures→optimizer. The genuine gap was
+> WIRING: the Factory's `grow` never projected the verified skill live, never chained the lineage, and the
+> evolved procedure never fed the change step. **Closed now:** new pure `growSkill()` transform
+> (`holo-factory-grow.mjs`) grows → projects the in-force skill → advances the κ-addressed lineage head
+> (verified generations only); `Q.factory.grow` (`holo-mind-ui.js`) consumes it — projects live into the
+> durable `learnedSkills` roster, persists the lineage head, and injects the evolved procedure into the
+> change step (learn → act). Witnessed by `holo-factory-grow-witness.mjs` (9/9, +3 new: `growSkillProjects`,
+> `lineageChains`, `failingGateNoAdvance`). New door surface: `Q.factory.grow` (now loop-closing) + `Q.factory.skill`.
+> This is an ADR-0097/0081 enhancement motivated by the Hermes research — the broader Hermes RUNTIME below
+> stays DESIGN ONLY.
 Relates: [[holo-q-mux-specialists]] (ADR-0091, one door `window.Q`) · [[holo-q-fuse-adr]] (ADR-0098, panel→judge→synthesize) · [[holo-recall-adr]] (ADR-0099, κ-graph retrieval over the PRIVATE corpus) · [[holo-mind-adr]] (ADR-0081, self-evolving fabric) · [[holo-factory-adr]] (ADR-0097, signal→change→verify→seal→learn + watch/tend) · [[holo-q-remote-model]] (ADR-0090, governed remote-LLM seam) · [[holo-import-adr]] (ADR-0092/0093, GitHub→Holo app + agent-native wiring + governed egress) · [[holo-q-model-registry]] (ADR-0096, the on-device brain) · ADR-0051 (Holo Forge κ-transform) · ADR-0033/0083 (conscience) · ADR-0082 (PROV-O receipts)
 
 ## Context

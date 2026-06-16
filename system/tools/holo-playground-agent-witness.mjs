@@ -50,6 +50,14 @@ function buildDoc() {
 const doc = buildDoc();
 const posted = [];
 const agent = createPlaygroundAgent({ doc, win: null, surfaceId: "win-1", postUp: (m) => posted.push(m) });
+
+// ── 0) OPT-IN: Playground is OFF by default (no hover-glow / right-click hijack until asked) ───────────────
+ok("Playground is OFF by default (dormant until opted in — no hover selection)", agent.isActive() === false);
+agent.setActive(true);
+ok("setActive(true) arms Playground for this surface", agent.isActive() === true);
+agent.setActive(false);
+ok("setActive(false) / Exit returns to dormant", agent.isActive() === false);
+
 const src = agent.serialize();
 ok("serialize() drops the agent script (#holo-playground-app)", !/holo-playground-app/.test(src), src.slice(0, 120));
 ok("serialize() drops the ambient Q script (#holo-q-app)", !/holo-q-app/.test(src));

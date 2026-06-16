@@ -52,103 +52,103 @@
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1551,
-      "px": 15.5,
-      "snippet": "\"font:15.5px/1.4 var(--holo-font-sans,system-ui,-apple-system,'Segoe UI',sans-serif);\" +"
+      "line": 1595,
+      "px": 14.5,
+      "snippet": "\"font:500 14.5px/1.35 var(--holo-font-sans,system-ui,-apple-system,'Segoe UI',sans-serif);"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1564,
+      "line": 1608,
       "px": 14,
       "snippet": "\"font:14px/1.4 var(--holo-font-sans,system-ui,-apple-system,'Segoe UI',sans-serif);opacity"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1566,
+      "line": 1610,
       "px": 13,
       "snippet": "\"#holo-voice-menu h4{margin:0 0 .5rem;font-size:13px;opacity:.7;font-weight:600}\" +"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1578,
+      "line": 1622,
       "px": 12,
       "snippet": "\"#holo-voice-menu .hv-note{margin-top:.5rem;font-size:12px;opacity:.6;line-height:1.35}\" +"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1584,
+      "line": 1628,
       "px": 14.5,
       "snippet": "\"font:14.5px/1.5 var(--holo-font-sans,system-ui,-apple-system,'Segoe UI',sans-serif);trans"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1591,
+      "line": 1635,
       "px": 15,
       "snippet": "\"#q-panel .qp-title{font-weight:600;font-size:15px;letter-spacing:.01em}\" +"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1592,
+      "line": 1636,
       "px": 11,
       "snippet": "\"#q-panel .qp-sub{font-size:11px;opacity:.5;margin-top:1px}\" +"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1593,
+      "line": 1637,
       "px": 11.5,
       "snippet": "\"#q-panel .qp-scope{margin-left:auto;font-size:11.5px;opacity:.85;cursor:pointer;padding:."
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1595,
+      "line": 1639,
       "px": 14,
       "snippet": "\"#q-panel .qp-icon{width:30px;height:30px;display:flex;align-items:center;justify-content:"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1602,
+      "line": 1646,
       "px": 12,
       "snippet": "\"#q-panel .qp-act{align-self:flex-start;font-size:12px;opacity:.72;display:flex;align-item"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1604,
+      "line": 1648,
       "px": 13,
       "snippet": "\"#q-panel .qp-empty{margin:auto;text-align:center;opacity:.5;font-size:13px;line-height:1."
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1608,
+      "line": 1652,
       "px": 15,
       "snippet": "\"#q-panel .qp-mic,#q-panel .qp-send{flex:0 0 auto;width:38px;height:38px;border-radius:50%"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1727,
+      "line": 1775,
       "px": 14,
       "snippet": "\"#holo-live .hl-you{margin-top:1.6rem;min-height:1.4em;max-width:min(680px,86vw);text-alig"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1729,
+      "line": 1777,
       "px": 12,
       "snippet": "\"#holo-live .hl-hint{margin-top:1.4rem;color:var(--holo-ink,#9fb0c8);opacity:.5;font:600 1"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1732,
+      "line": 1780,
       "px": 13,
       "snippet": "\"#holo-live .hl-sub{margin-top:.55rem;color:var(--holo-ink,#aebbd2);opacity:.62;text-align"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 1735,
+      "line": 1783,
       "px": 15,
       "snippet": "\"font:600 15px/1 var(--holo-font-sans,system-ui,-apple-system,'Segoe UI',sans-serif);-webk"
     },
     {
       "file": "os/usr/lib/holo/holo-voice.js",
-      "line": 2069,
+      "line": 2117,
       "px": 15,
       "snippet": "+ \"font:600 15px/1.42 var(--holo-font,system-ui,sans-serif);color:var(--holo-ink,#e8eef5);"
     },
@@ -586,289 +586,289 @@
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 420,
+      "line": 464,
       "px": 13,
       "snippet": ".ctx button .chev { margin-left: 8px; opacity: .55; font-size: 13px; flex: 0 0 auto; }"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 499,
+      "line": 543,
       "px": 13,
       "snippet": ".wall-busy { grid-column: 1 / -1; padding: 18px; text-align: center; color: #8b949e; font:"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2601,
+      "line": 2647,
       "px": 14,
       "snippet": "+ 'body{' + bg + 'position:relative;font:14px ui-sans-serif,system-ui;color:#e8eef9}'"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2603,
+      "line": 2649,
       "px": 11,
       "snippet": "+ '.cr .pw{opacity:.62;color:#8b949e;letter-spacing:.22em;font-size:11px}.cr .hg{font-weig"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2603,
+      "line": 2649,
       "px": 11,
       "snippet": "+ '.cr .pw{opacity:.62;color:#8b949e;letter-spacing:.22em;font-size:11px}.cr .hg{font-weig"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2633,
+      "line": 2679,
       "px": 14,
       "snippet": "font:14px/1.5 var(--win-font,ui-sans-serif,system-ui);transform:translateX(26px);"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2652,
+      "line": 2698,
       "px": 14,
       "snippet": ".cs-brand b{font-size:14px;display:flex;align-items:center;gap:5px}"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2653,
+      "line": 2699,
       "px": 11,
       "snippet": ".cs-brand small{font-size:11px;color:#7c7c84;white-space:nowrap;overflow:hidden;text-overf"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2656,
+      "line": 2702,
       "px": 14,
       "snippet": ".cs-msg{padding:0;margin:14px 0;font-size:14px;line-height:1.7;color:#d2d2d8}"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2658,
+      "line": 2704,
       "px": 12.5,
       "snippet": ".cs-msg .k{font-style:normal;font-family:var(--holo-font-mono,ui-monospace,monospace);colo"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2661,
+      "line": 2707,
       "px": 13,
       "snippet": ".cs-suggest{display:flex;align-items:center;gap:8px;margin:6px 14px 2px;font-size:13px;col"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2670,
+      "line": 2716,
       "px": 14,
       "snippet": "font:14px/1.5 var(--win-font,ui-sans-serif,system-ui);min-height:24px;max-height:170px;dis"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2676,
+      "line": 2722,
       "px": 13,
       "snippet": ".cs-build{margin-left:auto;display:flex;align-items:center;gap:5px;color:#c4c4cc;font-size"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2689,
+      "line": 2735,
       "px": 12,
       "snippet": ".cs-seg button{border:0;background:transparent;color:#9a9aa2;font:600 12px var(--win-font,"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2692,
+      "line": 2738,
       "px": 15,
       "snippet": ".cs-iconbtn{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2695,
+      "line": 2741,
       "px": 12,
       "snippet": "height:28px;box-sizing:border-box;padding:0 10px;color:#9a9aa2;font-size:12px;flex:1 1 aut"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2703,
+      "line": 2749,
       "px": 12,
       "snippet": ".cs-act{display:flex;align-items:center;gap:5px;height:28px;padding:0 11px;line-height:1;b"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2706,
+      "line": 2752,
       "px": 15,
       "snippet": ".cs-pub{color:#a78bfa;font-size:15px;line-height:1;cursor:pointer}"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2708,
+      "line": 2754,
       "px": 12,
       "snippet": "height:28px;padding:0 12px;line-height:1;font:600 12px var(--win-font,system-ui);cursor:po"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2711,
+      "line": 2757,
       "px": 12,
       "snippet": "border-radius:8px;height:28px;padding:0 11px;line-height:1;font:600 12px var(--win-font,sy"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2718,
+      "line": 2764,
       "px": 14,
       "snippet": "background:#161b22;color:#e8eef5;font:14px var(--win-font,system-ui);outline:none}"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2721,
+      "line": 2767,
       "px": 12,
       "snippet": "font:600 12px var(--win-font,system-ui);cursor:pointer}"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2723,
+      "line": 2769,
       "px": 12,
       "snippet": ".cs-importbar .st{font:12px var(--win-font,system-ui);color:#8b949e;white-space:nowrap;max"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2732,
+      "line": 2778,
       "px": 13,
       "snippet": "font:13px/1.5 var(--holo-font-mono,ui-monospace,monospace);user-select:none;white-space:pr"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2735,
+      "line": 2781,
       "px": 13,
       "snippet": "font:13px/1.5 var(--holo-font-mono,ui-monospace,monospace);white-space:pre;tab-size:2;over"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2747,
+      "line": 2793,
       "px": 13,
       "snippet": ".cs-cm .cm-scroller{font-family:var(--holo-font-mono,ui-monospace,monospace);font-size:13p"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2749,
+      "line": 2795,
       "px": 11,
       "snippet": "background:#1f6feb;color:#fff;font:11px/1 var(--holo-font-mono,ui-monospace,monospace);let"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2755,
+      "line": 2801,
       "px": 13,
       "snippet": ".cs-roview{position:absolute;inset:0;display:grid;place-items:center;text-align:center;col"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2994,
+      "line": 3040,
       "px": 12,
       "snippet": "+ '.wrap{max-width:760px;text-align:center}.tag{font-size:12px;letter-spacing:3px;text-tra"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 2998,
+      "line": 3044,
       "px": 14,
       "snippet": "+ '.card{background:#0e1626;border:1px solid #1c2740;border-radius:16px;padding:18px 20px;"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3220,
+      "line": 3266,
       "px": 14,
       "snippet": "html = '<!doctype html><meta charset=\"utf-8\"><body style=\"margin:0;font:14px/1.6 ui-monosp"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3465,
+      "line": 3511,
       "px": 15,
       "snippet": "return `<!doctype html><meta charset=utf-8><style>body{margin:0;background:#0a0e17;color:#"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3465,
+      "line": 3511,
       "px": 14,
       "snippet": "return `<!doctype html><meta charset=utf-8><style>body{margin:0;background:#0a0e17;color:#"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3465,
+      "line": 3511,
       "px": 12,
       "snippet": "return `<!doctype html><meta charset=utf-8><style>body{margin:0;background:#0a0e17;color:#"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3465,
+      "line": 3511,
       "px": 11,
       "snippet": "return `<!doctype html><meta charset=utf-8><style>body{margin:0;background:#0a0e17;color:#"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3605,
+      "line": 3682,
       "px": 12,
       "snippet": "const css = `<!doctype html><meta charset=\"utf-8\"><meta name=\"color-scheme\" content=\"dark "
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3605,
+      "line": 3682,
       "px": 13,
       "snippet": "const css = `<!doctype html><meta charset=\"utf-8\"><meta name=\"color-scheme\" content=\"dark "
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3927,
+      "line": 4012,
       "px": 14,
       "snippet": "#holo-qpanel .qtitle{font-weight:700;color:#eaf0ff;font-size:14px}"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3928,
+      "line": 4013,
       "px": 11,
       "snippet": "#holo-qpanel .qctx{margin-left:auto;font-size:11px;color:#8b94b8;max-width:170px;overflow:"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3932,
+      "line": 4017,
       "px": 13,
       "snippet": "#holo-qthread .qm{max-width:88%;padding:9px 12px;border-radius:13px;font-size:13px;line-he"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3938,
+      "line": 4023,
       "px": 13,
       "snippet": "font:13px/1.4 system-ui;padding:9px 11px;resize:none;max-height:120px;outline:none}"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3940,
+      "line": 4025,
       "px": 15,
       "snippet": "#holo-qsend{flex:0 0 auto;width:34px;height:34px;border:0;border-radius:10px;background:#2"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3943,
+      "line": 4028,
       "px": 12,
       "snippet": "#holo-qfoot button{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,2"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3946,
+      "line": 4031,
       "px": 12,
       "snippet": ".qchip{display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(124,92,25"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 3948,
+      "line": 4033,
       "px": 12.5,
       "snippet": ".qcap{margin-top:10px}.qcap b{display:block;color:#eaf0ff;font-weight:600;font-size:12.5px"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 4127,
+      "line": 4212,
       "px": 12,
       "snippet": "const orbFloor = function (pp) { const t = esc(String(pp || \"Holospace\")); return '<!docty"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 4482,
+      "line": 4567,
       "px": 14,
       "snippet": "#empty .nt p { margin: 0; color: var(--holo-ink-dim); font-size: 14px; }"
     },
     {
       "file": "os/usr/share/frame/shell.html",
-      "line": 4486,
+      "line": 4571,
       "px": 13,
       "snippet": "cursor: pointer; font: 600 13px var(--win-font, system-ui); }"
     }

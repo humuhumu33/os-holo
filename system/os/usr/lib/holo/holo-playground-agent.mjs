@@ -74,7 +74,11 @@ export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp 
   }
 
   // ── browser-only direct-manipulation surface (menu · inline edit · glow · toast). No-op without a window. ──
-  let menuEl = null, editorEl = null, target = null;
+  // OFF BY DEFAULT (`active=false`): the agent is injected into every app but stays DORMANT — it does NOT glow
+  // on hover, intercept right-click, or hijack double-click, so a normal app behaves normally. Playground is
+  // opt-in PER SURFACE: the shell's window menu toggles it (setActive / a {op:"playground-mode"} message), and
+  // it is exited from the element menu, Esc, or the badge. Only when active does direct manipulation light up.
+  let menuEl = null, editorEl = null, target = null, active = false, badgeEl = null, hot = null;
 
   function injectStyle() {
     if (!doc.getElementById || doc.getElementById("holo-pg-style")) return;
@@ -102,7 +106,11 @@ export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp 
       .holo-pg-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:2147483602;padding:9px 16px;border-radius:999px;
         background:var(--holo-surface,#14161b);border:1px solid var(--holo-border,#2a2f3a);color:var(--holo-ink,#eef2f6);
         box-shadow:0 12px 32px rgba(0,0,0,.45);font:0.85rem system-ui,sans-serif;opacity:0;transition:opacity .25s}
-      .holo-pg-toast.show{opacity:1}`;
+      .holo-pg-toast.show{opacity:1}
+      .holo-pg-badge{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:2147483602;padding:7px 14px;border-radius:999px;
+        background:color-mix(in srgb,var(--holo-accent,#5b8cff) 22%,var(--holo-surface,#14161b));border:1px solid var(--holo-accent,#5b8cff);
+        color:var(--holo-ink,#eef2f6);box-shadow:0 10px 30px rgba(0,0,0,.4);font:0.8rem system-ui,sans-serif;cursor:pointer;user-select:none;opacity:.96}
+      .holo-pg-badge:hover{opacity:1}`;
     (doc.head || doc.documentElement).appendChild(st);
   }
 
@@ -171,6 +179,8 @@ export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp 
     sep();
     item("🅺&nbsp; View κ", () => { closeMenu(); toast("κ updates on every edit — try Edit"); });
     item("⌫&nbsp; Delete", actDelete);
+    sep();
+    item("✕&nbsp; Exit Playground", () => { closeMenu(); setActive(false); });
     doc.body.appendChild(menuEl);
     const w = menuEl.offsetWidth || 200, h = menuEl.offsetHeight || 240;
     menuEl.style.left = Math.min(x, (win ? win.innerWidth : 1e4) - w - 8) + "px";
@@ -178,24 +188,45 @@ export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp 
   }
 
   function onContextMenu(e) {
+    if (!active) return;                    // DORMANT: let the app's / browser's native right-click work
     if (inUI(e.target)) return;            // let the agent's own UI use the native menu
     e.preventDefault(); e.stopPropagation();
     target = e.target && e.target.nodeType === 1 ? e.target : (e.target && e.target.parentElement);
     if (target) openMenu(e.clientX, e.clientY);
   }
-  function onDblClick(e) { if (inUI(e.target)) return; target = e.target && e.target.nodeType === 1 ? e.target : null; if (target) actText(); }
-  function onKeyDown(e) { if (e.key === "Escape") { closeMenu(); closeEditor(); } }
-  let hot = null;
-  function onOver(e) { const t = e.target; if (inUI(t) || t === hot || !t || t.nodeType !== 1) return; if (hot) hot.classList.remove(HOT); hot = t; try { t.classList.add(HOT); } catch (x) {} }
+  function onDblClick(e) { if (!active || inUI(e.target)) return; target = e.target && e.target.nodeType === 1 ? e.target : null; if (target) actText(); }
+  function onKeyDown(e) { if (e.key === "Escape") { if (menuEl || editorEl) { closeMenu(); closeEditor(); } else if (active) setActive(false); } }
+  function onOver(e) { if (!active) return; const t = e.target; if (inUI(t) || t === hot || !t || t.nodeType !== 1) return; if (hot) hot.classList.remove(HOT); hot = t; try { t.classList.add(HOT); } catch (x) {} }
   function onOut(e) { if (e.target === hot && hot) { hot.classList.remove(HOT); hot = null; } }
   function onPointerDown(e) { if (menuEl && !inUI(e.target)) closeMenu(); }
-  function onDown(e) {   // host → frame replies (e.g. the resulting κ after a reseal) — close the loop visibly
+  function onDown(e) {   // host → frame messages: toggle Playground mode, or the resulting κ after a reseal
     const m = e && e.data;
-    if (m && m.t === "holo-live-edit" && m.op === "sealed" && m.surfaceId === surfaceId) {
+    if (!m || m.t !== "holo-live-edit") return;
+    if (m.op === "playground-mode" && (m.surfaceId === surfaceId || m.surfaceId == null)) { setActive(!!m.on); return; }
+    if (m.op === "sealed" && m.surfaceId === surfaceId) {
       const k = String(m.kappa || "").split(":").pop() || "";
       if (m.changed) toast("✦ sealed · κ " + k.slice(0, 8) + "…");
     }
   }
+
+  // ── the opt-in switch. OFF by default; the shell's window menu turns it ON for a surface. ──
+  function showBadge() {
+    if (!doc.body || typeof doc.createElement !== "function" || badgeEl) return;
+    badgeEl = doc.createElement("div"); badgeEl.className = "holo-pg-badge"; badgeEl.setAttribute(EPHEMERAL, "");
+    badgeEl.textContent = "✦ Playground · right-click to edit · Esc to exit";
+    badgeEl.title = "Exit Playground"; badgeEl.onclick = () => setActive(false);
+    doc.body.appendChild(badgeEl);
+  }
+  function hideBadge() { if (badgeEl) { badgeEl.remove(); badgeEl = null; } }
+  function setActive(on) {
+    on = !!on;
+    if (on === active) return active;
+    active = on;
+    if (!on) { closeMenu(); closeEditor(); if (hot) { try { hot.classList.remove(HOT); } catch (e) {} hot = null; } hideBadge(); }
+    else showBadge();
+    return active;
+  }
+  function isActive() { return active; }
 
   function mount() {
     if (!win || !doc || !doc.addEventListener) return false;
@@ -223,8 +254,9 @@ export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp 
     const s = doc.getElementById && doc.getElementById("holo-pg-style"); if (s) s.remove();
   }
 
-  return { mount, unmount, serialize, requestReseal, onContextMenu, describe: () => ({
+  return { mount, unmount, serialize, requestReseal, onContextMenu, setActive, isActive, describe: () => ({
     is: "the in-frame Holo Playground agent — makes every element in a holo app right-click-editable",
+    default: "OFF — dormant until opted in per surface (the shell window menu toggles it); no hover glow / right-click hijack while off",
     onePath: "the agent NEVER seals; it serialises (ephemeral-stripped, L5) and hands the bytes UP — the shell calls createLiveEditor.edit",
   }) };
 }

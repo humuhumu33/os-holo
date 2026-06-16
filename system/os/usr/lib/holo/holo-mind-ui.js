@@ -364,7 +364,10 @@ async function _ensureTender() {
       _catalog = cm.createCatalog(provs);
     } catch (e) { _catalog = null; }
   }
-  _tender = mod.createTender({ factory: await _makeFactory(), store, triage: _triage });
+  // share the durable corpus head with the tender so a watch session's failures accumulate on ONE chain
+  // (and self-improvement can SEE them) — the host owns the head; the tender threads + publishes it.
+  _tender = mod.createTender({ factory: await _makeFactory(), store, triage: _triage,
+    getHead: () => corpusHead, setHead: (h) => { if (h && h !== corpusHead) { corpusHead = h; persistHead(); } } });
   _tender._mod = mod;
   return _tender;
 }
@@ -410,6 +413,23 @@ async function factoryGrow(opts = {}) {
   return r;
 }
 const factorySkill = () => ({ head: factorySkillHead, hasProcedure: !!factorySkillBytes, bytes: factorySkillBytes });
+
+// maybeAutoGrow — OPT-IN, GATED hands-off self-improvement for the tender. When watch/tend is asked to grow
+// (`grow: true` or `grow: { minFailures?, gate? }`) AND the corpus has accrued ≥ minFailures NEW failures
+// since the last grow, run the governed optimizer. HONEST + governance-preserving: the gate still rules —
+// with the default empty gate a revision is sealed (κ + audit trail) but is NOT in force (a proposal awaiting
+// ratification, ADR-0033 rule 4), so fully hands-off evolution cannot silently change behaviour; pass a
+// passing gate to allow live projection this session. No churn: only fires when NEW failures accrued.
+let _lastGrowFails = 0;
+async function maybeAutoGrow(grow) {
+  if (!grow) return null;                                            // opt-in only — default OFF
+  const o = (grow === true) ? {} : grow;
+  const minF = o.minFailures ?? 2;
+  const n = failures(corpusHead).length;
+  if (n < minF || n <= _lastGrowFails) return null;                 // threshold + only on NEW failures (no churn on noise)
+  _lastGrowFails = n;
+  try { return await factoryGrow({ gate: o.gate || {}, minFailures: minF }); } catch (e) { return { grew: false, reason: "auto-grow error: " + (e && e.message || e) }; }
+}
 // register an IN-TAB check (the CLOSED loop): a target whose source must parse, or a custom { verify }.
 async function factoryRegister(name, spec = {}) {
   const t = await _ensureTender();
@@ -422,7 +442,12 @@ async function factoryRegister(name, spec = {}) {
 async function _ingestGate(t) {
   try { const rep = await (await fetch("/os/etc/earl-report.jsonld", { cache: "no-cache" })).json(); for (const c of t._mod.gateChecks(rep, {})) t.register(c.name, c); } catch (e) {}
 }
-async function factoryTend(opts = {}) { const t = await _ensureTender(); if (opts.gate !== false) await _ingestGate(t); const r = await t.tend(opts); if (corpusHead) persistHead(); return r; }
+async function factoryTend(opts = {}) {
+  const t = await _ensureTender(); if (opts.gate !== false) await _ingestGate(t);
+  const r = await t.tend(opts); if (corpusHead) persistHead();         // tend threads + publishes the advancing corpus head
+  if (opts.grow) r.grew = await maybeAutoGrow(opts.grow);              // OPT-IN, GATED self-improvement after the pass
+  return r;
+}
 // watch — the OPT-IN autonomous loop: seal the user's standing intent, then tick tend() on the edge clock.
 // If candidates are supplied, SEMANTIC TRIAGE expands the natural-language intent into checks first, so
 // watch("keep my notepad working", { candidates }) locates and tends the right targets — driven only by intent.
@@ -430,7 +455,14 @@ async function factoryWatch(utterance, o = {}) {
   const t = await _ensureTender();
   if (_triage && o.discover !== false) { try { await t.discover(utterance, await _candidatesOr(o.candidates), o); } catch (e) {} }   // auto-locate from the live catalog — hands-off
   if (o.gate !== false) await _ingestGate(t);
-  return t.watch(utterance, { ...o, onTend: o.onTend || (() => { if (corpusHead) persistHead(); }) });
+  // each tick: tend (advances + persists the head via setHead), then OPT-IN gated self-improvement, then the
+  // caller's onTend. Auto-grow is hands-off but governance-preserving — see maybeAutoGrow (gate still rules).
+  const onTend = async (r) => {
+    if (corpusHead) persistHead();
+    if (o.grow) { try { r.grew = await maybeAutoGrow(o.grow); } catch (e) {} }
+    if (typeof o.onTend === "function") try { o.onTend(r); } catch (e) {}
+  };
+  return t.watch(utterance, { ...o, onTend });
 }
 
 if (typeof window !== "undefined") {

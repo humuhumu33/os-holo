@@ -20,6 +20,7 @@ import { dirname, join } from "node:path";
 import { createTender, parseCheck, gateChecks } from "../os/usr/lib/holo/q/holo-factory-tend.mjs";
 import { createFactory } from "../os/usr/lib/holo/q/holo-factory.mjs";
 import { verifyDeep, resolve } from "../os/usr/lib/holo/holo-mind.mjs";
+import { failures } from "../os/usr/lib/holo/holo-mind-evolve.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const checks = {};

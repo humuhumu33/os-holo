@@ -27,7 +27,7 @@
     {
       "name": "the κ-route resolves an OS object by /.holo/blake3/<κ> + re-derives",
       "ok": true,
-      "detail": "OS:shell.html 23c6064f8955…"
+      "detail": "OS:shell.html bdbb3dd42bf3…"
     },
     {
       "name": "the κ-route resolves an APP object by /.holo/blake3/<κ> + re-derives",
