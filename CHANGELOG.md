@@ -20,6 +20,7 @@ automatically from [Conventional Commits](https://www.conventionalcommits.org/) 
 
 ### Fixed
 
+- Show framed pages as one clean window, not window-in-window
 - Open doc windows at the same size as the app launcher
 - Re-pin the OS closure so shell.html and the worker verify, unblocking boot
 [unreleased]: https://github.com/humuhumu33/os-holo/commits/main
