@@ -1007,7 +1007,7 @@
     // VANTA.CLOUDS2 is a FACTORY, not the class — the shader lives on the prototype of the instances it makes.
     // So we mount one throwaway probe, patch the prototype it exposes (every later instance inherits it), and
     // discard it. Done once, lazily, only when Immersive actually needs the field.
-    const HOLO_HORIZON = "0.46";   // shader vertical offset (stock Vanta = 0.65); LOWER ⇒ lower horizon / more sky. 0.46 ⇒ cloud bank ~66% from top
+    const HOLO_HORIZON = "0.52";   // shader vertical offset (stock Vanta = 0.65); HIGHER ⇒ horizon up / less dark sky above. 0.52 ⇒ cloud bank ~62% from top (taller blue, narrower dark)
     let horizonPatched = false;
     function patchHorizon() {
       if (horizonPatched) return;
