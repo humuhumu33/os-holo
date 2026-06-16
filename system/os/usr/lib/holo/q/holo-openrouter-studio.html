@@ -1,0 +1,176 @@
+<!doctype html>
+<!-- holo-openrouter-studio.html — the SEAMLESS surface for "select any OpenRouter model via a toggle"
+     (ADR-0102). Browse the FULL live catalog (public GET, no key), flip ONE toggle to arm the governed
+     remote tier, pick any model — it re-wires the Q.fuse hybrid slot LIVE, no reload. Works inside the
+     booted shell (uses its window.Q + window.HoloConscience) or standalone (bootstraps its own). -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenRouter · select any model</title>
+<style>
+  :root { color-scheme: dark; --bg:#0b0d12; --fg:#e8ecf3; --dim:#9aa4b2; --line:#1e2430; --card:#11141b; --accent:#6ea8fe; --good:#5fd28b; --warn:#f0b35b; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif; padding:24px; max-width:760px; margin-inline:auto; }
+  h1 { font-size:22px; font-weight:600; margin:0 0 4px; letter-spacing:-0.01em; }
+  .sub { color:var(--dim); font-size:14px; margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px; }
+  .row { display:flex; align-items:center; gap:12px; }
+  .row + .row { margin-top:12px; }
+  label { color:var(--dim); font-size:13px; min-width:84px; }
+  input[type=text], input[type=password], input[type=search] { flex:1; background:#0c0f15; border:1px solid var(--line); color:var(--fg); border-radius:9px; padding:10px 12px; font-size:16px; }
+  /* the toggle */
+  .toggle { position:relative; width:52px; height:30px; flex:0 0 auto; }
+  .toggle input { opacity:0; width:0; height:0; }
+  .track { position:absolute; inset:0; background:#2a313e; border-radius:999px; transition:.18s; cursor:pointer; }
+  .track::before { content:""; position:absolute; height:22px; width:22px; left:4px; top:4px; background:#fff; border-radius:50%; transition:.18s; }
+  .toggle input:checked + .track { background:var(--good); }
+  .toggle input:checked + .track::before { transform:translateX(22px); }
+  .toggle input:disabled + .track { opacity:.4; cursor:not-allowed; }
+  .models { max-height:300px; overflow:auto; border:1px solid var(--line); border-radius:10px; margin-top:10px; }
+  .model { display:flex; justify-content:space-between; gap:10px; padding:9px 12px; border-bottom:1px solid var(--line); cursor:pointer; font-size:14px; }
+  .model:last-child { border-bottom:0; }
+  .model:hover { background:#161b24; }
+  .model.sel { background:#16233a; outline:1px solid var(--accent); }
+  .model .id { font-family:ui-monospace,monospace; }
+  .model .meta { color:var(--dim); font-size:12px; white-space:nowrap; }
+  .free { color:var(--good); }
+  .status { font-size:14px; }
+  .status b { color:var(--fg); } .status .k { color:var(--dim); font-family:ui-monospace,monospace; font-size:12px; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; }
+  .pill.on { background:#11321f; color:var(--good); } .pill.off { background:#2a313e; color:var(--dim); }
+  button { background:var(--accent); color:#04122c; border:0; border-radius:9px; padding:10px 14px; font-size:14px; font-weight:600; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--fg); border:1px solid var(--line); }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  .note { color:var(--dim); font-size:12.5px; margin-top:10px; }
+  .out { white-space:pre-wrap; font-family:ui-monospace,monospace; font-size:13px; background:#0c0f15; border:1px solid var(--line); border-radius:9px; padding:12px; margin-top:10px; min-height:24px; }
+  .err { color:var(--warn); }
+</style>
+<body>
+  <h1>OpenRouter · select any model</h1>
+  <p class="sub">Browse the full catalog, flip the toggle, pick any model — it wires into Q.fuse live, governed and κ-memoized. <b>A remote call bills your key and is not serverless.</b></p>
+
+  <div class="card">
+    <div class="row">
+      <label>Remote tier</label>
+      <span class="toggle"><input type="checkbox" id="toggle" disabled><span class="track" id="track"></span></span>
+      <span id="tierState" class="pill off">OFF</span>
+      <span class="status" style="margin-left:auto" id="tierNote">enter a key to arm</span>
+    </div>
+    <div class="row">
+      <label>API key</label>
+      <input type="password" id="key" placeholder="sk-or-… (scoped, rate-limited — lives in the browser vault)">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <label>Model</label>
+      <input type="search" id="search" placeholder="search any model — e.g. claude, gpt, llama, free">
+      <label style="min-width:auto"><input type="checkbox" id="freeOnly"> free only</label>
+    </div>
+    <div class="models" id="models"><div class="model"><span class="id">loading catalog…</span></div></div>
+    <div class="note" id="catNote"></div>
+  </div>
+
+  <div class="card status" id="statusCard">
+    <div class="row"><label>Status</label><span id="statusLine"><span class="pill off">tier off</span></span></div>
+    <div class="row"><button id="testBtn" class="ghost" disabled>Run a real test fusion (costs a few ¢)</button></div>
+    <div class="out" id="out">—</div>
+  </div>
+
+<script type="module">
+import { fetchCatalog, searchCatalog } from "./holo-q-openrouter-catalog.mjs";
+import { installQ } from "./holo-q.js";
+
+const $ = (id) => document.getElementById(id);
+const out = (t, err) => { const e = $("out"); e.textContent = t; e.className = "out" + (err ? " err" : ""); };
+
+// --- bootstrap window.Q + the conscience (use the shell's if present, else stand up our own) ---
+let conscience = window.HoloConscience || null;
+if (!conscience) {
+  const C = await import("../holo-conscience.js");
+  try { await C.verifyConstitution(); } catch {}
+  conscience = { evaluate: C.evaluate, scanPii: C.scanPii, sealed: C.sealed, verifyConstitution: C.verifyConstitution };
+  window.HoloConscience = conscience;
+}
+const Q = window.Q || installQ({ conscience: { evaluate: conscience.evaluate, scanPii: conscience.scanPii } });
+window.Q = Q;
+// a minimal LOCAL panel so a hybrid fusion has the required ≥2 voices (the shell supplies a real warm brain;
+// standalone we wire a labelled demo voice so the toggle is demonstrable).
+if (!Array.isArray(Q.__fusePanel) || !Q.__fusePanel.length) {
+  const localA = { id: "local·demo-a", generate: async function*(){ yield "Local reasoning: the answer."; } };
+  const localB = { id: "local·demo-b", generate: async function*(){ yield "Second local voice."; } };
+  const synth  = { id: "local·synth",  generate: async function*(){ yield "Synthesised local answer."; } };
+  Q.configureFuse({ panel: [localA, localB], judge: localA, synth });
+  Q.__fusePanel = [localA, localB]; Q.__fuseJudge = localA; Q.__fuseSynth = synth;
+}
+
+// --- load the full catalog (public GET, no key) ---
+let CATALOG = [], selected = null, ctl = null;
+try {
+  CATALOG = await fetchCatalog((...a) => fetch(...a), { base: "https://openrouter.ai/api/v1" });
+  $("catNote").textContent = CATALOG.length + " models available · click one to select";
+  renderModels();
+} catch (e) { $("models").innerHTML = '<div class="model err"><span class="id">catalog failed: ' + (e.message||e) + '</span></div>'; }
+
+function fmtPrice(p) { return p == null ? "?" : p === 0 ? "free" : "$" + (p * 1e6).toFixed(2) + "/M"; }
+function renderModels() {
+  const rows = searchCatalog(CATALOG, $("search").value, { freeOnly: $("freeOnly").checked, limit: 200 });
+  $("models").innerHTML = rows.map((m) => `<div class="model${selected===m.id?' sel':''}" data-id="${m.id}">
+    <span class="id">${m.id}</span>
+    <span class="meta">${m.free?'<span class="free">free</span>':fmtPrice(m.promptPrice)} · ${m.context?Math.round(m.context/1000)+'k ctx':''}</span></div>`).join("") || '<div class="model"><span class="id">no match</span></div>';
+  for (const el of $("models").querySelectorAll(".model[data-id]")) el.onclick = () => selectModel(el.dataset.id);
+}
+$("search").oninput = renderModels;
+$("freeOnly").onchange = renderModels;
+
+async function selectModel(id) {
+  selected = id; renderModels();
+  if (window.HoloOpenRouter && typeof window.HoloOpenRouter.setModel === "function") {
+    const r = await window.HoloOpenRouter.setModel(id);   // live re-wire, no reload
+    out("model → " + id + (r.wired ? "  (wired into Q.fuse live)" : "  (armed; flip the toggle to wire)"));
+  } else {
+    out("selected " + id + " — flip the toggle (with a key) to arm it");
+  }
+  refreshStatus();
+}
+
+// --- the toggle: arm/disarm the governed remote tier ---
+$("key").oninput = () => { const has = $("key").value.trim().length > 8; $("toggle").disabled = !has; $("tierNote").textContent = has ? "ready — flip to arm" : "enter a key to arm"; };
+$("toggle").onchange = async () => {
+  const on = $("toggle").checked;
+  try {
+    if (on) {
+      if (!selected) { out("pick a model first", true); $("toggle").checked = false; return; }
+      const { installOpenRouter } = await import("./holo-q-remote-provider.mjs");
+      const res = await installOpenRouter($("key").value.trim(), { model: selected, wireFuse: true, fetchImpl: (...a) => fetch(...a) });
+      ctl = window.HoloOpenRouter;
+      out("tier ON — model " + res.model + " wired into Q.fuse (tier hybrid). providerK " + (res.providerK||"").slice(0,28) + "…");
+    } else {
+      if (window.HoloOpenRouter && window.HoloOpenRouter.setEnabled) await window.HoloOpenRouter.setEnabled(false);
+      out("tier OFF — Q.fuse restored to 100% local");
+    }
+  } catch (e) { out("toggle failed: " + (e.message||e), true); $("toggle").checked = false; }
+  refreshStatus();
+};
+
+function refreshStatus() {
+  const info = window.HoloOpenRouter;
+  const on = !!(info && info.enabled);
+  $("tierState").className = "pill " + (on?"on":"off"); $("tierState").textContent = on?"ON":"OFF";
+  $("testBtn").disabled = !on;
+  $("statusLine").innerHTML = on
+    ? `<span class="pill on">tier hybrid</span> &nbsp; model <b>${info.model}</b> &nbsp; <span class="k">${(info.providerK||"").slice(0,24)}…</span>`
+    : `<span class="pill off">tier off</span> &nbsp; <span class="k">local-only fusion</span>`;
+}
+
+// --- optional: a REAL test fusion (explicit, costs money) ---
+$("testBtn").onclick = async () => {
+  out("running a real fusion through Q.fuse…");
+  try {
+    const r = await Q.fuse("In one short sentence: what is the capital of France?", { params: { maxTokens: 40 } });
+    const rec = r.receipt && r.receipt.body || {};
+    out(`answer: ${r.answer}\ntier: ${r.tier}  ·  cached: ${r.cached}\nFusionReceipt: ${r.receipt && r.receipt.id ? r.receipt.id.slice(0,40)+"…" : "—"}`);
+  } catch (e) { out("fusion failed: " + (e.message||e), true); }
+};
+refreshStatus();
+</script>

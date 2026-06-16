@@ -60,8 +60,13 @@ export async function providerKappa({ wireFormat, modelId }) {
 // κ-labels; `conscience` is the egress verdict (accept|caveat); `cost`/`usage` are honest accounting.
 export async function mintReceipt({
   requestK, responseK, providerK, wireFormat, modelId,
-  usage = {}, cost = null, startedAt, endedAt, conscience = {}, app = null, tier = "remote",
+  usage = {}, cost = null, meta = {}, startedAt, endedAt, conscience = {}, app = null, tier = "remote",
 } = {}) {
+  // an aggregator (OpenRouter, ADR-0102) routes a requested slug to a real upstream — `meta` names what
+  // ACTUALLY ran + native cost. requestK still names what was ASKED; the served fields name what ran. BOTH
+  // sit inside the canonicalized body, so tampering EITHER (incl. the served provider) breaks the address (L5).
+  const m = meta || {};
+  const effectiveCost = cost || m.cost || null;
   const body = {
     "@context": [...UOR_CONTEXT, HOLOQ],
     "@type": ["prov:Activity", "holoq:InferenceReceipt"],
@@ -72,8 +77,10 @@ export async function mintReceipt({
     "prov:generated": { "@id": responseK },
     "holoq:tier": tier,
     "holoq:provider": { "@id": providerK, "holoq:wireFormat": wireFormat, "holoq:modelId": modelId },
+    ...(m.servedModel ? { "holoq:servedModel": m.servedModel } : {}),
+    ...(m.servedProvider ? { "holoq:servedProvider": m.servedProvider } : {}),
     "holoq:usage": { "holoq:promptTokens": usage.promptTokens || 0, "holoq:completionTokens": usage.completionTokens || 0 },
-    ...(cost ? { "holoq:cost": { "holoq:currency": cost.currency || "USD", "holoq:amount": cost.amount } } : {}),
+    ...(effectiveCost ? { "holoq:cost": { "holoq:currency": effectiveCost.currency || "USD", "holoq:amount": effectiveCost.amount } } : {}),
     "prov:startedAtTime": startedAt,
     "prov:endedAtTime": endedAt,
     "holoq:conscience": { "holoq:outcome": conscience.outcome || "accept", "holoq:caveats": conscience.caveats || [], "holoq:sealed": conscience.sealed !== false },

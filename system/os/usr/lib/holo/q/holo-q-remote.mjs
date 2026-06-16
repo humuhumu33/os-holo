@@ -94,15 +94,17 @@ export function createRemoteBroker({ fetchImpl, conscience, clock } = {}) {
     const v = vault.get(providerK);
     const adapter = pick(v.wireFormat);
     const startedAt = now();
-    // 4 · stream the provider; accumulate text + usage with the adapter's pure parser.
-    const { text, usage } = await streamRemote({ fetchImpl, adapter, base: v.base, key: v.key, model: v.modelId, messages, params, onDelta, signal });
+    // 4 · stream the provider; accumulate text + usage + routing meta with the adapter's pure parser.
+    const { text, usage, meta } = await streamRemote({ fetchImpl, adapter, base: v.base, key: v.key, model: v.modelId, messages, params, onDelta, signal });
     const endedAt = now();
-    // 5 · admit: content-address the response, mint the mandatory receipt (P2).
+    // 5 · admit: content-address the response, mint the mandatory receipt (P2). `meta` carries the routing
+    //     truth (an aggregator like OpenRouter, ADR-0102, returns the model/provider it ACTUALLY ran +
+    //     native cost) — pinned into the receipt so it never lies about which upstream served (L5).
     const responseK = await responseKappa(text);
     const requestK = await requestKappa({ model: v.modelId, messages, params });
     const receipt = await mintReceipt({
       requestK, responseK, providerK, wireFormat: v.wireFormat, modelId: v.modelId,
-      usage, startedAt, endedAt, app,
+      usage, meta, startedAt, endedAt, app,
       conscience: { outcome: verdict.outcome, caveats: verdict.caveats, sealed: verdict.sealed },
     });
     return { receipt, response: text, responseKappa: responseK, conscience: { outcome: verdict.outcome, caveats: verdict.caveats }, usage };
@@ -147,7 +149,7 @@ export async function streamRemote({ fetchImpl, adapter, base, key, model, messa
     throw new Error("remote HTTP " + res.status + (detail ? ": " + detail.slice(0, 200) : ""));
   }
   const reader = res.body.getReader(), dec = new TextDecoder();
-  let buf = "", text = ""; const usage = {};
+  let buf = "", text = ""; const usage = {}, meta = {};
   for (;;) {
     const { value, done } = await reader.read(); if (done) break;
     buf += dec.decode(value, { stream: true });
@@ -158,9 +160,10 @@ export async function streamRemote({ fetchImpl, adapter, base, key, model, messa
       const out = adapter.parseEvent(ev); if (!out) continue;
       if (out.text) { text += out.text; if (onDelta) { try { onDelta(out.text); } catch {} } }
       if (out.usage) Object.assign(usage, out.usage);
+      if (out.meta) Object.assign(meta, out.meta);   // routing truth (served model/provider/cost), ADR-0102
     }
   }
-  return { text, usage };
+  return { text, usage, meta };
 }
 
 export default { createRemoteBroker, streamRemote, egressDecision, serveRpc };

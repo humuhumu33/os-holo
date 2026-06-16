@@ -81,7 +81,49 @@ export function configureDefaultFuse(Q, { sampler = null, samplers = null, fabri
   const cfg = defaultPanel({ sampler, samplers });
   if (!cfg.panel.length) return { ok: false, reason: cfg.reason, mode: cfg.mode };
   Q.configureFuse({ panel: cfg.panel, judge: cfg.judge, synth: cfg.synth, fabric });
+  try { Q.__fusePanel = cfg.panel; Q.__fuseJudge = cfg.judge; Q.__fuseSynth = cfg.synth; } catch (e) {}   // track for withRemoteMember (ADR-0102) to compose without dropping judge/synth
   return { ok: true, mode: cfg.mode, diversity: cfg.diversity, panel: cfg.panel.map((p) => p.id) };
+}
+
+// ── withRemoteMember(Q, remoteProvider, opts) → add a governed REMOTE model as ONE hybrid panel member
+//    (ADR-0102), preserving the existing local panel. The remote provider (holo-q-remote-provider.mjs
+//    makeRemoteProvider) is already a fabric provider with remote:true, so Q.fuse seals tier "hybrid"
+//    automatically. This is the PER-CALL opt-in frontier voice: the default panel stays 100% local; calling
+//    this only ADDS breadth when the host/user asks. Pulls the current panel from the live fuse instance so
+//    it composes with whatever defaultPanel already wired; if none, it seeds a panel from the remote alone
+//    is refused (a panel needs ≥2 for diversity — Law L5 honesty). Returns an honest summary. ──
+export function withRemoteMember(Q, remoteProvider, { fabric = null, panel = null, judge = null, synth = null } = {}) {
+  if (!Q || typeof Q.configureFuse !== "function") return { ok: false, reason: "Q.configureFuse not present" };
+  if (!remoteProvider || typeof remoteProvider.generate !== "function") return { ok: false, reason: "a remote provider { id, generate, remote:true } is required" };
+  // the local panel: the caller may pass it explicitly (opts.panel), else we read the one configureDefaultFuse
+  // stashed on the door (Q.__fusePanel) — createFuse keeps its config private, so the panel is tracked here.
+  const localPanel = (Array.isArray(panel) ? panel : null) || (Array.isArray(Q.__fusePanel) ? Q.__fusePanel : null);
+  if (!localPanel || !localPanel.length) {
+    return { ok: false, reason: "no local panel wired yet — call configureDefaultFuse(Q,{sampler}) first, then add the remote member (fusion needs ≥2 members for diversity, Law L5)" };
+  }
+  // PRESERVE the judge + synth the local wire chose — configureFuse rebuilds createFuse from scratch, so
+  // omitting them would silently reset synth to a panel member (a bug the live in-browser test caught).
+  const j = judge || Q.__fuseJudge || null;
+  const s = synth || Q.__fuseSynth || null;
+  // SINGLE remote slot: drop ANY prior remote member (a different-slug model from an earlier setModel) AND
+  // a same-id duplicate, so switching models (ADR-0102 "select any model") swaps cleanly, never stacks.
+  const combined = [...localPanel.filter((m) => m && !m.remote && m.id !== remoteProvider.id), remoteProvider];
+  Q.__fusePanel = combined;                               // remember for a subsequent add
+  Q.configureFuse({ panel: combined, judge: j, synth: s, fabric });
+  return { ok: true, tier: "hybrid", members: combined.map((p) => ({ id: p.id, remote: !!p.remote })) };
+}
+
+// withoutRemoteMember(Q, opts) → drop the remote slot, restore the 100%-local panel (the toggle-OFF path,
+// ADR-0102). configureFuse is rebuilt local-only; judge/synth preserved. Honest no-op if no panel/remote.
+export function withoutRemoteMember(Q, { fabric = null } = {}) {
+  if (!Q || typeof Q.configureFuse !== "function") return { ok: false, reason: "Q.configureFuse not present" };
+  const panel = Array.isArray(Q.__fusePanel) ? Q.__fusePanel : null;
+  if (!panel || !panel.length) return { ok: false, reason: "no panel wired" };
+  const locals = panel.filter((m) => m && !m.remote);
+  if (locals.length === panel.length) return { ok: true, tier: "local", members: locals.map((p) => ({ id: p.id })), unchanged: true };
+  Q.__fusePanel = locals;
+  Q.configureFuse({ panel: locals, judge: Q.__fuseJudge || null, synth: Q.__fuseSynth || null, fabric });
+  return { ok: true, tier: "local", members: locals.map((p) => ({ id: p.id })) };
 }
 
 export function describePanel() {
@@ -91,7 +133,8 @@ export function describePanel() {
     adapter: "a (messages,opts)→deltas sampler becomes a fabric provider {id, generate(input,opts)}; the persona is in the provider so each member addresses a distinct κ",
     honest: "labels diversity 'persona' vs 'model' — never claims model diversity from one brain; with nothing loaded it REFUSES, it does not invent a model (Law L5)",
     judge: "MODEL mode judges with the reasoner; PERSONA mode uses a dedicated judge lens — the fuse engine's buildJudgePrompt does the heavy structuring either way",
+    remote: "withRemoteMember(Q, makeRemoteProvider(...)) adds ONE governed frontier slot (ADR-0102) → tier 'hybrid', a per-call opt-in; the default panel stays 100% local",
   };
 }
 
-export default { PANEL_PERSONAS, JUDGE_PERSONA, SYNTH_PERSONA, REGISTRY_PANEL, samplerProvider, defaultPanel, configureDefaultFuse, describePanel };
+export default { PANEL_PERSONAS, JUDGE_PERSONA, SYNTH_PERSONA, REGISTRY_PANEL, samplerProvider, defaultPanel, configureDefaultFuse, withRemoteMember, withoutRemoteMember, describePanel };

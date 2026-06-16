@@ -62,6 +62,45 @@ export const adapters = {
     },
   },
 
+  // OPENROUTER — an OpenAI-WIRE aggregator (ADR-0102). Distinct identity (NOT reused from `openai`) so the
+  // receipt names the engine honestly, exactly like ollama. Two things make it its own adapter: it carries
+  // attribution headers (HTTP-Referer / X-Title), and its stream returns the routing TRUTH — the model +
+  // upstream provider OpenRouter ACTUALLY served, plus native cost. We surface those as `out.meta` so the
+  // receipt can pin "asked for slug X, actually ran Y on provider Z for $C" (the honesty payload, L5).
+  openrouter: {
+    wire: "openrouter",
+    base: "https://openrouter.ai/api/v1",
+    path: () => "/chat/completions",
+    headers: (key) => ({
+      "content-type": "application/json",
+      ...(key ? { authorization: "Bearer " + key } : {}),
+      "HTTP-Referer": "https://hologram.os",   // attribution (OpenRouter convention; host-identifying, not a secret)
+      "X-Title": "Hologram OS",
+    }),
+    body: ({ model, messages, params = {} }) => ({
+      model, messages, stream: true, max_tokens: params.maxTokens || 4096,
+      stream_options: { include_usage: true },
+      usage: { include: true },                // ask OpenRouter to return native cost accounting in usage
+    }),
+    parseEvent: (ev) => {
+      if (ev === "[DONE]") return { done: true };
+      if (!ev || typeof ev !== "object") return null;
+      if (ev.error) throw new Error("remote: " + (ev.error.message || "stream error"));
+      const out = {};
+      const d = ev.choices && ev.choices[0] && ev.choices[0].delta && ev.choices[0].delta.content;
+      if (d) out.text = d;
+      if (ev.usage) out.usage = { promptTokens: ev.usage.prompt_tokens, completionTokens: ev.usage.completion_tokens };
+      // the honesty payload: what OpenRouter ROUTED to (chunks carry `model`; the routed upstream is in
+      // `provider`; native cost rides the final usage object). Pinned into the receipt → never lies (L5).
+      const meta = {};
+      if (ev.model) meta.servedModel = ev.model;
+      if (ev.provider) meta.servedProvider = typeof ev.provider === "string" ? ev.provider : (ev.provider && ev.provider.name) || null;
+      if (ev.usage && ev.usage.cost != null) meta.cost = { currency: "USD", amount: ev.usage.cost };
+      if (meta.servedModel || meta.servedProvider || meta.cost) out.meta = meta;
+      return (out.text || out.usage || out.meta) ? out : null;
+    },
+  },
+
   // OLLAMA — local, OpenAI-compatible endpoint (no key). Same shaping as openai; distinct identity so a
   // receipt names the engine honestly. base points at the loopback host (resolved from the vault).
   ollama: {
@@ -81,15 +120,16 @@ export const pick = (wireFormat) => adapters[wireFormat] || adapters.openai;
 // answer + accumulated usage. The witness drives this with canned bytes; the live streamer (in
 // holo-q-remote.mjs) reuses the SAME line logic incrementally over a fetch reader.
 export function runSSE(adapter, sseText) {
-  let text = "", done = false; const usage = {};
+  let text = "", done = false; const usage = {}, meta = {};
   for (const line of String(sseText).split("\n")) {
     const ev = decodeLine(line); if (ev === undefined) continue;
     const out = adapter.parseEvent(ev); if (!out) continue;
     if (out.text) text += out.text;
     if (out.usage) Object.assign(usage, out.usage);
+    if (out.meta) Object.assign(meta, out.meta);
     if (out.done) done = true;
   }
-  return { text, usage, done };
+  return { text, usage, done, meta };
 }
 // decodeLine(line) → a decoded SSE event, the "[DONE]" sentinel string, or undefined to skip. Pure.
 export function decodeLine(line) {

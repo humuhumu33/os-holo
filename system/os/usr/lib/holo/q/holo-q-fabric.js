@@ -44,11 +44,22 @@ function memStore() {
 // ── the fabric ─────────────────────────────────────────────────────────────────────────────────────
 // createFabric({ store?, hotMax? }) — `store` is an OS κ-store ({put(bytes)→κ, get(κ)}); omit for an
 // in-memory one. Providers are the per-task brains the mux binds: { id, embed?|classify?|generate? }.
-export function createFabric({ store = null, hotMax = 512 } = {}) {
+export function createFabric({ store = null, hotMax = 512, indexStore = null } = {}) {
   const kstore = store || memStore();
   const hot = new Map();                                  // memoKey → { value, kappa }   (hot O(1))
   const index = new Map();                                // memoKey → kappa              (durable lookup)
   const stats = { hits: 0, misses: 0, coldMs: 0, coldN: 0 };
+
+  // optional DURABLE memo index (ADR-0102 — closes describeFabric's v1 gap). When an `indexStore`
+  // ({ load()→[[memoKey,κ]…], save(entries) }) is injected, the input→κ index survives a reload, so a
+  // sealed answer (incl. an EXPENSIVE remote one) replays O(1) across sessions and NEVER re-egresses /
+  // re-pays. Without it, behaviour is exactly as before (in-memory index, durable bytes only).
+  let _indexReady = indexStore && typeof indexStore.load === "function"
+    ? Promise.resolve(indexStore.load()).then((e) => { if (Array.isArray(e)) for (const [k, kap] of e) index.set(k, kap); }).catch(() => {})
+    : null;
+  async function persistIndex() {
+    if (indexStore && typeof indexStore.save === "function") { try { await indexStore.save([...index.entries()]); } catch {} }
+  }
 
   function touchHot(key, rec) {                            // tiny LRU
     hot.delete(key); hot.set(key, rec);
@@ -63,6 +74,7 @@ export function createFabric({ store = null, hotMax = 512 } = {}) {
   // "delta" events then a sealed "final". Every event carries the content κ (κ-addressed rendering).
   async function* run({ provider, task, input, params = {}, signal } = {}) {
     if (!provider) throw new Error("holo-q-fabric: no provider for task " + task);
+    if (_indexReady) { await _indexReady; _indexReady = null; }   // hydrate the durable index once (ADR-0102)
     const key = await memoKey(task, provider.id, input, params);
 
     // 1) hot path — instant replay
@@ -94,6 +106,7 @@ export function createFabric({ store = null, hotMax = 512 } = {}) {
 
     const kappa = await kstore.put(enc(value));           // seal the output to its content address
     index.set(key, kappa); touchHot(key, { value, kappa });
+    await persistIndex();                                 // durable input→κ (ADR-0102) — no-op without an indexStore
     const ms = (typeof performance !== "undefined" ? performance.now() : Date.now()) - t0;
     stats.misses++; stats.coldMs += ms; stats.coldN++;
     yield { phase: "final", value, kappa, cached: false, ms };
@@ -123,7 +136,7 @@ export function describeFabric() {
     streaming: "run() is one async-iterable: cached → a single instant final; cold generative → live deltas then a sealed final",
     render: "every result carries its content κ → a κ-addressed renderer reuses identical on-screen fragments (never re-render)",
     orchestrator: "Holo Mind (ADR-0081) discovers (mux) · applies (embed/classify/generate) · self-improves (reevaluate) over this fabric",
-    honest: "the input→κ index is in-memory in v1 (sealed bytes are durable); cross-reload O(1) needs the index persisted too — a small refinement",
+    honest: "the input→κ index is in-memory by default (sealed bytes are durable); inject an `indexStore` ({load,save}) to persist it so cross-reload O(1) holds — the ADR-0102 pay-once-across-sessions path, especially for expensive remote legs",
   };
 }
 
