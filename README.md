@@ -7,10 +7,11 @@
 # Hologram OS 🌐
 
 <p align="center">
-  <a href="index.html">Open Hologram OS</a> &nbsp;|&nbsp; <a href="MANIFESTO.md">Manifesto</a> &nbsp;|&nbsp; <a href="CONSTITUTION.md">Constitution</a> &nbsp;|&nbsp; <a href="AGENTS.md">For AI agents</a>
+  <a href="index.html">Open Hologram OS</a> &nbsp;|&nbsp; <a href="MANIFESTO.md">Manifesto</a> &nbsp;|&nbsp; <a href="CONSTITUTION.md">Constitution</a> &nbsp;|&nbsp; <a href="AGENTS.md">For AI agents</a> &nbsp;|&nbsp; <a href="https://discord.gg/ZwuZaNyuve">Community</a>
 </p>
 
 <p align="center">
+  <a href="https://discord.gg/ZwuZaNyuve"><img src="https://img.shields.io/discord/1342910418754076732?style=for-the-badge&logo=discord&logoColor=white&label=Discord&color=5865F2" alt="Join the community on Discord"></a>
   <a href="MANIFESTO.md"><img src="https://img.shields.io/badge/Docs-read%20the%20manifesto-7DEFC9?style=for-the-badge" alt="Docs"></a>
   <a href="CONSTITUTION.md"><img src="https://img.shields.io/badge/Self%20verifying-did%3Aholo-5B8CFF?style=for-the-badge" alt="Self verifying"></a>
   <a href="index.html"><img src="https://img.shields.io/badge/Runs%20in-your%20browser-111111?style=for-the-badge" alt="Runs in your browser"></a>
@@ -18,15 +19,15 @@
   <a href="https://uor.foundation/"><img src="https://img.shields.io/badge/Built%20with-UOR%20Foundation-C77BFF?style=for-the-badge" alt="Built with the UOR Foundation"></a>
 </p>
 
-> 🌐 **Your personal internet supercomputer. Fast, free and private.**
+> **Your personal internet supercomputer. Fast, free and private.**
 >
 > Hologram enables you to seamlessly build, run and share 100% serverless applications.
 
-Hologram OS is a whole computer that opens inside a single browser tab. It is fast, free, private, and beautiful, and it belongs entirely to you. There is no account to create, no server to rent, and nothing to install. You just open it, and it runs.
+Hologram OS is a supercomputer that opens inside a single browser tab. It is fast, free, private, and beautiful, and it belongs entirely to you. There is no account to create, no server to rent, and nothing to install. You just open it, and it runs.
 
 Most of computing today is borrowed. The powerful part lives in a building you will never enter, watching while it works, and you get a small window into it. Hologram does the opposite. It holds the hard parts so you keep the simple ones: the power, the control, and the proof. The supercomputer becomes yours, and it fits in a tab.
 
-Under the surface it unites three worlds that have always been kept apart, the everyday web, the open value web, and AI, on one shared foundation we call the **substrate**. The substrate is grounded in plain mathematics (abstract algebra) and runs on geometry your browser already knows how to compute, so it needs no special hardware and no outside help. Everything in it is **self verifying**: each object carries a name made from its own contents, so you can always check that a thing is exactly what it claims to be.
+Under the surface it unites three worlds that have always been kept apart, the everyday web, the open value web, and AI, on one shared foundation we call the **substrate**. The substrate is grounded in fundamental mathematical foundations and runs on simple code your browser already knows how to compute, so it needs no special hardware and no outside help. Everything in it is **self verifying**: each object carries a name made from its own contents, so you can always check that a thing is exactly what it claims to be.
 
 > **Heads up:** every promise on this page is something the system already does, and you can prove each one yourself. You do not have to trust this README. You can [verify it](CONSTITUTION.md).
 
@@ -83,7 +84,7 @@ That is what we mean by **sovereign**: a machine that answers to you, that holds
 
 You never have to think about any of this to use Hologram. It is here for the curious.
 
-Two good ideas have always been kept on separate tables. One gives every object a trustworthy name made from its own contents, so nothing can be quietly swapped, but the objects are blank and carry no meaning. The other describes what things mean in a shared, open vocabulary, but it has always needed a server to vouch for it. Put both on the same object and you get something none of the everyday web, the open value web, or AI has alone: a foundation that is at once **self verifying**, meaningful, and **serverless**. That union is the substrate, and the substrate is the OS.
+Two good ideas have always been kept on separate tables. One gives every object a trustworthy name made from its own contents, so nothing can be quietly swapped, but the objects are blank and carry no meaning. The other describes what things mean in a shared, open vocabulary, but it has always needed a server to vouch for it. Put both on the same object and you get something none of the everyday web2, the open value web3, or AI has alone: a foundation that is at once **self verifying**, meaningful, and **serverless**. That union is the substrate, and the substrate is the OS.
 
 | Layer | In plain words | In one line |
 |---|---|---|
@@ -173,6 +174,7 @@ Be kind and be clear. The [Code of Conduct](system/CODE_OF_CONDUCT.md) asks for 
 
 ## Community
 
+* Join the conversation on the community [Discord](https://discord.gg/ZwuZaNyuve), where you can see who is online right now.
 * Questions, ideas, and proposals are welcome in the project's issues and discussions on GitHub.
 * To report something sensitive, please follow the [Security policy](system/SECURITY.md).
 * To learn about the foundation and community behind the substrate, visit the [UOR Foundation](https://uor.foundation/).
