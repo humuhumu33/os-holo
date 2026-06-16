@@ -6,6 +6,12 @@
 <title>Hologram OS — boot a sovereign computer</title>
 <meta name="description" content="A sovereign, serverless internet computer. A content-addressable storage · compute · networking substrate that boots entirely in your browser, rooted in your own hardware. No server. No install. Open one file; a whole operating system unfolds from a single seed." />
 <meta name="theme-color" content="#000000" />
+<!-- Cold-entry hardening — this is the very FIRST byte the browser loads, before any service worker
+     exists to verify it. These directives are the ones that actually take effect in <meta>; the
+     embedding floor (frame-ancestors / X-Frame-Options) is header-only and is stamped by the κ service
+     worker on every page it serves. base-uri 'self' is load-bearing for a relative-path OS: it denies a
+     <base> injection that would silently re-root the entire boot chain onto a foreign origin. -->
+<meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'" />
 <meta property="og:title" content="Hologram OS — a sovereign internet computer" />
 <meta property="og:description" content="Boots entirely in your browser, rooted in your own hardware. No server, no install." />
 <meta property="og:type" content="website" />
@@ -1278,7 +1284,13 @@
       setTimeout(() => { fw.hidden = true; frame.src = "about:blank"; }, 260);
       try { lastFocus && lastFocus.focus({ preventScroll: true }); } catch {}
     }
-    frame.addEventListener("load", () => { if (frame.src && frame.src !== "about:blank") { frame.classList.add("in"); loading.style.display = "none"; } });
+    frame.addEventListener("load", () => {
+      if (!frame.src || frame.src === "about:blank") return;
+      frame.classList.add("in"); loading.style.display = "none";
+      // The framed page is same-origin, so close from inside too: Esc while focus is in the iframe
+      // should still close the window (key events do not cross frames on their own).
+      try { frame.contentDocument.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); }); } catch {}
+    });
     closeDot.addEventListener("click", close);
     scrim.addEventListener("click", close);
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
@@ -1619,9 +1631,11 @@
   LEXT.addEventListener("click", function (e) { e.preventDefault(); const app = lItems[lSel]; if (app) launchApp(app.f); });
   LBACK.addEventListener("click", function () { if (lFull) exitFull(); else closeLauncher(); });
   LCLOSE.addEventListener("click", function () { closeLauncher(); });
-  // true OS-level fullscreen for the most immersive browse — the whole launcher fills the display.
+  // true OS-level fullscreen for the most immersive browse. Fullscreen the PAGE, not just the launcher:
+  // the glass (.lx) blurs the cosmos (.bg) behind it, so taking .lx alone fullscreen would strand the
+  // glass over black. documentElement keeps .bg behind the glass — the clean blurred-cosmos look persists.
   const LFS = $("lfs");
-  LFS.addEventListener("click", function () { try { document.fullscreenElement ? document.exitFullscreen() : LX.requestFullscreen(); } catch (e) {} });
+  LFS.addEventListener("click", function () { try { document.fullscreenElement ? document.exitFullscreen() : (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen).call(document.documentElement); } catch (e) {} });
   document.addEventListener("fullscreenchange", function () { const lbl = LFS.querySelector(".lx-fslbl"); if (lbl) lbl.textContent = document.fullscreenElement ? "Exit" : "Fullscreen"; });
   LKAPPA.addEventListener("click", function () {
     if (!lFullKappa) return; const old = LKLBL.textContent;

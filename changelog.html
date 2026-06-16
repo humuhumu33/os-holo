@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#05070c" />
 <link rel="icon" type="image/svg+xml" href="os/usr/share/icons/hologram-dark.svg" />
 <link rel="alternate" type="application/atom+xml" title="Hologram OS changelog" href="feed.xml" />
-<script>var d=document.documentElement;d.setAttribute("data-theme","dark");</script>
+<script>var d=document.documentElement;d.setAttribute("data-theme","dark");try{if(window.self!==window.top)d.setAttribute("data-embed","1");}catch(e){d.setAttribute("data-embed","1");}</script>
 <style>
   :root{
     --bg:#05070c; --fg:#eaf0fb; --fg-soft:#c6d2e6; --muted:#8b97ad; --muted-2:#6c7891;
@@ -87,6 +87,14 @@
   .foot a{ color:var(--fg-soft); border-bottom:1px solid var(--line-strong); }
   .foot code{ font:.92em ui-monospace,monospace; color:var(--fg-soft); }
   @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+
+  /* ── EMBED — inside the gateway's doc-window: drop our own backdrop + header (brand · feed · seal)
+     and the title that the window already shows, so only the entries remain, cleanly centred. ──── */
+  :root[data-embed] .aurora{ display:none; }
+  :root[data-embed] body{ background:transparent; }
+  :root[data-embed] .top, :root[data-embed] .eyebrow, :root[data-embed] h1, :root[data-embed] .rule{ display:none; }
+  :root[data-embed] .wrap{ max-width:62rem; padding-top:clamp(36px,7vmin,72px); }
+  :root[data-embed] .lede{ margin-top:0; }
 </style>
 </head>
 <body>
