@@ -21,7 +21,9 @@ export function mountPlay(trigger, { launch } = {}) {
   const body = aside.body;
   let _loaded = false, _items = [], _cat = "All", _activeId = null;
 
-  async function openPlay() { aside.open(); if (!_loaded) await load(); }
+  // Refetch on open until we actually have items: if the very first open raced an empty/not-yet-ready
+  // catalogue, a later open recovers without a full page reload (instead of sticking on "Nothing yet").
+  async function openPlay() { aside.open(); if (!_loaded || _items.length === 0) await load(); }
   if (trigger) { trigger.setAttribute("aria-expanded", "false"); trigger.addEventListener("click", (e) => { e.preventDefault(); if (aside.isOpen()) aside.close(); else openPlay(); }); }
 
   async function load() {
