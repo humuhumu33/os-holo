@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # commit the regenerated CHANGELOG.md / feed.xml back to the repo
   pages: write
   id-token: write
 
@@ -31,6 +31,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history + tags, so git-cliff can build the whole changelog
+      # ── Live, self-updating changelog ────────────────────────────────────────────────────────
+      # Regenerate CHANGELOG.md from the repo history (Conventional Commits → Keep a Changelog),
+      # build the Atom feed, prove conformance (fail-closed), and commit the refreshed source of
+      # truth back. Folding this into the deploy keeps the live page current with no manual step,
+      # and sidesteps the GITHUB_TOKEN "no re-trigger" rule a separate commit-then-deploy would hit.
+      - name: Regenerate changelog (git-cliff)
+        continue-on-error: true   # if git-cliff hiccups, fall back to the committed CHANGELOG.md — never break the site deploy
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --verbose
+        env:
+          OUTPUT: CHANGELOG.md
+      - name: Build Atom feed and witness conformance
+        run: |
+          node system/tools/changelog-feed.mjs CHANGELOG.md feed.xml
+          node system/tools/changelog-witness.mjs CHANGELOG.md   # fail-closed: bad changelog blocks the deploy
+      - name: Commit refreshed changelog
+        continue-on-error: true
+        run: |
+          if ! git diff --quiet -- CHANGELOG.md feed.xml; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add CHANGELOG.md feed.xml
+            git commit -m "chore(changelog): regenerate from history [skip ci]"
+            git push
+          fi
       - uses: actions/configure-pages@v5
         with:
           enablement: true   # self-enable Pages (GitHub Actions source) on a fresh repo, so the first push deploys with no manual settings toggle
@@ -48,6 +77,8 @@ jobs:
           # it must be published or those links 404. NOTE: the docs assets are absolute (/docs/_astro/…),
           # so they resolve only at a ROOT site — under a /<repo>/ project path the docs render unstyled.
           cp -r docs _site/docs
+          # The live changelog: the styled reader page, its Keep a Changelog source, and the Atom feed.
+          cp CHANGELOG.md changelog.html feed.xml _site/
           cp system/llms.txt _site/
           cp -r system/os _site/os
           cp -r system/os/.well-known _site/.well-known

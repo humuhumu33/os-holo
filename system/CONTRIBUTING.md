@@ -35,3 +35,23 @@ engine (a pinned, unmodified submodule). Read [AGENTS.md](AGENTS.md) and
 Match the surrounding code: its comment density, naming, and idiom. Witnesses are pure
 Node where possible (green in CI); browser-only checks say so and degrade honestly — never
 a false pass.
+
+## Commits and the changelog
+
+The changelog writes itself. Do not edit `CHANGELOG.md` by hand — it is generated from the git
+history and published live at [`/changelog.html`](../changelog.html).
+
+- **Write [Conventional Commits](https://www.conventionalcommits.org/):** `type(scope): description`.
+  Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
+  Breaking changes carry a `!` (`feat(api)!: …`) or a `BREAKING CHANGE:` footer. A pull-request
+  check (`Conventional Commits`) rejects subjects that do not parse — fail-closed, so a malformed
+  message can never corrupt the changelog.
+- **How it maps** (Conventional Commit → [Keep a Changelog](https://keepachangelog.com/) section):
+  `feat` → Added · `fix` → Fixed · `perf`/`refactor`/`revert` → Changed · deprecations → Deprecated ·
+  removals → Removed · security → Security. `docs`/`style`/`test`/`chore`/`ci`/`build` are omitted as
+  noise; anything unmatched falls under Changed. The full mapping lives in [`cliff.toml`](../cliff.toml).
+- **Releases follow [SemVer](https://semver.org/):** cut a `vMAJOR.MINOR.PATCH` tag to close the
+  `[Unreleased]` section into a dated release. The Pages deploy then regenerates `CHANGELOG.md`,
+  the [`git-cliff`](https://git-cliff.org/) source, the Atom `feed.xml`, and the live page — and a
+  witness (`changelog-witness.mjs`) proves the result conforms to Keep a Changelog + SemVer or the
+  deploy fails.

@@ -1,0 +1,24 @@
+name: Conventional Commits
+
+# Fail-closed guard: every commit on a pull request must follow Conventional Commits, so the
+# auto-generated changelog (Keep a Changelog, built by git-cliff in the Pages deploy) can never
+# be silently corrupted by an unparseable history. Pure Node, no dependencies to install.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Lint PR commit subjects
+        run: |
+          git log --format=%s "origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }}" \
+            | node system/tools/commitlint.mjs
