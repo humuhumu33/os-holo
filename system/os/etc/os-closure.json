@@ -735,13 +735,10 @@
       ]
     },
     "apps/index.jsonld": {
-      "kappa": "did:holo:sha256:60c7b151945d6a964c67b60c252dcb4b91b1c09066653fb89e2791ebc0a80643",
-      "sri": "sha256-YMexUZRdapZMZ7YMJS3LS5GxwJBmZT+4nieR68CoBkM=",
-      "multibase": "uEiBgx7FRlF1qlkxntgwlLctLkbHAkGZlP7ieJ5HrwKgGQw",
-      "bytes": 21397,
-      "alsoKnownAs": [
-        "did:holo:blake3:d746d04586152a3178e04cf14a7f8446f0e220e5595b617c1cc51528f8747664"
-      ]
+      "kappa": "did:holo:sha256:10cb73874b256ecdeaf59e44fe542cc0a6f7eb0c07f2ac8d9fc22e8d3d9a23ea",
+      "sri": "sha256-EMtzh0slbs3q9Z5E/lQswKb36wwH8qyNn8IujT2aI+o=",
+      "multibase": "uEiAQy3OHSyVuzer1nkT-VCzApvfrDAfyrI2fwi6NPZoj6g",
+      "bytes": 26597
     },
     "manifest.webmanifest": {
       "kappa": "did:holo:sha256:bdb7fee16d37632c6b21af40477a0d910a8e5028387a1575a6c6c2105d964f1f",
