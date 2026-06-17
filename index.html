@@ -795,11 +795,9 @@
 <div class="bg" aria-hidden="true">
   <div class="bg-neb"></div>
   <div class="bg-aurora"></div>
-  <div class="bg-stars"></div>
   <div class="bg-gl" id="vanta"></div>
   <div class="bg-sun"></div>
   <div class="bg-scrim"></div>
-  <canvas class="bg-starfield" id="starfield" aria-hidden="true"></canvas>
   <div class="bg-grain"></div>
 </div>
 
@@ -812,7 +810,7 @@
   <nav class="links" aria-label="Primary">
     <a href="docs/" data-frame="Docs">Docs</a>
     <a href="docs/manifesto.html" data-frame="Manifesto">Manifesto</a>
-    <a href="changelog.html" data-frame="Changelog">Changelog</a>
+    <a href="docs/changelog.html" data-frame="Changelog">Changelog</a>
   </nav>
   <span class="grow"></span>
   <div class="right">
@@ -1060,7 +1058,7 @@
     // VANTA.CLOUDS2 is a FACTORY, not the class — the shader lives on the prototype of the instances it makes.
     // So we mount one throwaway probe, patch the prototype it exposes (every later instance inherits it), and
     // discard it. Done once, lazily, only when Immersive actually needs the field.
-    const HOLO_HORIZON = "0.58";   // shader vertical offset (stock Vanta = 0.65); HIGHER ⇒ horizon up / less dark sky above. 0.58 ⇒ cloud bank ~55% from top (more blue sky, narrower dark)
+    const HOLO_HORIZON = "0.52";   // shader vertical offset (stock Vanta = 0.65); HIGHER ⇒ horizon up / less dark sky above. 0.52 ⇒ cloud bank ~60% from top (slightly taller blue sky)
     let horizonPatched = false;
     function patchHorizon() {
       if (horizonPatched) return;

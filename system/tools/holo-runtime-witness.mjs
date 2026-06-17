@@ -18,7 +18,7 @@ import { dirname, join, relative } from "node:path";
 const here = dirname(fileURLToPath(import.meta.url));        // tools/
 const OS = join(here, "..", "os");                          // system/os
 const RUNTIME = join(OS, "usr", "lib", "holo");             // the one Holo Runtime
-const APPS = "C:/Users/pavel/Desktop/Hologram Apps/apps";   // the apps repo (see relock-app.mjs)
+const APPS = process.env.HOLO_APPS_DIR || join(here, "../../../holo-apps/apps");   // the apps repo (see relock-app.mjs)
 
 const results = []; let passed = 0, failed = 0;
 const rec = (n, ok, d = "") => { results.push({ name: n, ok, detail: d }); ok ? passed++ : failed++; console.log(`${ok ? "PASS" : "FAIL"} — ${n}${d ? "  (" + d + ")" : ""}`); };

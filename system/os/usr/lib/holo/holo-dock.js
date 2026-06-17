@@ -69,6 +69,8 @@
     apps: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
     tools: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.6-.6-2.5z"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.81 1.17V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 7.5 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.18 14H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.5a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 10 3.18V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 2.4 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 20.82 10H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    create: NEW_SVG,
+    q: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.4"/><ellipse cx="12" cy="12" rx="10" ry="4.2"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(120 12 12)"/></svg>',
   };
   // ── app glyphs ──────────────────────────────────────────────────────────────────────────────────
   // Every dock tile reads as the SAME monochrome line glyph (uniform 24·stroke 2) as the navigator
@@ -370,23 +372,33 @@
     STATE.renderedSdk = sdk;
     var homeBtn = null;
     if (holo.showHome !== false) {
-      var foldLabel = holo.collapsed ? "Unfold the dock" : "Fold the dock — drag to move it";
+      // The header: the Hologram brand mark. In the icon rail it MORPHS to a panel-expand glyph on hover
+      // and a click expands the navigator (Perplexity-style); when expanded it sits beside the wordmark
+      // with a collapse control pinned to the right. Drag the mark to move the dock; right-click /
+      // long-press folds it to a single chip.
+      var expandHint = holo.expanded ? "Collapse navigator" : "Expand navigator";
+      var head = el("div", { "class": "holo-dock-head" });
       var logoImg = el("img", { "class": "holo-dock-icon holo-dock-logo", src: LOGO_URL, alt: "Hologram", draggable: "false" });
-      logoImg.addEventListener("error", function () { var s = el("span", { "class": "holo-dock-icon", html: HOME_SVG }); if (this.parentNode) this.parentNode.replaceChild(s, this); });
-      homeBtn = el("button", { "class": "holo-dock-tile holo-dock-home", title: foldLabel, "aria-label": foldLabel }, [logoImg, el("span", { "class": "holo-dock-label", text: "Hologram OS" })]);
-      inner.appendChild(homeBtn);                              // click → fold/unfold (wireDockMove); drag → move the dock
-      // the expand/collapse-navigator control — glides the dock between the icon rail and the wide navigator
-      var exLabel = holo.expanded ? "Collapse navigator" : "Expand navigator";
-      var exBtn = el("button", { "class": "holo-dock-tile holo-dock-expand", title: exLabel, "aria-label": exLabel }, [el("span", { "class": "holo-dock-icon", html: EXPAND_SVG }), el("span", { "class": "holo-dock-label", text: "Collapse" })]);
+      logoImg.addEventListener("error", function () { var s = el("span", { "class": "holo-dock-icon holo-dock-logo", html: HOME_SVG }); if (this.parentNode) this.parentNode.replaceChild(s, this); });
+      var morph = el("span", { "class": "holo-dock-icon holo-dock-logo-morph", html: EXPAND_SVG, "aria-hidden": "true" });
+      homeBtn = el("button", { "class": "holo-dock-tile holo-dock-home", title: expandHint, "aria-label": expandHint }, [logoImg, morph]);
+      homeBtn.addEventListener("contextmenu", function (e) { e.preventDefault(); toggleCollapse(); });   // fold to a chip
+      bindLongPress(homeBtn, function () { toggleCollapse(); });
+      head.appendChild(homeBtn);                               // click → expand/collapse navigator (wireDockMove); drag → move the dock
+      // the collapse control — only meaningful in the expanded navigator; pins to the header's right edge
+      var exBtn = el("button", { "class": "holo-dock-tile holo-dock-collapse", title: "Collapse navigator", "aria-label": "Collapse navigator" }, [el("span", { "class": "holo-dock-icon", html: EXPAND_SVG })]);
       exBtn.addEventListener("click", function (e) { e.stopPropagation(); toggleExpand(); });
-      inner.appendChild(exBtn);
+      head.appendChild(exBtn);
+      inner.appendChild(head);
     }
 
-    if (holo.expanded) { fixedNav(inner); inner.appendChild(sectionHeader("Pinned")); }
+    // core categories ALWAYS render — a glyph stack in the icon rail, left-aligned labelled rows when
+    // expanded. No section headers, no Recents: a tight, no-scroll list. Pinned apps follow a hairline.
+    fixedNav(inner);
+    if ((holo.pins || []).length) inner.appendChild(el("span", { "class": "holo-dock-rule" }));
     var list = el("ol", { "class": "holo-dock-items" });
     (holo.pins || []).forEach(function (entry) { list.appendChild(isGroup(entry) ? groupTile(entry) : item(entry)); });
     inner.appendChild(list);
-    if (holo.expanded) { var rec = recentsList(); if (rec) { inner.appendChild(sectionHeader("Recents")); inner.appendChild(rec); } }
 
     inner.appendChild(el("span", { "class": "holo-dock-sep" }));
 
@@ -416,6 +428,10 @@
     measure();
     requestAnimationFrame(measure);
     if (W.ResizeObserver) { try { if (ro) ro.disconnect(); ro = new ResizeObserver(measure); ro.observe(inner); } catch (e) {} }
+    // self-reveal safety: the dock starts at opacity 0 and only fades in once it carries `.ready`. If
+    // reveal()'s rAF is throttled (backgrounded tab) or its call is ever skipped, the dock would stay
+    // invisible forever — so every fresh render also schedules the reveal via a timer (which still fires).
+    if (!wasReady) setTimeout(function () { var n = DOC.getElementById("holo-dock"); if (n) n.classList.add("ready"); }, 100);
   }
 
   // a live tile: the Holo Vinyl disc — shows artwork, spins clockwise while playing, tap = play/pause
@@ -466,6 +482,13 @@
 
   // ── expanded navigator: section headers + the live, κ-addressed Recents list ──────────────────────
   function toggleExpand() { STATE.holo = STATE.holo || {}; STATE.holo.expanded = !STATE.holo.expanded; render(); persist(); reveal(); }
+  // a plain click on the brand mark: a folded chip unfolds to the rail; on the left edge it toggles the
+  // wide navigator (Perplexity); on the other edges (no wide layout there) it folds to a chip instead.
+  function onHomeClick() {
+    if (effectiveHolo().collapsed) { toggleCollapse(); return; }
+    if (STATE.orient === "left") { toggleExpand(); return; }
+    toggleCollapse();
+  }
   function sectionHeader(text) { return el("div", { "class": "holo-dock-section", text: text }); }
   // the shell publishes its open + recent holospaces on W.__holoNav (each {k,name,kind,fav}) and the
   // opener on W.HoloShell.open(k) — so the navigator is 100% anchored in κ-addressed objects, rendered
@@ -501,23 +524,35 @@
 
   // ── fixed native categories — a desktop-OS sidebar (Home · Search · Files · Apps · Tools · Settings),
   //    each opening its real κ-addressed holospace/app via window.HoloShell. Only shown when expanded. ──
+  // a Perplexity-style sidebar mapped to Hologram's REAL κ-addressed surfaces via window.HoloShell —
+  // every row opens a live holospace/app; "New" fires the dock's start action (a fresh holospace tab).
+  // CORE only — one flat, header-less list that fits the rail without scrolling. Every row maps to a
+  // real κ-addressed surface via window.HoloShell ("New" fires the dock's start action).
   var NAV = [
-    { h: null, rows: [ { id: "home", t: "Home", g: G.home }, { id: "search", t: "Search", g: G.search, kbd: "Ctrl K" }, { id: "resources", t: "Resources", g: G.resources } ] },
-    { h: "System", rows: [ { id: "files", t: "Files", g: G.files }, { id: "apps", t: "Apps", g: G.apps }, { id: "tools", t: "Tools", g: G.tools }, { id: "settings", t: "Settings", g: G.settings } ] },
+    { h: null, rows: [
+      { id: "new", t: "New", g: G.create, act: startAction, primary: true },
+      { id: "home", t: "Home", g: G.home },
+      { id: "search", t: "Search", g: G.search, kbd: true },
+      { id: "apps", t: "Spaces", g: G.apps },
+      { id: "files", t: "Files", g: G.files },
+      { id: "settings", t: "Settings", g: G.settings },
+    ] },
   ];
   var activeNav = "home";
-  function navGo(id) {
+  function navGo(r) {
+    if (r && r.act) { try { r.act(); } catch (e) {} return; }   // an action row (New) — fires, never latches active
+    var id = r && r.id ? r.id : r;
     activeNav = id;
     if (dockEl) dockEl.querySelectorAll(".holo-dock-nav").forEach(function (n) { if (n.getAttribute("data-nav") === id) n.setAttribute("data-active", ""); else n.removeAttribute("data-active"); });
     try { var s = W.HoloShell; if (s && typeof s[id] === "function") s[id](); } catch (e) {}
   }
   function navRow(r) {
-    var li = el("li", { "class": "holo-dock-item holo-dock-nav", "data-nav": r.id });
-    if (r.id === activeNav) li.setAttribute("data-active", "");
+    var li = el("li", { "class": "holo-dock-item holo-dock-nav" + (r.primary ? " holo-dock-nav-primary" : ""), "data-nav": r.id });
+    if (r.id === activeNav && !r.act) li.setAttribute("data-active", "");
     var kids = [el("span", { "class": "holo-dock-icon", html: r.g }), el("span", { "class": "holo-dock-label", text: r.t })];
-    if (r.kbd) kids.push(el("kbd", { "class": "holo-dock-kbd", text: r.kbd }));
+    if (r.kbd) kids.push(el("kbd", { "class": "holo-dock-kbd", text: (STATE.profile && STATE.profile.apple) ? "⌘ K" : "Ctrl K" }));
     var tile = el("button", { "class": "holo-dock-tile", title: r.t, "aria-label": r.t }, kids);
-    tile.addEventListener("click", function () { navGo(r.id); });
+    tile.addEventListener("click", function () { navGo(r); });
     li.appendChild(tile);
     return li;
   }
@@ -572,7 +607,16 @@
     }
   }
   function reorient() { if (!dockEl) return; var o = orientNow(); if (o !== STATE.orient) { STATE.orient = o; dockEl.setAttribute("data-orient", o); } measure(); }
-  function reveal() { if (dockEl) { measure(); requestAnimationFrame(function () { if (dockEl) dockEl.classList.add("ready"); }); } }
+  function reveal() {
+    if (!dockEl) return;
+    measure();
+    // target the LIVE dock by id (render() may replace the node between scheduling and firing — a
+    // captured ref would go stale and never reveal). rAF is the fast path; setTimeout is the fallback
+    // since rAF is PAUSED in a backgrounded/throttled tab, which would otherwise pin the dock at opacity 0.
+    var go = function () { var n = DOC.getElementById("holo-dock"); if (n) n.classList.add("ready"); };
+    requestAnimationFrame(go);
+    setTimeout(go, 100);
+  }
 
   // ── drag: reorder at the edges, BUNDLE at the center (the iOS-home gesture) ─────────────────────
   function wireDrag(list) {
@@ -632,7 +676,7 @@
       DOC.removeEventListener("pointermove", move, true);
       DOC.removeEventListener("pointerup", up, true);
       DOC.body.style.userSelect = "";
-      if (!did) { if (onHome) toggleCollapse(); return; }       // a plain click on the H logo → fold / unfold
+      if (!did) { if (onHome) onHomeClick(); return; }          // a plain click on the brand mark → expand / collapse navigator (folded → unfold)
       moving = false; dock.classList.remove("holo-dock--moving");
       STATE.holo = STATE.holo || {};
       var side = snapSide(e.clientX, e.clientY);
@@ -644,7 +688,7 @@
       if (e.button != null && e.button !== 0) return;
       var t = e.target;
       onHome = !!(homeBtn && (t === homeBtn || homeBtn.contains(t)));
-      if (!onHome && t.closest && t.closest(".holo-dock-item, .holo-dock-action, .holo-dock-add, .holo-dock-clock")) return;  // tiles / actions keep their own behavior
+      if (!onHome && t.closest && t.closest(".holo-dock-item, .holo-dock-action, .holo-dock-add, .holo-dock-clock, .holo-dock-collapse")) return;  // tiles / actions keep their own behavior
       did = false; moving = false; sx = e.clientX; sy = e.clientY;
       DOC.addEventListener("pointermove", move, true);
       DOC.addEventListener("pointerup", up, true);

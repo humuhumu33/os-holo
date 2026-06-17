@@ -27,6 +27,7 @@ const pickFetch = (f) => f || (typeof fetch !== "undefined" ? fetch : null);
 export function linkedDataAdapter({ lang = "en" } = {}) {
   return {
     id: "wikidata",
+    offline: false,                                          // hits the network → the LIVE/on-demand tier
     async search(query, { fetchImpl, limit = 5 } = {}) {
       const f = pickFetch(fetchImpl); if (!f) throw new Error("discover: no fetch");
       const url = `https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&type=item`
@@ -65,9 +66,14 @@ export function linkedDataAdapter({ lang = "en" } = {}) {
 // ── createDiscovery({ adapters, fetchImpl }) — run the meaning query across adapters → merged candidates.
 export function createDiscovery({ adapters = [linkedDataAdapter()], fetchImpl = null } = {}) {
   const f = pickFetch(fetchImpl);
-  async function discover(query, { limit = 5 } = {}) {
+  // discover(query, { limit, tier }) — tier filters adapters: "offline" = no-network sources (the κ-index,
+  // the learned index); "live" = network sources (linked-data, on-demand); "all" = both. The orchestrator
+  // tries offline FIRST and only escalates to live when offline is insufficient (latency + the learn payoff).
+  async function discover(query, { limit = 5, tier = "all" } = {}) {
     const out = [];
     for (const a of adapters) {
+      if (tier === "offline" && a.offline !== true) continue;
+      if (tier === "live" && a.offline === true) continue;
       try { const hits = await a.search(query, { fetchImpl: f, limit }); for (const h of hits) out.push({ ...h, adapter: a.id }); } catch (e) { /* one source failing must not kill discovery */ }
     }
     return out;

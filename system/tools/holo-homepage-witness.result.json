@@ -2,9 +2,9 @@
   "@type": "earl:TestResult",
   "spec": "Hologram Homepage — one familiar portal door that resolves every internet (web · web3 · ipfs · onion · ai · κ-native) through ONE unified resolver into ONE sealed κ-card; every section streams from a scene manifest of κ-references and self-verifies (κ = real SHA-256 of its bytes, Law L5); golden-ratio (φ) layout; mobile-conformant.",
   "authority": "ADR-0088 · ADR-0092 · ADR-0093 · ADR-0099 · ADR-0103 · holospaces Laws L1–L5 · WCAG 2.2 · MD3",
-  "witnessed": true,
-  "passed": 47,
-  "failed": 0,
+  "witnessed": false,
+  "passed": 46,
+  "failed": 1,
   "covers": [
     "holo-homepage",
     "omnisearch",
@@ -16,7 +16,9 @@
     "mobile-conformant",
     "web2-web3-ipfs-onion-ai"
   ],
-  "subFloorFonts": [],
+  "subFloorFonts": [
+    11
+  ],
   "checks": {
     "surface exists at usr/share/frame/homepage.html": true,
     "surface is registered in the ONE fhs route map (served flat at /homepage.html)": true,
@@ -63,7 +65,7 @@
     "type scale steps by φ (modular scale on the readability floor)": true,
     "links the vendored theme + mobile (WCAG 2.2 / MD3) stylesheets": true,
     "honors the 48dp tap floor (var(--holo-tap))": true,
-    "no hardcoded font-size below the 16px readability floor": true,
+    "no hardcoded font-size below the 16px readability floor": false,
     "the inline runtime module parses (node --check)": true
   }
 }

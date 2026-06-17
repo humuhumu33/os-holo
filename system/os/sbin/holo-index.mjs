@@ -14,6 +14,7 @@
 
 import { createCorpus } from "../usr/lib/holo/q/holo-q-corpus.js";
 import { rrf } from "../usr/lib/holo/q/holo-q-recall.js";          // the SAME RRF the recall read-path uses
+import { personalRank } from "../usr/lib/holo/holo-rank.mjs";      // κ-PageRank (forward-push PPR) — the authority signal
 import { sealSnapshot, blockSource, toCar, fromCar } from "./holo-web-snapshot.mjs";
 import { resolveIpfsPath } from "./holo-ipfs-gateway.mjs";
 import * as holoIpfs from "../usr/lib/holo/holo-ipfs.js";
@@ -72,32 +73,52 @@ export async function loadIndexFromCar(car, opts = {}) {
 // against OUR sealed index (network-free) the same way it discovers against linked-data. search() ranks by
 // BM25 over the index corpus; seal() returns the ALREADY-sealed source object (its CID + the bundle blocks),
 // so the composed page cites the real indexed CID — which re-derives at resolve.
+// docAuthority(docs) → Map(cid → authority τ in 0..1). The κ-PageRank AUTHORITY signal (Google's E-E-A-T
+// analogue, but computed + re-derivable): build the index's own REFERENCE graph — doc A "mentions" doc B
+// when B's title appears in A's text — and run holo-rank's forward-push PPR seeded uniformly over all docs
+// (≈ global PageRank). A doc many others reference scores higher. REUSES holo-rank verbatim; deterministic.
+const AUTH_FIELDS = { rel: "rel", from: "prov:wasDerivedFrom", to: "schema:itemReviewed", by: "prov:wasAttributedTo", weight: "schema:reviewRating", at: "dcterms:created" };
+export function docAuthority(docs) {
+  const list = [...docs.values()], F = AUTH_FIELDS, edges = [];
+  for (const a of list) {
+    const hay = " " + String(a.text || "").toLowerCase().replace(/[^a-z0-9]+/g, " ") + " ";
+    for (const b of list) {
+      if (a.cid === b.cid) continue;
+      const t = String(b.title || "").toLowerCase().trim();
+      if (t.length > 3 && hay.includes(" " + t + " ")) edges.push({ [F.rel]: "mentions", [F.from]: a.cid, [F.to]: b.cid, [F.by]: "did:holo:index", [F.weight]: 1, [F.at]: 0 });
+    }
+  }
+  if (!edges.length) return new Map();
+  try { return personalRank(edges, list.map((d) => d.cid)).scores; } catch { return new Map(); }
+}
+
 export function indexAdapter(loaded) {
   const { corpus, docs, blocks } = loaded;
   const bundle = blocks || new Map();
+  const authority = docAuthority(docs);            // cid → τ, computed once over the index reference graph
+  const AUTH_LAMBDA = 3;                            // authority BREAKS TIES, never overrides relevance: RRF × (1 + λ·τ), τ∈[0,1]
   return {
     id: "kappa-index",
-    // HYBRID retrieval: vector(query) ⊕ BM25(query) fused by RRF — the same shape as Q.recall. The vector
-    // leg is live only when the loaded corpus has an embedder (semantic ranking); with embedder:null,
-    // corpus.vector returns [] and this degrades to pure BM25 — backward-compatible, no behavior change.
+    offline: true,                                   // served from the κ-store, no network → the OFFLINE tier
+    authority,
+    // HYBRID + AUTHORITY: vector ⊕ BM25 fused by RRF (the Q.recall shape), then re-weighted by κ-PageRank
+    // authority (Google's relevance→authority cascade). Vector leg is live only with an embedder; with
+    // embedder:null, corpus.vector returns [] → pure BM25 (backward-compatible). Each hit carries its τ.
     async search(query, { limit = 5 } = {}) {
       const depth = Math.max(limit * 4, 20);
       const [vec, kw] = await Promise.all([corpus.vector(query, depth), Promise.resolve(corpus.bm25(query, depth))]);
       const fused = rrf([{ via: "vector", items: vec }, { via: "bm25", items: kw }]);
-      const seen = new Set(), out = [];
-      for (const f of fused) {
-        const ch = corpus.chunk(f.kappa); if (!ch) continue;
-        const cid = ch.pageId; if (seen.has(cid)) continue; seen.add(cid);
-        const d = docs.get(cid) || {};
-        out.push({ source: "kappa-index", entityId: cid, title: d.title || cid, summary: "", ref: "ipfs://" + cid, cid, via: f.via });
-        if (out.length >= limit) break;
-      }
-      return out;
+      const byDoc = new Map();
+      for (const f of fused) { const ch = corpus.chunk(f.kappa); if (!ch) continue; const cid = ch.pageId; if (!byDoc.has(cid)) byDoc.set(cid, { cid, rrf: f.rrf, via: f.via }); }
+      const ranked = [...byDoc.values()]
+        .map((d) => { const a = authority.get(d.cid) || 0; return { ...d, authority: a, score: d.rrf * (1 + AUTH_LAMBDA * a) }; })
+        .sort((x, y) => y.score - x.score || (x.cid < y.cid ? -1 : 1));
+      return ranked.slice(0, limit).map((d) => { const doc = docs.get(d.cid) || {}; return { source: "kappa-index", entityId: d.cid, title: doc.title || d.cid, summary: "", ref: "ipfs://" + d.cid, cid: d.cid, via: d.via, authority: +(d.authority).toFixed(5) }; });
     },
     async seal(c) {
       const d = docs.get(c.cid) || {};
       return { ok: true, source: "kappa-index", entityId: c.cid, title: d.title || c.cid, ref: c.ref || ("ipfs://" + c.cid),
-        cid: c.cid, blocks: bundle, extract: String(d.text || "").split(/\n{2,}/)[0] || "", text: d.text || "" };
+        cid: c.cid, blocks: bundle, extract: String(d.text || "").split(/\n{2,}/)[0] || "", text: d.text || "", authority: c.authority };
     },
   };
 }

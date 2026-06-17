@@ -1,0 +1,58 @@
+{
+  "witnessed": true,
+  "passed": 8,
+  "failed": 0,
+  "covers": [
+    "the manifest κ pins are REAL — the on-disk 4K asset bytes re-der",
+    "every chunk verified to its DECLARED κ before decode — verified ",
+    "bytes-rendered-before-verified = 0 (nothing decodes until its κ ",
+    "verified bytes persisted to the OpfsKappaStore (κ-store resident",
+    "the 4K video actually DECODES — 3840×2160, frames advancing",
+    "pin-to-own — κ pinned in the OpfsKappaStore (instant, zero re-do",
+    "ORIGIN KILL SWITCH — replays from the local OPFS κ-store, source",
+    "no fatal page errors"
+  ],
+  "results": [
+    {
+      "name": "the manifest κ pins are REAL — the on-disk 4K asset bytes re-derive to their declared sha256 (Law L5, independent oracle)",
+      "ok": true,
+      "detail": "2/2"
+    },
+    {
+      "name": "every chunk verified to its DECLARED κ before decode — verified all, refused none",
+      "ok": true,
+      "detail": "verified 2/2 · mismatches 0"
+    },
+    {
+      "name": "bytes-rendered-before-verified = 0 (nothing decodes until its κ re-derives)",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "name": "verified bytes persisted to the OpfsKappaStore (κ-store resident)",
+      "ok": true,
+      "detail": "13.1 MB resident"
+    },
+    {
+      "name": "the 4K video actually DECODES — 3840×2160, frames advancing",
+      "ok": true,
+      "detail": "3840×2160 · t=2.06s · 25 fps"
+    },
+    {
+      "name": "pin-to-own — κ pinned in the OpfsKappaStore (instant, zero re-download)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "ORIGIN KILL SWITCH — replays from the local OPFS κ-store, source flips to κ-store, zero origin (L3 + serverless)",
+      "ok": true,
+      "detail": "source:κ-store fromStore:true"
+    },
+    {
+      "name": "no fatal page errors",
+      "ok": true,
+      "detail": "clean"
+    }
+  ],
+  "spec": "Holo Hub streaming showcase, Phase 1: the real 4K (2160p) Big Buck Bunny CMAF κ-object streams through the substrate — each chunk re-derives to its DECLARED manifest κ (Law L5) before it decodes (bytes-rendered-before-verify=0), persists in the OpfsKappaStore, decodes as real 4K video (where H.264 is present), and replays from the κ-store with the origin cut (L3 + serverless). Witnessed live in a real browser."
+}

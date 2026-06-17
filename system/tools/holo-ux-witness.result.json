@@ -14,7 +14,7 @@
     "law-l5",
     "conformance"
   ],
-  "doctrineKappa": "did:holo:sha256:3216467f8b36f76889c53ab26860ecad0c67099cb2ba1e2b51c4f2adee0b5721",
+  "doctrineKappa": "did:holo:sha256:7ef6698b17a4db2783004b65eba0a6177ad5cf3ed479d1db3fe219b512592daf",
   "tenets": 13,
   "hosts": [
     "windows",

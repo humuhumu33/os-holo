@@ -14,7 +14,7 @@
     "strict-conformance"
   ],
   "appsScanned": 42,
-  "doctrineKappa": "did:holo:sha256:3216467f8b36f76889c53ab26860ecad0c67099cb2ba1e2b51c4f2adee0b5721",
+  "doctrineKappa": "did:holo:sha256:7ef6698b17a4db2783004b65eba0a6177ad5cf3ed479d1db3fe219b512592daf",
   "checks": {
     "the carrier is intact — holo-theme.js bootstraps holo-ux.js (every engine-loading app inherits the doctrine)": true,
     "the canonical Holo UX doctrine object exists + re-derives to its content address (Law L5)": true,

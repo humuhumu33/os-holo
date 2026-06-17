@@ -13,7 +13,7 @@ import { dirname, join } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const OS2 = join(here, "../os");
-const APPS = "C:/Users/pavel/Desktop/Hologram Apps";
+const APPS = process.env.HOLO_APPS_REPO || join(here, "../../../holo-apps");
 const PKG = "C:/Users/pavel/Desktop/holospaces-main (vs)/holospaces-main/crates/holospaces-web/web/pkg";
 
 const results = []; let passed = 0, failed = 0;

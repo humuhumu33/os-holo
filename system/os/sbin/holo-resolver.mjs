@@ -4,7 +4,7 @@
 // local cache, the origin, a peer, or a gateway — "stored anywhere, accessed from multiple sources."
 // Trust is in the math, not the source (docs/08 §Verify by re-derivation): a wrong or tampered byte
 // from any source is refused, and a κ-verified copy from a hostile gateway is as good as from home.
-// The shared logic lives HERE (node-testable); holo-sw.js is the Service-Worker shell that calls it.
+// The shared logic lives HERE (node-testable); holo-fhs-sw.js is the Service-Worker shell that calls it.
 
 // hexOf(κ) — the sha-256 hex of a did:holo:sha256:… / sha256:… κ.
 export const hexOf = (k) => String(k).split(":").pop();

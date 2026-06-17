@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>κ-UI render proof</title>
+<style>body{background:#09090B;color:#fff;font:16px system-ui;padding:40px}#out{margin-top:20px;display:flex;gap:12px;flex-wrap:wrap}#log{margin-top:24px;font:13px ui-monospace;white-space:pre-wrap;color:#a1a1aa}</style>
+</head><body>
+<h1>Render a shadcn Button as a κ-object</h1>
+<div id="out"></div>
+<div id="log"></div>
+<script type="module">
+const log = (...a) => { document.getElementById("log").textContent += a.join(" ") + "\n"; };
+try {
+  const HR = await import("/_shared/holo-render.js");
+  window.HoloRender = HR;
+  const reg = await (await fetch("/ui/vendor/registry.json")).json();
+  log("registry:", Object.keys(reg).length, "components");
+  await HR.configure({});                       // auto-loads /ui/vendor/importmap.json
+  log("button κ:", reg.button);
+  const t0 = performance.now();
+  const r = await HR.render(document.getElementById("out"), reg.button, { props: { variant: "default" }, children: "Verified κ button" });
+  log("render ok:", JSON.stringify(r), "(" + (performance.now()-t0).toFixed(1) + "ms)");
+  // mount a second variant to prove props stream through
+  const slot = document.createElement("span"); document.getElementById("out").append(slot);
+  await HR.render(slot, reg.button, { props: { variant: "outline" }, children: "Outline" });
+  log("second variant ok");
+} catch (e) { log("ERROR:", e && e.message || e); console.error(e); }
+</script>
+</body></html>

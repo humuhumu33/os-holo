@@ -14,8 +14,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join, relative } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const OS2 = "C:/Users/pavel/Desktop/Hologram OS2";
-const APPS = "C:/Users/pavel/Desktop/Hologram Apps";
+const OS2 = join(here, "../..");
+const APPS = process.env.HOLO_APPS_REPO || join(here, "../../../holo-apps");
 const INDEX = join(here, "../os/etc/substrate-index.json");
 const { blake3hex } = await import(pathToFileURL(join(here, "../os/usr/lib/holo/holo-blake3.mjs")));
 

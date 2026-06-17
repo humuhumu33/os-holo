@@ -106,8 +106,9 @@ jobs:
           # guaranteed to ship verbatim regardless of how the docs build treats public/*.html.
           cp system/docs/site/public/manifesto.html _site/docs/manifesto.html
           cp system/docs/site/public/download.html _site/docs/download.html
-          # The live changelog: the styled reader page, its Keep a Changelog source, and the Atom feed.
-          cp CHANGELOG.md changelog.html feed.xml _site/
+          # The live changelog: the styled reader page now ships under docs/ (copied via `cp -r docs`
+          # above), so here we only stage its Keep a Changelog source and the Atom feed at the root.
+          cp CHANGELOG.md feed.xml _site/
           cp system/llms.txt _site/
           cp -r system/os _site/os
           cp -r system/os/.well-known _site/.well-known

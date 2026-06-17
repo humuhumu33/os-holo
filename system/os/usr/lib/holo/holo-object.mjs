@@ -9,7 +9,8 @@
 // thing (web2 drop-in) — zero loss. UOR is the missing STRUCTURAL piece (self-verifying
 // identity + composition); W3C/JSON-LD is the SEMANTIC piece (interpretable meaning). On
 // the same object: a self-verifying, interpretable, serverless object graph. This is
-// IPLD + RDF + DID unified. Pure + dependency-free (SHA-256 via node:crypto).
+// IPLD + RDF + DID unified. Pure + dependency-free — the ONE isomorphic substrate envelope
+// (SHA-256 via holo-uor's pure-JS axis; runs in Node, browser, and the gateway Service Worker).
 
 // Content addressing comes from ONE primitive (holo-uor.mjs) — Law L2, no per-file re-derivation.
 // Re-exported for the many importers that read these off holo-object.

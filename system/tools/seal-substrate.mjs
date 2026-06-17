@@ -16,8 +16,8 @@ import { dirname, join } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const OS2 = join(here, "../os");
-const ORIG = "C:/Users/pavel/Desktop/hologram-os/os";
-const APPS = "C:/Users/pavel/Desktop/Hologram Apps";
+const ORIG = process.env.HOLO_OS_DIR || join(here, "../os");
+const APPS = process.env.HOLO_APPS_REPO || join(here, "../../../holo-apps");
 const CLOSURE = join(OS2, "etc/os-closure.json");
 const checkOnly = process.argv.includes("--check");
 

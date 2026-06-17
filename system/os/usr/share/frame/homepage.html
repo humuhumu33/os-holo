@@ -600,7 +600,9 @@ Promise.all([
     const pointer = await checkPointer(loaded.indexCid);
     try { indexInfo = await (await fetch("/usr/share/frame/holo-index.json")).json(); } catch {}
     if (indexInfo) indexInfo.pointer = pointer;
-    semantic = mk([idx.indexAdapter(loaded), disco.linkedDataAdapter()]);
+    // LEARN sink: live-discovered long-tail sources join the offline κ-index → next ask is network-free.
+    const learn = async (sources) => { let n = 0; for (const s of sources || []) { if (!s || !s.cid || loaded.docs.has(s.cid)) continue; try { await loaded.corpus.index({ id: s.cid, text: s.text || (s.title + "\n" + (s.extract || "")), meta: { cid: s.cid, title: s.title } }); loaded.docs.set(s.cid, { cid: s.cid, title: s.title, text: s.text || s.extract || s.title, meta: {} }); if (s.blocks) for (const [c, b] of s.blocks) loaded.blocks.set(c, b); n++; } catch {} } return n; };
+    semantic = sem.createSemantic({ discovery: disco.createDiscovery({ adapters: [idx.indexAdapter(loaded), disco.linkedDataAdapter()], fetchImpl: proxyFetch }), learn });
   } catch (e) { /* no pre-built index asset → live linked-data discovery only */ }
 }).catch(() => {});
 
@@ -1237,7 +1239,7 @@ async function runResolve(v){
   let r, cached = false;
   if (L1.has(key)){ r = L1.get(key); cached = true; }
   else {
-    try { r = await resolveUnified(key, { fetchImpl: proxyFetch, timeoutMs: 22000, semantic }); }
+    try { r = await resolveUnified(key, { fetchImpl: proxyFetch, timeoutMs: 22000, semantic, semanticOpts: { onStage: (s) => { try { streamPaintHome(card, key, s); } catch {} } } }); }
     catch(e){ r = { ok:false, lane:"unknown", reason:String(e&&e.message||e) }; }
     if (r && r.ok && r.lane!=="nl") L1.set(key, r);
   }
@@ -1324,15 +1326,31 @@ async function renderNL(card, r){
   card.innerHTML = `<div class="rhd">${glyph("#10b981","Q")}<div><div class="ttl">${esc(r.query)}</div><div class="sub">natural language → Q.recall</div></div><span class="badge">ask Q</span></div><div class="rbody">${out.html}</div>`;
 }
 // NL → SEMANTIC: a discovered, fused, sealed κ-page citing L5-verified source CIDs (the open-web answer leg).
+// STREAMING: paint the portal card as the answer streams — tier first, then each verified source as it
+// seals, before the composed page is ready (the first credible result appears fast; the rest fill in).
+const credChipHome = (s) => `<span class="ok">✓ L5</span>${s.authority!=null?` · auth ${Math.round(s.authority*100)}`:""}${s.source?` · ${esc(s.source)}`:""}`;
+function streamPaintHome(card, query, s){
+  if (s.phase === "tier"){
+    card.innerHTML = `<div class="rhd">${glyph("#10b981","Q")}<div><div class="ttl">${esc(query)}</div><div class="sub">semantic web · ${esc(s.tier)} · searching ${esc((s.probes||[]).join(" ⊕ "))}…</div></div><span class="badge">semantic</span></div>`
+      + `<div class="rbody"><div class="strm"></div><div class="rrow strmstatus"><div class="k" style="color:var(--dim)">streaming</div><div class="v" style="color:var(--dim)">resolving verified sources…</div></div></div>`;
+  } else if (s.phase === "source"){
+    const strm = card.querySelector(".strm"); const sx = s.source;
+    if (strm) strm.insertAdjacentHTML("beforeend", `<div class="rrow"><div class="k">[${s.index}] ${credChipHome(sx)}</div><div class="v">${esc(sx.title||sx.entityId||"")} · <span style="color:var(--subtle)">${esc(short(sx.cid,8))}</span></div></div>`);
+  } else if (s.phase === "composed"){
+    const st = card.querySelector(".strmstatus .v"); if (st) st.textContent = "composing the verified κ-page…";
+  }
+}
 async function renderSemantic(card, r){
   if (!r.ok){ const out = await runRecall(r.query); card.innerHTML = `<div class="rhd">${glyph("#10b981","Q")}<div><div class="ttl">${esc(r.query)}</div><div class="sub">no public source · Q.recall fallback</div></div><span class="badge">ask Q</span></div><div class="rbody">${out.html}</div>`; return; }
   try { if (publishKStore) await publishKStore(r.blocks); } catch {}   // publish the composed page + sources → /ipfs/<cid>/ resolves
-  const srcRows = (r.sources||[]).map((s,i)=>`<div class="rrow"><div class="k">[${i+1}] ${esc(s.source||"")}</div><div class="v"><a href="#" data-q="ipfs://${esc(s.cid)}">${esc(s.title||s.entityId||"")}</a> · <span style="color:var(--subtle)">${esc(short(s.cid,8))}</span></div></div>`).join("");
+  const cred = (s)=>`<span class="ok">✓ L5</span>${s.authority!=null?` · auth ${Math.round(s.authority*100)}`:""}${s.source?` · ${esc(s.source)}`:""}`;
+  const srcRows = (r.sources||[]).map((s,i)=>`<div class="rrow"><div class="k">[${i+1}] ${cred(s)}</div><div class="v"><a href="#" data-q="ipfs://${esc(s.cid)}">${esc(s.title||s.entityId||"")}</a> · <span style="color:var(--subtle)">${esc(short(s.cid,8))}</span></div></div>`).join("");
   const ans = r.answer ? `<div class="rrow"><div class="k">answer</div><div class="v">${esc(r.answer)}</div></div>` : "";
   const preview = r.html ? `<div class="pv"><iframe sandbox="allow-same-origin" src="${URL.createObjectURL(new Blob([r.html],{type:"text/html"}))}"></iframe></div>` : "";
   const open = `<a class="open" href="/ipfs/${esc(r.cid)}/" target="_blank" rel="noopener">Open κ-page ↗</a>`;
   const idxLine = indexInfo ? `<div style="color:var(--dim);font:11px var(--mono);margin-bottom:9px">κ-index · ${indexInfo.count} docs · built ${esc((indexInfo.builtAt||"").slice(0,10))} · pointer ${esc(indexInfo.pointer||"—")} · ${esc(short(indexInfo.indexCid||"",7))}</div>` : "";
-  card.innerHTML = `<div class="rhd">${glyph("#10b981","Q")}<div><div class="ttl">${esc(r.query)}</div><div class="sub">semantic web → ${r.sources.length} verified source${r.sources.length===1?"":"s"} · ${esc((r.probes||[]).join(" ⊕ "))}</div></div><span class="badge">semantic</span></div>`
+  const tierTag = r.tier === "live" ? `live${r.learned ? " · learned +" + r.learned : ""}` : "offline";
+  card.innerHTML = `<div class="rhd">${glyph("#10b981","Q")}<div><div class="ttl">${esc(r.query)}</div><div class="sub">semantic web → ${r.sources.length} verified source${r.sources.length===1?"":"s"} · ${esc(tierTag)} · ${esc((r.probes||[]).join(" ⊕ "))}</div></div><span class="badge">semantic</span></div>`
     + `<div class="rbody">${idxLine}${ans}${srcRows}</div>` + preview + sealStrip(r, open);
   wire(card);
   try { if (corpus) corpus.index({ id:r.cid, text:`${r.query}\n${(r.sources||[]).map(s=>s.title).join("\n")}\n${r.answer||""}`, meta:{ path:"semantic" } }).catch(()=>{}); } catch {}

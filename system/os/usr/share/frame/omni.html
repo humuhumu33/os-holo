@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Omni Resolve one content-addressed space</title>
 <!--
-  omni.html — a LIVE lab for the omni-resolve seam (sbin/holo-omni.mjs). Type any address from the four
+  omni.html — a LIVE lab for the omni-resolve seam (sbin/holo-omni-object.mjs). Type any address from the four
   namespaces — https:// · did:holo: · ipfs:// · bare CID — and watch it resolve into the SAME content-
   addressed space: bytes fetched from wherever they live, re-derived to their hash before admission (Law
   L5), with the source shown as a latency choice, never a trust one. Discovery (Delegated Routing V1)
@@ -109,12 +109,12 @@
 
   <div class="foot">
     The <code>https://</code> leg <b>imports</b> any web object and mints its κ the reverse bridge. The <code>ipfs://</code>/CID leg fetches the verifiable IPLD <em>block</em>; multi-block UnixFS file assembly is the next layer up. "via dev proxy" routes fetches through the host so the lab works despite cross-origin CORS turn it off to see raw browser CORS behaviour.<br>
-    Backed by <code>/sbin/holo-omni.mjs</code> + <code>/sbin/holo-routing.mjs</code> (Delegated Routing V1). Nothing here is trusted: the hash is.
+    Backed by <code>/sbin/holo-omni-object.mjs</code> + <code>/sbin/holo-routing.mjs</code> (Delegated Routing V1). Nothing here is trusted: the hash is.
   </div>
 </div>
 
 <script type="module">
-import { resolveAny, parseRef } from "/sbin/holo-omni.mjs";
+import { resolveAny, parseRef } from "/sbin/holo-omni-object.mjs";
 
 const $ = (id) => document.getElementById(id);
 const addr = $("addr"), steps = $("steps"), card = $("card");

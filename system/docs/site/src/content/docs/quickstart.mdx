@@ -14,16 +14,16 @@ This page walks you through your first session along whichever door fits you. If
 you only want the mental model first, start with [What is Hologram OS?](/docs).
 
 <CardGrid>
-  <Card title="Boot the OS" icon="rocket">
-    Open the single gateway and power on a computer you fully own — on your own
-    hardware, from one file.
-  </Card>
   <Card title="Build against it" icon="laptop">
     Work from `system/`, run the release gate, and ship only what a witness proves.
   </Card>
   <Card title="Connect an agent" icon="seti:default">
     Speak MCP to a discovery document that lists every door and hands back objects
     you re-derive yourself.
+  </Card>
+  <Card title="Boot the OS" icon="rocket">
+    Open the single gateway and power on a computer you fully own — on your own
+    hardware, from one file.
   </Card>
 </CardGrid>
 
@@ -35,32 +35,9 @@ you only want the mental model first, start with [What is Hologram OS?](/docs).
 There are three doors into the same substrate. Each ends at a command you can run
 right now.
 
-* **Boot** — open the gateway and use the desktop. No tools required.
 * **Build** — clone the repo, run the gate, and witness a component against an external authority.
 * **Connect** — start the MCP door and discover its live, self-describing tools.
-
-## Boot the OS
-
-You want a computer that runs on your hardware and trusts no server. Opening the
-gateway starts the κ Service Worker and walks the boot chain.
-
-<Steps>
-
-1. **Open `index.html`** — the single gateway. It starts the κ Service Worker and
-   enters the boot chain: rEFInd → Plymouth → SDDM → PrimeOS.
-
-2. **Let it boot to the greeter.** The OS is content-addressed, so the bytes are
-   verified on the way in — a single altered byte yields a different hash and is refused.
-
-3. **Sign in to bind a device-local key,** then use the desktop. The key is bound
-   to *this* device; there is never a server account to create.
-
-</Steps>
-
-<Aside type="tip" title="Deny the origin">
-  The gateway is one CDN among peers, not an authority. Deny it and the
-  byte-identical, verified OS still boots from cache or a neighbouring peer.
-</Aside>
+* **Boot** — open the gateway and use the desktop. No tools required.
 
 ## Build against it
 
@@ -130,6 +107,29 @@ self-verifying object you re-derive before you trust it.
   Start at the self-verifying discovery document
   [`/.well-known/agents.json`](/.well-known/agents.json). It lists every agent door
   — MCP, NANDA, A2A, Agent Skills — and is authoritative, not this page.
+</Aside>
+
+## Boot the OS
+
+No tools required. Opening the gateway starts the κ Service Worker and walks the
+boot chain on your own hardware — useful to see the substrate you build against.
+
+<Steps>
+
+1. **Open `index.html`** — the single gateway. It starts the κ Service Worker and
+   enters the boot chain: rEFInd → Plymouth → SDDM → PrimeOS.
+
+2. **Let it boot to the greeter.** The OS is content-addressed, so the bytes are
+   verified on the way in — a single altered byte yields a different hash and is refused.
+
+3. **Sign in to bind a device-local key,** then use the desktop. The key is bound
+   to *this* device; there is never a server account to create.
+
+</Steps>
+
+<Aside type="tip" title="Deny the origin">
+  The gateway is one CDN among peers, not an authority. Deny it and the
+  byte-identical, verified OS still boots from cache or a neighbouring peer.
 </Aside>
 
 ## Now what?

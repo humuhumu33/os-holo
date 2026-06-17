@@ -57,8 +57,8 @@ const walk = (rel) => { const abs = join(SRC, rel); if (!existsSync(abs)) return
 const SPINE = [
   ["usr/share/frame", ["holospace.html", "home.html", "find.html"]],
   ["boot", ["holo-boot-sw.js", "coi-serviceworker.min.js"]],
-  ["lib", ["holo-sw.js", "holo-launch.mjs", "holo-boot-sw-register.mjs", "browser-sw.js"]],
-  ["sbin", ["holo-resolver.mjs", "holo-sources.mjs", "holo-peers.mjs", "holo-uor.mjs", "holo-object.mjs", "holo-wire.mjs"]],
+  ["lib", ["holo-launch.mjs", "holo-boot-sw-register.mjs", "browser-sw.js"]],
+  ["sbin", ["holo-resolver.mjs", "holo-sources.mjs", "holo-peers.mjs", "holo-wire.mjs"]],
   ["etc", ["manifest.webmanifest", "os-closure.json"]],
   ["usr/share/icons", ["icon-192.png", "icon-512.png"]],
 ];

@@ -21,6 +21,33 @@
   "dcterms:isDefinedBy": "https://hologram.os/ns/conformance",
   "conforms": [
     {
+      "@id": "https://hologram.os/conformance/os2#w1-origin-blocked-boot",
+      "@type": "hosc:ConformanceAssertion",
+      "name": "W1 — Hologram OS boots with the ORIGIN BLOCKED, serving its boot closure network-free from the κ-keyed content cache (the keystone serverless proof: L3 the store is the memory · L5 verify-at-boundary · no server). Witnessed LIVE in real Chromium against the production deploy (prod cache-first mode): a full online boot under Service-Worker control caches the boot closure, then ALL origin network is cut (setOffline) and the OS is reloaded — it must still boot and render, with every boot-critical path served from the κ cache (x-holo-cache:hit) and zero network. The localhost dev server cannot witness this (the SW runs DEV / cache-first-off on 127.0.0.1, holo-fhs-sw.js:29,470,508); the NECESSARY condition (closure complete + κ-route content-serviceable + bogus κ refused) is witnessed live in pure Node by tools/holo-w1-origin-blocked-boot-witness.mjs.",
+      "hosc:authority": "holospaces Laws L1 (content not location) · L3 (the store is the memory) · L5 (verify by re-derivation) · serverless / CROSS-1 (dumb static host) · W3C Service Workers · WHATWG Fetch · verify by real-browser offline boot against the live deploy (Playwright) — tools/holo-w1-deploy-witness.mjs",
+      "hosc:witness": "tools/holo-w1-deploy-witness.mjs",
+      "hosc:required": true,
+      "hosc:category": "Runtime"
+    },
+    {
+      "@id": "https://hologram.os/conformance/os2#sw-opfs-durable-store",
+      "@type": "hosc:ConformanceAssertion",
+      "name": "The OS gains DURABLE storage: the OpfsKappaStore (-04-) is wired into the delivery Service Worker (holo-fhs-sw.js) as a persistence tier BEHIND the Cache-Storage hot tier. Verified bytes are written through to OPFS at store time, and on a Cache-Storage miss the SW serves them network-free from OPFS (x-holo-cache: opfs) — so durability SURVIVES Cache-Storage eviction (Law L3, the store is the memory). The integration is best-effort + feature-detected: if OPFS is unavailable in the worker, the store stays null and the SW behaves exactly as before (no regression). Witnessed LIVE in real Chromium in PROD cache-first mode (forced locally via an HTTPS proxy on a non-localhost host so the SW's localhost DEV bypass is off): the SW writes a verified boot path through to OPFS, Cache Storage is then CLEARED, and a refetch still serves the byte-identical content from OPFS. (On localhost every closure entry is a dev-fresh source file, so the integration is correctly dormant there.)",
+      "hosc:authority": "design -04- (OpfsKappaStore) · holospaces KappaStore contract · Laws L1/L3/L5 · cc29 (verify-at-boundary: put() is the trust boundary) · W3C File System Access (OPFS) in a Service Worker · W3C Service Workers · verify by real-browser write-through + Cache-Storage-eviction durability in prod mode (Playwright + a self-signed secure context) — tools/holo-sw-opfs-prod-witness.mjs",
+      "hosc:witness": "tools/holo-sw-opfs-prod-witness.mjs",
+      "hosc:required": true,
+      "hosc:category": "Runtime"
+    },
+    {
+      "@id": "https://hologram.os/conformance/os2#w2-opfs-kappastore",
+      "@type": "hosc:ConformanceAssertion",
+      "name": "W2 — the browser OpfsKappaStore (os/usr/lib/holo/holo-opfs-kappastore.mjs) is a faithful, PERSISTENT KappaStore backend, making Law L3 (the store is the memory) real in a tab. It implements the holospaces KappaStore contract (put / get / contains / pin / evict) over the Origin Private File System, content-addressed by κ (sha256 hex; the sharded path = the file name = the content hash, so identical bytes dedupe to one file). Witnessed LIVE in real Chromium against an in-memory MemKappaStore oracle: byte-for-byte round-trip, κ-identity / dedup / distinct, a differential TCK (κ identical AND bytes equal across both backends), contains, pin-survives-cache-pressure, correctness-free eviction (unpinned evicts, pinned refuses), and — the keystone — PERSISTENCE across a page reload (the in-memory hot cache is gone; bytes are served from OPFS byte-identical). put() is the L5 trust boundary (cc29 / -03- C2); in-store reads are trusted.",
+      "hosc:authority": "holospaces KappaStore contract (put/get/contains/pin, KappaLabel) · cc7_kdisk (MemKappaStore oracle · sector dedup) · cc29 (verify-at-boundary) · Laws L1/L3/L5 · W3C File System Access (OPFS) · WebCrypto SHA-256 · verify by real-browser differential TCK + reload-persistence (Playwright) — tools/holo-w2-opfs-kappastore-witness.mjs",
+      "hosc:witness": "tools/holo-w2-opfs-kappastore-witness.mjs",
+      "hosc:required": true,
+      "hosc:category": "Runtime"
+    },
+    {
       "@id": "https://hologram.os/conformance/os2#holo-notifications",
       "@type": "hosc:ConformanceAssertion",
       "name": "Notifications are ONE coherent surface (Holo Notify): holo.notify shows a quiet, theme-coherent toast and ALWAYS files a durable, per-operator record into a persistent, openable Notification Center rendered in the shared right side-carriage (createAside — the same dock Create/Play/Share wear), so an alert is never lost and history survives reload + re-sign-in (the OS's localStorage UI-state axis, capped to a recent window — notifications are UI state, not substrate objects). Obvious-but-not-intrusive by construction: the bell carries an unread badge, a fresh arrival shimmers with the OS's own κ-glyphs, and motion is reduced-motion-aware; tokens + golden-ratio throughout (the hardcoded-hex banner is the anti-pattern it removes). Q is a first-class sender with its own thread and a DELIVER-ONLY seam (window.Q.note) that posts a note it is handed and never generates text, so a cold brain still posts honest notes and nothing is fabricated (Law L5); a static welcome seeds the Q thread once per operator. The two prior ad-hoc surfaces both flow through it: the shell routes toast() through window.HoloNotify (a bare toast is shown but not filed, so history stays meaningful), and the 'Secure your account' nudge is migrated to a persistent, actionable Backup notification. Witnessed 21/21 (tools/holo-notify-witness.mjs, static analysis of the served module + shell + backup). Pending: os-closure κ-pin for the new served module (the deferred re-lock, matches the Q/Mind family — SW network-fallback, never 409s).",
@@ -568,6 +595,15 @@
       "hosc:witness": "tools/holo-app-mobile-witness.mjs",
       "hosc:required": true,
       "hosc:category": "Display manager & UI"
+    },
+    {
+      "@id": "https://hologram.os/conformance/os2#app-conformance",
+      "@type": "hosc:ConformanceAssertion",
+      "name": "EVERY holospace application is a self-contained, shareable, provenance-tracked κ-holospace, proven per app across SIX properties, as a RATCHET (the 'betterer' pattern, sibling of #app-mobile-conformance) so the corpus can only get MORE conformant and a property once gained can never regress. P1 canonical-shell: the app runs inside the ONE canonical shell (ADR-0111) — an authored index.html surface that mounts in the OS frame, shipping NO forked shell.html of its own. P2 self-contained + serverless: a sealed κ-object (holospace.lock.json with a did:holo:sha256 root + non-empty closure) served by the service worker alone, with NO undeclared mandatory backend (an external fetch/WS without a holo:egress declaration is an honest RED, never green). P3 storage-agnostic: the app is named by a CONTENT address (did:holo:sha256), so the WHAT is fixed and any transport tier — GitHub/local/cloud/IPFS/peer — supplies the WHERE, with honest-null on empty source (ADR-0103/0105). P4 single-address launch + discovery: the app's TRUE root κ is discoverable + launchable from the one door (omnibar/launcher/homepage) because apps/index.jsonld carries holo:root = the app's content κ. P5 share = a link: the catalog entry carries schema:name + schema:description, the per-app social cover + auto-description that the ADR-0109 Share carriage (#wks= link · Copy · navigator.share · live QR) unfurls. P6 provenance + royalties: an OUT-OF-BAND κ-addressed version chain (holospace.prov.json) with a per-version creator κ — lineage kept out of the κ to preserve κ-memo (ADR-0082) — making attribution + programmatic royalties machine-readable. Properties not yet met are reported RED, never faked green (Law L5).",
+      "hosc:authority": "ADR-0112 (universal app conformance baseline) over ADR-0109 (Share carriage) · ADR-0105/0106 (Workspace Sync + Session capture) · ADR-0082 (PROV-O) · ADR-0111 (Boot root + CSP/clickjacking floor) · ADR-0103 (Omni resolver) · the #app-mobile-conformance 'betterer' ratchet template · the Gateway launcher · static analysis of the served app repo (apps/*/holospace.lock.json + holospace.prov.json) joined to the OS app catalog (apps/index.jsonld)",
+      "hosc:witness": "tools/holo-app-conformance-witness.mjs",
+      "hosc:required": true,
+      "hosc:category": "Universal app conformance"
     },
     {
       "@id": "https://hologram.os/conformance/os2#holo-dock",

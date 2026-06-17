@@ -16,7 +16,7 @@ import { startServer } from "./holo-serve-fhs.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const OS2 = join(here, "../os");
-const ORIG = "C:/Users/pavel/Desktop/hologram-os/os";
+const ORIG = process.env.HOLO_OS_DIR || join(here, "../os");
 const APPS = process.env.HOLO_APPS_REPO || join(here, "../../../holo-apps");
 const SHARED = join(OS2, "usr/lib/holo");
 

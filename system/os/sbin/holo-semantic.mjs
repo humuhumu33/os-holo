@@ -67,7 +67,7 @@ function buildSynthPrompt(query, sources) {
 // createSemantic({ discovery, synth?, clock? }) — the orchestrator. `discovery` is a holo-discover
 // createDiscovery() instance (carrying its own injected fetchImpl). `synth` is OPTIONAL: a Q.fuse instance
 // ({ fuse(prompt) }) or a generative provider ({ generate(prompt) -> async iterable {delta} }).
-export function createSemantic({ discovery = null, synth = null } = {}) {
+export function createSemantic({ discovery = null, synth = null, agent = null, learn = null } = {}) {
   if (!discovery) throw new Error("holo-semantic: a discovery instance is required (holo-discover.createDiscovery)");
 
   async function runSynth(prompt) {
@@ -76,52 +76,93 @@ export function createSemantic({ discovery = null, synth = null } = {}) {
     if (typeof synth.generate === "function") { let out = ""; for await (const e of synth.generate(prompt)) out += (e.delta || ""); return out || null; }
     return null;
   }
+  // agent escalation: an injectable seam that proposes EXTRA probes for the long tail (a model, or any
+  // reformulator). Default = the deterministic probes. Used only when the offline tier comes up short.
+  async function agentProbes(q, base) {
+    if (agent && typeof agent.expand === "function") { try { const extra = await agent.expand(q, base); return [...new Set([...base, ...(extra || [])])].slice(0, 6); } catch {} }
+    return base;
+  }
+  // discover a tier and fuse per-probe candidate lists by RRF (cross-probe agreement).
+  async function discoverRanked(probes, tier, perProbe) {
+    const lists = [], byId = new Map();
+    for (const p of probes) {
+      const cands = await discovery.discover(p, { limit: perProbe, tier });
+      lists.push({ via: tier, items: cands.map((c) => ({ kappa: c.entityId, ...c })).filter((c) => c.kappa) });
+      for (const c of cands) if (c.entityId && !byId.has(c.entityId)) byId.set(c.entityId, c);
+    }
+    return rrf(lists).map((f) => byId.get(f.kappa)).filter(Boolean);
+  }
+  // sufficiency gate: does the offline tier contain a doc ABOUT this query? Match the query's SALIENT terms
+  // (drop framing words like "history/what/how" — those appear in many docs' text and would falsely satisfy
+  // a raw BM25 hit) against candidate TITLES/entities (a doc's topic). No salient-term title match → the
+  // topic isn't in the index → escalate to live. (Conservative: costs a live round-trip + a learn, never a
+  // wrong answer.) Only meaningful when a live tier exists to escalate to (see hasLive below).
+  const STOP = new Set(["the", "and", "for", "with", "from", "into", "over", "what", "who", "how", "why", "when", "where", "which", "history", "origins", "origin", "overview", "story", "guide", "introduction", "intro", "timeline", "summary", "about"]);
+  function covers(cands, q) {
+    const terms = (String(q).toLowerCase().match(/[a-z0-9]{4,}/g) || []).filter((w) => !STOP.has(w));
+    if (!terms.length) return cands.length > 0;          // a query of only framing words → any offline hit suffices
+    return cands.some((c) => { const t = (String(c.title || "") + " " + String(c.entityId || "")).toLowerCase(); return terms.some((w) => t.includes(w)); });
+  }
 
-  // answer(query, opts) → { ok, query, probes, cid, did, blocks, sources:[{cid,title,entityId,…}],
-  //                          answer?, mode, ms } | { ok:false, … }
+  // answer(query, opts) → { ok, query, probes, tier, learned, cid, did, blocks, sources, answer?, mode, ms }
   //   opts: { perProbe=5, topK=3, synthesize=false }
-  async function answer(query, { perProbe = 5, topK = 3, synthesize = false } = {}) {
+  // TIERED: try the OFFLINE κ-index first (instant, no network); only when it doesn't cover the query do we
+  // escalate to LIVE on-demand discovery (agent-expanded) — and LEARN the result into the offline index so
+  // the next time this (or a near) query is asked it is served offline. Coverage grows from use.
+  async function answer(query, { perProbe = 5, topK = 3, synthesize = false, onStage = null } = {}) {
     const t0 = (typeof performance !== "undefined" && performance.now) ? performance.now() : 0;
     const ms = () => (t0 ? Math.round((performance.now ? performance.now() : 0) - t0) : 0);
+    const emit = (s) => { try { onStage && onStage({ ...s, ms: ms() }); } catch {} };   // STREAM: progressive stages → the UI paints as content verifies
     const q = String(query || "").trim();
     if (!q) return { ok: false, query: q, reason: "empty query", ms: ms() };
 
-    // EXPAND + DISCOVER — one ranked candidate list per probe (keyed by entity id for fusion).
     const probes = expandQuery(q);
-    const lists = [], byId = new Map();
-    for (const p of probes) {
-      const cands = await discovery.discover(p, { limit: perProbe });
-      lists.push({ via: p, items: cands.map((c) => ({ kappa: c.entityId, ...c })).filter((c) => c.kappa) });
-      for (const c of cands) if (c.entityId && !byId.has(c.entityId)) byId.set(c.entityId, c);
+    let tier = "offline", learned = 0;
+    let ranked = await discoverRanked(probes, "offline", perProbe);   // OFFLINE FIRST — κ-index + learned, no network
+    const hasLive = (discovery.adapters || []).some((a) => a.offline !== true);   // only escalate if there IS a live tier
+    if (hasLive && !covers(ranked, q)) {                              // ESCALATE — the long tail goes live + agentic
+      tier = "live";
+      ranked = await discoverRanked(await agentProbes(q, probes), "live", perProbe);
     }
-    // FUSE — RRF by entity id; cross-probe agreement ranks an entity above a single noisy top hit.
-    const fused = rrf(lists);
-    const ranked = fused.map((f) => byId.get(f.kappa)).filter(Boolean);
+    emit({ phase: "tier", tier, probes });
 
-    // SEAL — top-K fused candidates that yield content → fresh, self-verifying IPFS objects.
-    const sources = [], blocks = new Map();
+    // SEAL — top-K candidates → fresh, self-verifying IPFS objects. Each verified source is EMITTED as soon
+    // as it seals, so the first credible result paints before the rest (and before the composed page).
+    const sources = [], blocks = new Map(), seen = new Set();
     for (const c of ranked) {
       if (sources.length >= topK) break;
       const sealed = await discovery.sealCandidate(c, q);
       if (!sealed) continue;
+      const key = sealed.sourceUrl || sealed.cid;   // dedupe by CONTENT identity — distinct entities often resolve to the SAME article
+      if (seen.has(key)) continue;
+      seen.add(key);
       for (const [cid, b] of sealed.blocks) blocks.set(cid, b);
       sources.push(sealed);
+      emit({ phase: "source", index: sources.length, tier, source: { cid: sealed.cid, title: sealed.title, entityId: sealed.entityId, source: sealed.source, ref: sealed.ref, authority: sealed.authority != null ? sealed.authority : null, verified: true } });
     }
-    if (!sources.length) return { ok: false, query: q, probes, reason: "no source yielded verifiable content", ms: ms() };
+    if (!sources.length) { emit({ phase: "empty" }); return { ok: false, query: q, probes, tier, reason: "no source yielded verifiable content", ms: ms() }; }
+
+    // LEARN — on a live answer, persist the discovered sources into the offline index so the next ask is
+    // network-free (the long tail it has seen becomes instant). Injected by the host; failure never blocks.
+    if (tier === "live" && typeof learn === "function") { try { learned = (await learn(sources)) || 0; } catch {} }
 
     // SYNTH? — opt-in model answer + [n] citations to the source CIDs (the only model step).
     let synthesized = null, mode = "compose";
     if (synthesize) { synthesized = await runSynth(buildSynthPrompt(q, sources)); if (synthesized) mode = "synthesize"; }
 
     // COMPOSE + SEAL — one page citing every source by its CID; the composed page is itself a κ-object.
+    if (synthesized) emit({ phase: "answer", answer: synthesized });
     const html = composePage(q, sources, synthesized);
     const snap = await sealSnapshot({ resources: [{ name: "index.html", bytes: html }] });
     for (const [cid, b] of snap.blocks) blocks.set(cid, b);   // merged store: the page + every cited source resolves
+    emit({ phase: "composed", cid: snap.rootCid, did: snap.did });
 
     return {
-      ok: true, query: q, probes, mode, html,        // html: the composed page bytes, for an in-page preview (the κ resolves the same bytes)
+      ok: true, query: q, probes, tier, learned, mode, html,   // tier: offline|live · learned: #docs added to the offline index
       cid: snap.rootCid, did: snap.did, blocks, manifest: snap.manifest,
-      sources: sources.map((s) => ({ cid: s.cid, title: s.title, entityId: s.entityId, source: s.source, ref: s.ref })),
+      // each source carries its credibility: verified (L5 — content-addressed, re-derives at resolve),
+      // authority (κ-PageRank τ when the source came from the index), provenance (source class + ref).
+      sources: sources.map((s) => ({ cid: s.cid, title: s.title, entityId: s.entityId, source: s.source, ref: s.ref, authority: s.authority != null ? s.authority : null, verified: true })),
       ...(synthesized ? { answer: synthesized } : {}),
       ms: ms(),
     };

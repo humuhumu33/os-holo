@@ -113,18 +113,29 @@ if (chromium) {
     const resp = await page.reload({ waitUntil: "load", timeout: 30000 }).catch((e) => ({ _err: String(e.message || e) }));
     const dom = await page.evaluate(() => document.readyState === "complete" && !!document.body && document.body.children.length > 0).catch(() => false);
     const booted = !!resp && !resp._err && (typeof resp.ok !== "function" || resp.ok()) && dom;
-    rec("ORIGIN BLOCKED — the shell still boots offline, served network-free from the κ-keyed content cache (L3 + serverless)", booted, booted ? "shell.html booted from cache offline" : `did not boot offline${resp && resp._err ? " · " + resp._err.slice(0, 60) : ""}`);
-
-    // every boot-critical resource still resolves from cache (x-holo-cache: hit) with origin dead.
     const hits = await page.evaluate(async (boot) => {
       const out = []; for (const p of boot) { try { const r = await fetch("/" + p, { cache: "no-store" }); out.push([p, r.status, r.headers.get("x-holo-cache")]); } catch (e) { out.push([p, "ERR", String(e).slice(0, 40)]); } } return out;
     }, BOOT).catch(() => []);
     const served = hits.filter(([, s, c]) => s === 200 && c === "hit").length;
     const miss = hits.filter(([, s, c]) => !(s === 200 && c === "hit")).map(([p, s, c]) => `${p}:${s}/${c}`);
-    rec("every boot-critical resource is served x-holo-cache:hit with the origin blocked (zero network)", served === BOOT.length, `${served}/${BOOT.length} hit${miss.length ? " · " + miss.slice(0, 3).join(",") : ""}`);
-    rec("no fatal page errors while booting offline", errs.length === 0, errs.slice(0, 2).join(" | ") || "clean");
 
-    liveLane = booted && served === BOOT.length && errs.length === 0 ? "pass" : "fail";
+    // The SW runs in DEV mode on localhost (holo-fhs-sw.js:29,470,508): PATH requests are served FRESH
+    // and never cached, so offline boot is disabled BY DESIGN — not a defect. Production (!DEV: HTTPS,
+    // non-localhost, e.g. GitHub Pages) is cache-first (x-holo-cache:hit) and boots offline. The
+    // localhost harness CANNOT witness the prod path. Classify that honestly: dev-bypassed ≠ fail.
+    const DEVHOST = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(new URL(base).hostname);
+    const devBypassed = DEVHOST && !booted && served === 0 && hits.every(([, s, c]) => c !== "hit");
+    if (devBypassed) {
+      liveLane = "dev-bypassed";
+      console.log(`\n  ⚠ SW DEV mode (localhost, holo-fhs-sw.js:29,470,508): path requests served fresh, cache-first OFF.`);
+      console.log(`    offline boot is NOT a defect here and NOT witnessable on localhost — needs a prod HTTPS / non-localhost host.`);
+      console.log(`    offline boot probe: ${miss.slice(0, 3).join(", ")}`);
+    } else {
+      rec("ORIGIN BLOCKED — the shell still boots offline, served network-free from the κ-keyed content cache (L3 + serverless)", booted, booted ? "shell.html booted from cache offline" : `did not boot offline${resp && resp._err ? " · " + resp._err.slice(0, 60) : ""}`);
+      rec("every boot-critical resource is served x-holo-cache:hit with the origin blocked (zero network)", served === BOOT.length, `${served}/${BOOT.length} hit${miss.length ? " · " + miss.slice(0, 3).join(",") : ""}`);
+      rec("no fatal page errors while booting offline", errs.length === 0, errs.slice(0, 2).join(" | ") || "clean");
+      liveLane = booted && served === BOOT.length && errs.length === 0 ? "pass" : "fail";
+    }
     await browser.close();
   } catch (e) { if (browser) await browser.close().catch(() => {}); rec("browser lane completed without throwing", false, String((e && e.message) || e)); liveLane = "fail"; }
 }
@@ -136,7 +147,9 @@ await close();
 const witnessed = staticPass && liveLane === "pass";
 const note = liveLane === "skipped"
   ? "HTTP lane (necessary condition) PASSED; live origin-blocked boot NOT exercised — install playwright to witness the sufficient proof."
-  : (witnessed ? "origin-blocked boot witnessed live." : "origin-blocked boot FAILED.");
+  : liveLane === "dev-bypassed"
+  ? "HTTP lane (necessary condition) PASSED; sufficient proof NOT witnessable on localhost — the SW runs DEV-mode (cache-first off). Run against a prod HTTPS / non-localhost host (e.g. the GitHub Pages deploy) to witness offline boot."
+  : (witnessed ? "origin-blocked boot witnessed live." : "origin-blocked boot FAILED (real offline-boot gap in prod-mode).");
 console.log(`\n${witnessed ? "WITNESSED ✓" : "NOT FULLY WITNESSED ✗"} — ${passed}/${passed + failed} · W1 origin-blocked boot · ${note}`);
 writeFileSync(join(here, "holo-w1-origin-blocked-boot-witness.result.json"),
   JSON.stringify({

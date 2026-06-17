@@ -6,14 +6,15 @@
 //   node tools/relock-app.mjs <app-id>        e.g. workspace, forge
 
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, relative, extname, basename } from "node:path";
-import { pathToFileURL } from "node:url";
+import { join, relative, extname, basename, dirname } from "node:path";
+import { pathToFileURL, fileURLToPath } from "node:url";
 
 const APP = process.argv[2];
 if (!APP) { console.error("usage: node tools/relock-app.mjs <app-id>"); process.exit(2); }
-const HOLOGRAM_OS = "C:/Users/pavel/Desktop/hologram-os/os";
-const APP_DIR = `C:/Users/pavel/Desktop/Hologram Apps/apps/${APP}`;
-const SHARED = "C:/Users/pavel/Desktop/Hologram OS2/system/os/usr/lib/holo";   // /_shared/ resolves here
+const here = dirname(fileURLToPath(import.meta.url));
+const HOLOGRAM_OS = join(here, "../os/usr/lib/holo");
+const APP_DIR = join(here, "../../../holo-apps/apps", APP);
+const SHARED = join(here, "../os/usr/lib/holo");   // /_shared/ resolves here
 
 const { sha256hex, sriOf, mbSha256 } = await import(pathToFileURL(join(HOLOGRAM_OS, "holo-uor.mjs")));
 const { makeObject, contentLink } = await import(pathToFileURL(join(HOLOGRAM_OS, "holo-object.mjs")));

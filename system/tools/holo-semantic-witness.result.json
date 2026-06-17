@@ -14,21 +14,27 @@
       "title": "Ancient Rome",
       "entityId": "Q1747689",
       "source": "wikidata",
-      "ref": "https://www.wikidata.org/wiki/Q1747689"
+      "ref": "https://www.wikidata.org/wiki/Q1747689",
+      "authority": null,
+      "verified": true
     },
     {
       "cid": "bafybeig7gihl3rpb4c4cbguk32zszwp4uspknnfz7pwzwmztzawqwwd2ba",
       "title": "History of Rome",
       "entityId": "Q830852",
       "source": "wikidata",
-      "ref": "https://www.wikidata.org/wiki/Q830852"
+      "ref": "https://www.wikidata.org/wiki/Q830852",
+      "authority": null,
+      "verified": true
     },
     {
       "cid": "bafybeibin6vypjqleqql3gks65qmicoivlph6hodrzpotqzbwrg5oh4ddi",
       "title": "Roman Empire",
       "entityId": "Q2277",
       "source": "wikidata",
-      "ref": "https://www.wikidata.org/wiki/Q2277"
+      "ref": "https://www.wikidata.org/wiki/Q2277",
+      "authority": null,
+      "verified": true
     }
   ],
   "pass": 13,

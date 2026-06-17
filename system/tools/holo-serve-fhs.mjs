@@ -27,8 +27,8 @@ import { blake3hex as torBlake3 } from "../os/usr/lib/holo/holo-blake3.mjs";
 const here = dirname(fileURLToPath(import.meta.url));
 export const OS2 = join(here, "../os");
 export const REPO = join(here, "../..");                              // repo root — holds the gateway index.html + repo-root vendored assets (system/vendor/…) that prod serves statically
-export const APPS = "C:/Users/pavel/Desktop/Hologram Apps";          // the separate apps repo
-export const ORIG = "C:/Users/pavel/Desktop/hologram-os/os";
+export const APPS = process.env.HOLO_APPS_REPO || join(here, "../../../holo-apps");          // the separate apps repo
+export const ORIG = process.env.HOLO_OS_DIR || join(here, "../os");
 
 // the pretty-share helpers: an app's display name (from the content-addressed catalog) + its root κ.
 let _cat = null;

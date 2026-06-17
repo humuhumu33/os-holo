@@ -13,6 +13,8 @@
     "w1": "node tools/holo-w1-origin-blocked-boot-witness.mjs",
     "w1-deploy": "node tools/holo-w1-deploy-witness.mjs",
     "w2": "node tools/holo-w2-opfs-kappastore-witness.mjs",
+    "hub-stream": "node tools/holo-hub-stream-showcase-witness.mjs",
+    "hub-stream-serve": "node tools/holo-hub-stream-serve.mjs",
     "w-sw-opfs": "node tools/holo-sw-opfs-prod-witness.mjs",
     "audit": "node tools/audit-apps.mjs",
     "gen": "node tools/gen-fhs-graph.mjs",

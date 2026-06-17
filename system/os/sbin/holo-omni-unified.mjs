@@ -11,7 +11,7 @@
 // "what is this?" chip before the resolve completes. Pure ESM, no DOM. This file is the thin seam the
 // magical bar sits on: paste anything → one verified κ-object → render → Q-act.
 
-import { resolveAny, parseRef } from "./holo-omni.mjs";
+import { resolveAny, parseRef } from "./holo-omni-object.mjs";
 import { parseWeb3Ref, resolveWeb3 } from "./holo-omni-web3.mjs";
 import { parseOnionRef, resolveOnion } from "./holo-omni-onion.mjs";
 
@@ -71,7 +71,7 @@ export async function resolveUnified(input, cfg = {}) {
       try {
         const r = await cfg.semantic.answer(q, { synthesize: !!cfg.synthesize, ...(cfg.semanticOpts || {}) });
         if (r && r.ok) return { ok: true, lane: "nl", kind: "semantic", label: cls.label, query: q,
-          kappa: r.did, cid: r.cid, did: r.did, probes: r.probes, sources: r.sources, answer: r.answer, mode: r.mode, html: r.html, blocks: r.blocks, manifest: r.manifest, ms: r.ms != null ? r.ms : ms() };
+          kappa: r.did, cid: r.cid, did: r.did, probes: r.probes, tier: r.tier, learned: r.learned, sources: r.sources, answer: r.answer, mode: r.mode, html: r.html, blocks: r.blocks, manifest: r.manifest, ms: r.ms != null ? r.ms : ms() };
         return { ok: false, lane: "nl", kind: "semantic", label: cls.label, query: q, reason: (r && r.reason) || "no verifiable result", ms: ms() };
       } catch (e) {
         return { ok: false, lane: "nl", kind: "semantic", label: cls.label, query: q, reason: String((e && e.message) || e), ms: ms() };

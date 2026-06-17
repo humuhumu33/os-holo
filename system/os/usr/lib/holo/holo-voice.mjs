@@ -4,6 +4,8 @@
 // checkable. Pure + isomorphic: the witness runs it in Node, the shell can run it in the
 // browser. One source of truth for the jargon lexicon — holo-voice-lexicon.jsonld is its
 // SKOS materialization and holo-voice-witness.mjs re-derives both (no drift).
+// NOTE: distinct from holo-voice.js (the on-device SPEECH engine, window.HoloVoice). This linter
+// is the WRITING voice; it exports under globalThis.HoloPlainVoice so the two never collide.
 
 // jargon → plain. Conventional plain-language swaps (plainlanguage.gov-style). NOT the
 // domain vocabulary: κ, content-addressed, Merkle-DAG, holospace are precise terms, kept.
@@ -69,4 +71,4 @@ export function toSkos() {
   };
 }
 
-if (typeof globalThis !== "undefined") globalThis.HoloVoice = { JARGON, findJargon, order, concision, lint, toSkos };
+if (typeof globalThis !== "undefined") globalThis.HoloPlainVoice = { JARGON, findJargon, order, concision, lint, toSkos };

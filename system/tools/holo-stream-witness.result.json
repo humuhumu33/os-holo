@@ -1,0 +1,27 @@
+{
+  "@type": "holo:WitnessResult",
+  "witness": "holo-stream",
+  "step": "G3",
+  "phases": [
+    "tier",
+    "source",
+    "source",
+    "source",
+    "composed"
+  ],
+  "firstSourceMs": 42,
+  "composedMs": 144,
+  "pass": 7,
+  "fail": 0,
+  "total": 7,
+  "ok": true,
+  "checks": {
+    "answer-completed-with-a-composed-page-1": true,
+    "the-first-stage-is-the-tier-decision-2": true,
+    "the-last-stage-is-the-composed-page-3": true,
+    "one-source-stage-was-emitted-per-sealed-source-4": true,
+    "the-first-source-is-emitted-before-the-composed-page-pro-5": true,
+    "the-first-source-arrives-earlier-than-the-composed-page--6": true,
+    "each-source-carries-verification-a-title-paintable-immed-7": true
+  }
+}

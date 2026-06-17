@@ -1,0 +1,368 @@
+{
+  "spec": "Every holospace application is a self-contained, shareable, provenance-tracked κ-holospace: it runs in the ONE canonical shell (P1), is a sealed serverless κ-object with no undeclared backend (P2), is named by a content address resolvable by any transport tier (P3), is discoverable + launchable from its single root κ via the one door (P4), is shareable as a link with a per-app social card (P5), and embeds an out-of-band κ-addressed version chain with per-version creator κ for programmatic royalties (P6). Enforced as a RATCHET over the served app repo: no app may LOSE a property, so conformance only increases. Properties not yet met are reported RED, never faked green (Law L5).",
+  "authority": "ADR-0112 over ADR-0109 (Share) · ADR-0105/0106 (Workspace Sync + Session capture) · ADR-0082 (PROV-O) · ADR-0111 (Boot root + CSP/clickjacking floor) · ADR-0103 (Omni resolver) · #app-mobile-conformance (ratchet template) · Gateway launcher · static analysis of the served app repo + apps/index.jsonld",
+  "witnessed": true,
+  "covers": [
+    "canonical-shell",
+    "self-contained",
+    "serverless",
+    "storage-agnostic",
+    "single-address",
+    "share-as-link",
+    "provenance",
+    "royalties",
+    "every-application",
+    "ratchet",
+    "honest-null"
+  ],
+  "appsScanned": 42,
+  "perProperty": {
+    "P1": 42,
+    "P2": 40,
+    "P3": 42,
+    "P4": 42,
+    "P5": 42,
+    "P6": 0
+  },
+  "fullyConformant": 0,
+  "fullyConformantApps": [],
+  "matrix": {
+    "amp": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "atlas": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "atlas96": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "book": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "brcminer": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "btc": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "capture": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "cloud": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "code": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "code-desktop": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "control": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "cosmos": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "docs": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "evm": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "f1": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "files": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "forge": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "git": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "hub": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "ipfs": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "jypyter": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "liberty": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "meet": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "music": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "notepad": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "notepadpp": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "os": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "plasma": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "player": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "privacy": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "q": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "qemu": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "qvac": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "search": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "stream": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "terms": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "trade": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "ui": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "video": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "workspace": {
+      "canonical-shell": true,
+      "self-contained": true,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "browser": {
+      "canonical-shell": true,
+      "self-contained": false,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    },
+    "etherscan": {
+      "canonical-shell": true,
+      "self-contained": false,
+      "storage-agnostic": true,
+      "single-address": true,
+      "share-as-link": true,
+      "provenance": false
+    }
+  },
+  "regressions": []
+}

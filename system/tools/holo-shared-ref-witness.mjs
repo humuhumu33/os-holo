@@ -22,7 +22,7 @@ import { dirname, join } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SHARED = join(here, "../os/usr/lib/holo");                            // the OS2 runtime _shared resolves here
-const APPS = process.env.HOLO_APPS_DIR || "C:/Users/pavel/Desktop/Hologram Apps/apps";   // what OS2 serves
+const APPS = process.env.HOLO_APPS_DIR || join(here, "../../../holo-apps/apps");   // what OS2 serves
 
 const kappaCache = new Map();
 const kappaOf = (name) => {

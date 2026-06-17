@@ -12,10 +12,10 @@
     "no duplicate DEFAULT shell in the catalo",
     "the retired shells are unreachable — no ",
     "the ONE shared embed guard exists in the",
+    "no app renders its own tab strip when em",
     "the shell is sealed in the OS-wide κ-rou",
     "the served shell RE-DERIVES to its seale",
     "the shell resolves BY CONTENT at /.holo/",
-    "the shell loader is Secure-Boot-pinned (",
     "the shell is anchored on the unified UOR",
     "the served shell RE-DERIVES to its subst"
   ],
@@ -58,7 +58,7 @@
     {
       "name": "no duplicate DEFAULT shell in the catalog (a kept self-contained app is exempt)",
       "ok": true,
-      "detail": "41 apps · self-contained exempt: org.hologram.HoloBrowser"
+      "detail": "42 apps · self-contained exempt: org.hologram.HoloBrowser"
     },
     {
       "name": "the old duplicate shell CODE is retired (holospaces/browser · holospaces/sdk · apps/sdk)",
@@ -77,13 +77,13 @@
     },
     {
       "name": "no app renders its own tab strip when embedded — each carries the embed guard (no double-drawn frame)",
-      "ok": false,
-      "detail": "unguarded: files"
+      "ok": true,
+      "detail": "all tab-strip apps guarded"
     },
     {
       "name": "the shell is sealed in the OS-wide κ-route closure (a did:holo content address)",
       "ok": true,
-      "detail": "κ 594dc683f91e04b7…"
+      "detail": "κ 09db74267b30b7d5…"
     },
     {
       "name": "the served shell RE-DERIVES to its sealed κ — tamper-refused (Law L5)",
@@ -97,13 +97,13 @@
     },
     {
       "name": "the shell loader is Secure-Boot-pinned (rEFInd re-derives + refuses a mismatch, Law L5)",
-      "ok": true,
-      "detail": "pinned"
+      "ok": false,
+      "detail": "stale pin"
     },
     {
       "name": "the shell is anchored on the unified UOR substrate (carries its did:holo:blake3 σ-axis κ)",
       "ok": true,
-      "detail": "blake3 572d95e22836b6bb…"
+      "detail": "blake3 45aded07b5166246…"
     },
     {
       "name": "the served shell RE-DERIVES to its substrate κ via OS2 BLAKE3 (≡ substrate kappa(), Law L5 / CC-51)",

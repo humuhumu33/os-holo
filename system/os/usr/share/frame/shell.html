@@ -775,7 +775,7 @@
       import { createPlaygroundHost, createPlaygroundAgent } from "/_shared/holo-playground-agent.mjs";   // Holo Playground: in-app (iframe) AND in-shell element edits route to that ONE primitive
       import { capabilitiesToSandbox, linkFor } from "/holo-launch.mjs";
       import { classify, matches } from "/holo-omni.mjs";
-      import { resolveAny, parseRef } from "/sbin/holo-omni.mjs";   // the discovery-backed κ-resolver (trustless gateways + Delegated Routing V1)
+      import { resolveAny, parseRef } from "/sbin/holo-omni-object.mjs";   // the discovery-backed κ-resolver (trustless gateways + Delegated Routing V1)
       import { parseWeb3Ref, resolveWeb3 } from "/sbin/holo-omni-web3.mjs";   // the web3 leg: ENS · accounts · tokens · tx · CAIP → one sealed κ-card (governed read, hosc:Egress receipt)
       import { record as omniRemember, search as omniRecent } from "/sbin/holo-omni-index.mjs";   // the omnibar's MEMORY: it remembers + ranks everything you've opened (private, instant, holo-rank-aware)
       import { askPrivate as omniAsk, indexObject as omniIndexObject } from "/sbin/holo-omni-q.mjs";   // the omnibar's PRIVATE INTELLIGENCE: Q.recall (model-free BM25 ⊕ κ-graph) over your resolved corpus — ask a question, get YOUR stuff, on-device
@@ -5657,7 +5657,7 @@
         padding: 6px 12px; font: var(--chrome-fw) var(--chrome-fs) var(--win-font); white-space: nowrap; transition: background .12s ease; }
       #verbs button:hover { background: var(--holo-surface-2); color: var(--accent); }
       #verbs button:active { transform: scale(.96); }
-      #verbs #share-btn { color: var(--accent); }   /* Share — the viral action, highlighted */
+      #verbs #share-btn { color: var(--holo-ink); }   /* Share — matched to Create/Play (white ink) */
       /* Share → a SOCIAL PREVIEW card (how the link unfurls when shared), above the QR + link */
       #share-social { width: 100%; border: 1px solid var(--holo-border); border-radius: var(--holo-radius); overflow: hidden; margin: 4px 0 14px; background: var(--holo-bg); text-align: left; }
       #share-social .ss-img { aspect-ratio: 1.91 / 1; display: grid; place-items: center; background: radial-gradient(120% 130% at 28% -10%, color-mix(in srgb, var(--accent) 32%, var(--holo-surface)), var(--holo-bg)); }
