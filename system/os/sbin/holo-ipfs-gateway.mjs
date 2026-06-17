@@ -10,9 +10,10 @@
 // injected, so the witness drives it with a fixture store and the SW drives it with real gateways.
 
 import * as holoIpfs from "../usr/lib/holo/holo-ipfs.js";
-import { assembleUnixFs } from "./holo-omni.mjs";
+import { assembleUnixFs } from "./holo-omni-object.mjs";
 import { IPFS_GATEWAYS } from "./holo-peers.mjs";
 import { discoverGateways } from "./holo-routing.mjs";
+import { selectRender, kindOfContentType } from "./holo-render-contract.mjs";   // dependency-free (no node:crypto) — SW-safe
 
 const MIME = {
   html: "text/html", htm: "text/html", css: "text/css", js: "text/javascript", mjs: "text/javascript",
@@ -38,6 +39,29 @@ export function sniff(bytes, name) {
   if (head.startsWith("<!doctype html") || head.startsWith("<html") || head.startsWith("<svg")) return head.startsWith("<svg") ? "image/svg+xml" : "text/html";
   let printable = 0; for (const c of bytes.subarray(0, 256)) if (c === 9 || c === 10 || c === 13 || (c >= 32 && c < 127)) printable++;
   return printable > bytes.subarray(0, 256).length * 0.85 ? "text/plain" : "application/octet-stream";
+}
+
+// dispatchRender(bytes, name) — the SINGLE serve-time render dispatch the SW imports. If the bytes are a
+// UOR envelope that DECLARES a render contract, honor it (a self-describing object chooses how it renders);
+// otherwise fall back to the existing extension/magic-byte sniff. Pure over ALREADY-VERIFIED bytes — trust
+// is recovered upstream by re-derivation (Law L5), never here. Returns { kind, contentType }.
+export function dispatchRender(bytes, name) {
+  const obj = tryParseUor(bytes);
+  if (obj && obj.render) {
+    const r = selectRender(obj);
+    return { kind: r.kind, contentType: r.contentType || mimeOf(name) || sniff(bytes, name), declared: true };
+  }
+  const ct = mimeOf(name) || sniff(bytes, name);
+  return { kind: kindOfContentType(ct), contentType: ct, declared: false };
+}
+// tryParseUor(bytes) → a UOR envelope object | null. A UOR object is canonical JSON-LD with @context + a
+// content-derived id; anything that does not parse as one is left to the byte sniffer untouched.
+function tryParseUor(bytes) {
+  try {
+    if (!bytes || bytes.length > 1 << 20) return null;            // contracts are tiny; don't parse large media
+    const o = JSON.parse(new TextDecoder("utf-8", { fatal: false }).decode(bytes));
+    return (o && o["@context"] && typeof o.id === "string" && o.id.startsWith("did:holo:")) ? o : null;
+  } catch { return null; }
 }
 
 // parseIpfsPath(rel) → { ns, root, path } | null. rel is the BASE-stripped path, e.g. "ipfs/<cid>/a/b.html".
@@ -175,14 +199,17 @@ export async function resolveIpfsPath(root, path, getBlock) {
     if (idx) return { kind: "file", cidStr: idx.cid, contentType: "text/html", name: idx.name, servedIndex: true, stream: () => streamUnixFsFile(idx.cid, getBlock) };
     return { kind: "directory", cidStr: cur, entries };
   }
-  // file / raw → STREAM. Content type from the name, else sniff the raw leaf / the file's first leaf.
+  // file / raw → STREAM. A render contract DECLARED in the bytes wins (a self-describing object chooses how
+  // it renders, S1); else the name extension; else sniff the raw leaf / the file's first leaf. For a single
+  // raw leaf we hold the whole block, so dispatchRender can honor a UOR render-contract envelope right here.
   const name = segs.length ? segs[segs.length - 1] : "";
-  let ct = mimeOf(name);
-  if (!ct && peek.raw) ct = sniff(peek.block, name);
+  let ct = null, renderKind = null;
+  if (peek.raw) { const d = dispatchRender(peek.block, name); ct = d.contentType; if (d.declared) renderKind = d.kind; }
+  if (!ct) ct = mimeOf(name);
   if (!ct && peek.node && peek.node.links && peek.node.links.length) { try { const first = await getBlock(cidToString(peek.node.links[0].cid)); if (first) ct = sniff(first, name); } catch {} }
   if (!ct && peek.node && !(peek.node.links || []).length && peek.node.data) { try { const u = holoIpfs.decodeUnixFs(peek.node.data); if (u && u.data) ct = sniff(u.data, name); } catch {} }
   if (!ct) ct = "application/octet-stream";
-  return { kind: "file", cidStr: cur, contentType: ct, name, stream: () => streamUnixFsFile(cur, getBlock) };
+  return { kind: "file", cidStr: cur, contentType: ct, name, ...(renderKind ? { renderKind } : {}), stream: () => streamUnixFsFile(cur, getBlock) };
 }
 
 // ── the navigation reporter — a tiny script injected into served HTML (a COPY of already-verified bytes,
@@ -247,4 +274,4 @@ export function ipfsErrorHtml(p, out) {
 <body><div class="c"><div class="g">⬡</div><div class="t">Couldn't resolve this object</div><div class="s">ipfs://${esc(p.root)}${p.path ? "/" + esc(p.path) : ""}</div><div class="r">${esc(out.reason || "no source served a verified copy")} · ${esc(out.status || 502)}</div></div></body></html>`;
 }
 
-export default { parseIpfsPath, makeGetBlock, resolveIpfsPath, directoryListingHtml, ipfsErrorHtml, injectNavReporter, navReporter, mimeOf, sniff };
+export default { parseIpfsPath, makeGetBlock, resolveIpfsPath, directoryListingHtml, ipfsErrorHtml, injectNavReporter, navReporter, mimeOf, sniff, dispatchRender };

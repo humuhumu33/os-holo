@@ -566,6 +566,46 @@ const omniEntries = () => { try { return JSON.parse(localStorage.getItem("holo:o
 let askPrivate = null;
 import("/sbin/holo-omni-q.mjs").then((m) => { askPrivate = m.askPrivate; }).catch(() => {});
 
+// ── the SEMANTIC orchestrator (the open-web ANSWER leg): a natural-language query → discover (live
+//    linked-data ⊕ the pre-built, self-verifying κ-index holo-index.car) → fuse (RRF) → compose a κ-page
+//    citing L5-verified source CIDs. Dynamically imported so it never blocks the portal paint; upgrades to
+//    also query the κ-index when the asset loads (network-free, re-derived on load). Null until ready →
+//    resolveUnified's NL lane falls back to the private Q.recall tag, unchanged. ──
+let semantic = null, publishKStore = null, indexInfo = null;
+// the pinned index-authority pubkey (Ed25519). A pointer signed by another key — or an older seq — is refused.
+const PINNED_INDEX_PUB = "028982a7282a3268bd26f62bd0e2cb39a3b95a604f347e8edc6294df13554b37";
+Promise.all([
+  import("/sbin/holo-discover.mjs"), import("/sbin/holo-semantic.mjs"),
+  import("/sbin/holo-index.mjs"), import("/sbin/holo-web-snapshot.mjs"), import("/usr/lib/holo/q/holo-q-embed.js"),
+  import("/sbin/holo-index-pointer.mjs"),
+]).then(async ([disco, sem, idx, snap, emb, ptrmod]) => {
+  publishKStore = snap.publishToKStore;
+  const mk = (adapters) => sem.createSemantic({ discovery: disco.createDiscovery({ adapters, fetchImpl: proxyFetch }) });
+  semantic = mk([disco.linkedDataAdapter()]);
+  const checkPointer = async (loadedCid) => {
+    try {
+      const ptr = await (await fetch("/usr/share/frame/holo-index.ptr.json")).json();
+      const minSeq = parseInt(localStorage.getItem("holo:index-seq") || "-1", 10);
+      const v = await ptrmod.verifyPointer(ptr, { pinnedPub: PINNED_INDEX_PUB, minSeq });
+      if (!v.ok) return "unverified (" + v.reason + ")";
+      if (v.target !== loadedCid) return "stale CAR (≠ signed target)";
+      try { localStorage.setItem("holo:index-seq", String(v.seq)); } catch {}
+      return "✓ seq " + v.seq;
+    } catch { return "unsigned"; }
+  };
+  try {
+    const embedder = await emb.resolveEmbedder();   // ONE embedder for docs + queries; bge-small if it loads, else floor
+    const car = new Uint8Array(await (await fetch("/usr/share/frame/holo-index.car")).arrayBuffer());
+    const loaded = await idx.loadIndexFromCar(car, { embedder });   // hybrid vector ⊕ BM25 ⊕ RRF over the κ-index
+    const pointer = await checkPointer(loaded.indexCid);
+    try { indexInfo = await (await fetch("/usr/share/frame/holo-index.json")).json(); } catch {}
+    if (indexInfo) indexInfo.pointer = pointer;
+    // LEARN sink: live-discovered long-tail sources join the offline κ-index → next ask is network-free.
+    const learn = async (sources) => { let n = 0; for (const s of sources || []) { if (!s || !s.cid || loaded.docs.has(s.cid)) continue; try { await loaded.corpus.index({ id: s.cid, text: s.text || (s.title + "\n" + (s.extract || "")), meta: { cid: s.cid, title: s.title } }); loaded.docs.set(s.cid, { cid: s.cid, title: s.title, text: s.text || s.extract || s.title, meta: {} }); if (s.blocks) for (const [c, b] of s.blocks) loaded.blocks.set(c, b); n++; } catch {} } return n; };
+    semantic = sem.createSemantic({ discovery: disco.createDiscovery({ adapters: [idx.indexAdapter(loaded), disco.linkedDataAdapter()], fetchImpl: proxyFetch }), learn });
+  } catch (e) { /* no pre-built index asset → live linked-data discovery only */ }
+}).catch(() => {});
+
 // Q recall is additive — load it WITHOUT blocking module init (so the portal always paints even if
 // the corpus modules are slow/intercepted). The page degrades to "still indexing" until it arrives.
 let corpus = null, recall = null;
@@ -1199,13 +1239,14 @@ async function runResolve(v){
   let r, cached = false;
   if (L1.has(key)){ r = L1.get(key); cached = true; }
   else {
-    try { r = await resolveUnified(key, { fetchImpl: proxyFetch, timeoutMs: 22000 }); }
+    try { r = await resolveUnified(key, { fetchImpl: proxyFetch, timeoutMs: 22000, semantic, semanticOpts: { onStage: (s) => { try { streamPaintHome(card, key, s); } catch {} } } }); }
     catch(e){ r = { ok:false, lane:"unknown", reason:String(e&&e.message||e) }; }
     if (r && r.ok && r.lane!=="nl") L1.set(key, r);
   }
   const ms = Math.round(performance.now() - t0);
   try {
-    if (r.lane==="nl") await renderNL(card, r);
+    if (r.kind==="semantic") await renderSemantic(card, r);
+    else if (r.lane==="nl") await renderNL(card, r);
     else if (!r.ok) card.innerHTML = `<div class="rhd"><div class="glyph" style="background:var(--holo-danger)">✕</div><div><div class="ttl">Could not resolve</div><div class="sub">${esc(v)}</div></div><span class="badge">${esc(r.lane||"")}</span></div><div class="rerr">${esc(r.reason||"unknown")}</div>${onionHint(r,v)}`;
     else if (r.lane==="web3") renderWeb3(card, r);
     else renderObject(card, r, v);
@@ -1283,6 +1324,36 @@ function renderObject(card, r, v){
 async function renderNL(card, r){
   const out = await runRecall(r.query);
   card.innerHTML = `<div class="rhd">${glyph("#10b981","Q")}<div><div class="ttl">${esc(r.query)}</div><div class="sub">natural language → Q.recall</div></div><span class="badge">ask Q</span></div><div class="rbody">${out.html}</div>`;
+}
+// NL → SEMANTIC: a discovered, fused, sealed κ-page citing L5-verified source CIDs (the open-web answer leg).
+// STREAMING: paint the portal card as the answer streams — tier first, then each verified source as it
+// seals, before the composed page is ready (the first credible result appears fast; the rest fill in).
+const credChipHome = (s) => `<span class="ok">✓ L5</span>${s.authority!=null?` · auth ${Math.round(s.authority*100)}`:""}${s.source?` · ${esc(s.source)}`:""}`;
+function streamPaintHome(card, query, s){
+  if (s.phase === "tier"){
+    card.innerHTML = `<div class="rhd">${glyph("#10b981","Q")}<div><div class="ttl">${esc(query)}</div><div class="sub">semantic web · ${esc(s.tier)} · searching ${esc((s.probes||[]).join(" ⊕ "))}…</div></div><span class="badge">semantic</span></div>`
+      + `<div class="rbody"><div class="strm"></div><div class="rrow strmstatus"><div class="k" style="color:var(--dim)">streaming</div><div class="v" style="color:var(--dim)">resolving verified sources…</div></div></div>`;
+  } else if (s.phase === "source"){
+    const strm = card.querySelector(".strm"); const sx = s.source;
+    if (strm) strm.insertAdjacentHTML("beforeend", `<div class="rrow"><div class="k">[${s.index}] ${credChipHome(sx)}</div><div class="v">${esc(sx.title||sx.entityId||"")} · <span style="color:var(--subtle)">${esc(short(sx.cid,8))}</span></div></div>`);
+  } else if (s.phase === "composed"){
+    const st = card.querySelector(".strmstatus .v"); if (st) st.textContent = "composing the verified κ-page…";
+  }
+}
+async function renderSemantic(card, r){
+  if (!r.ok){ const out = await runRecall(r.query); card.innerHTML = `<div class="rhd">${glyph("#10b981","Q")}<div><div class="ttl">${esc(r.query)}</div><div class="sub">no public source · Q.recall fallback</div></div><span class="badge">ask Q</span></div><div class="rbody">${out.html}</div>`; return; }
+  try { if (publishKStore) await publishKStore(r.blocks); } catch {}   // publish the composed page + sources → /ipfs/<cid>/ resolves
+  const cred = (s)=>`<span class="ok">✓ L5</span>${s.authority!=null?` · auth ${Math.round(s.authority*100)}`:""}${s.source?` · ${esc(s.source)}`:""}`;
+  const srcRows = (r.sources||[]).map((s,i)=>`<div class="rrow"><div class="k">[${i+1}] ${cred(s)}</div><div class="v"><a href="#" data-q="ipfs://${esc(s.cid)}">${esc(s.title||s.entityId||"")}</a> · <span style="color:var(--subtle)">${esc(short(s.cid,8))}</span></div></div>`).join("");
+  const ans = r.answer ? `<div class="rrow"><div class="k">answer</div><div class="v">${esc(r.answer)}</div></div>` : "";
+  const preview = r.html ? `<div class="pv"><iframe sandbox="allow-same-origin" src="${URL.createObjectURL(new Blob([r.html],{type:"text/html"}))}"></iframe></div>` : "";
+  const open = `<a class="open" href="/ipfs/${esc(r.cid)}/" target="_blank" rel="noopener">Open κ-page ↗</a>`;
+  const idxLine = indexInfo ? `<div style="color:var(--dim);font:11px var(--mono);margin-bottom:9px">κ-index · ${indexInfo.count} docs · built ${esc((indexInfo.builtAt||"").slice(0,10))} · pointer ${esc(indexInfo.pointer||"—")} · ${esc(short(indexInfo.indexCid||"",7))}</div>` : "";
+  const tierTag = r.tier === "live" ? `live${r.learned ? " · learned +" + r.learned : ""}` : "offline";
+  card.innerHTML = `<div class="rhd">${glyph("#10b981","Q")}<div><div class="ttl">${esc(r.query)}</div><div class="sub">semantic web → ${r.sources.length} verified source${r.sources.length===1?"":"s"} · ${esc(tierTag)} · ${esc((r.probes||[]).join(" ⊕ "))}</div></div><span class="badge">semantic</span></div>`
+    + `<div class="rbody">${idxLine}${ans}${srcRows}</div>` + preview + sealStrip(r, open);
+  wire(card);
+  try { if (corpus) corpus.index({ id:r.cid, text:`${r.query}\n${(r.sources||[]).map(s=>s.title).join("\n")}\n${r.answer||""}`, meta:{ path:"semantic" } }).catch(()=>{}); } catch {}
 }
 function onionHint(r,v){ return /\.onion\b/i.test(v) ? `<div class="qstrip"><span class="qm" style="color:#f59e0b">⧉</span><div class="qt">The address verified itself offline. Fetching its bytes needs a Tor transport, opened from the shell browser, with the egress pinned in a receipt.</div></div>` : ""; }
 

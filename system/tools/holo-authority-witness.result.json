@@ -1,0 +1,37 @@
+{
+  "@type": "holo:WitnessResult",
+  "witness": "holo-authority",
+  "step": "G1",
+  "authorityTop": "bafkreigfwufjx4xvpur5jvgjefa23zcr222nbs7vpakqi3yhumyshl4csm",
+  "sources": [
+    {
+      "title": "Center",
+      "authority": 0.42208,
+      "verified": true
+    },
+    {
+      "title": "Spoke Two",
+      "authority": 0.12678,
+      "verified": true
+    },
+    {
+      "title": "Spoke Three",
+      "authority": 0.12678,
+      "verified": true
+    }
+  ],
+  "pass": 8,
+  "fail": 0,
+  "total": 8,
+  "ok": true,
+  "checks": {
+    "docauthority-returns-a-pagerank-score-per-doc-holo-rank--1": true,
+    "the-most-referenced-doc-center-has-the-highest-authority-2": true,
+    "an-unreferenced-doc-edge-has-lower-authority-than-center-3": true,
+    "search-attaches-an-authority-score-to-every-hit-4": true,
+    "authority-re-weighting-ranks-center-first-on-a-relevance-5": true,
+    "center-outranks-the-unreferenced-edge-6": true,
+    "answer-sources-are-verified-l5-and-carry-authority-7": true,
+    "the-top-answer-source-is-the-highest-authority-doc-8": true
+  }
+}

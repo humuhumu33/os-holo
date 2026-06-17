@@ -1,0 +1,31 @@
+{
+  "@type": "holo:WitnessResult",
+  "witness": "holo-index",
+  "stage": 4,
+  "indexCid": "bafybeid4m2bdqf77djwcsa6443nw7tpmfz6e4tzbd52imnwurpkzrtwjmy",
+  "indexState": "did:holo:sha256:a94bb85158e2ccc6c1754b472e39fdee8e4b77495e7790107eb2400e11e5850e",
+  "docs": [
+    "bafybeibhrqmjrutb2ndyd7jhra2gl2lszxxyuavojmkj43t5y73thnmk6q",
+    "bafybeibxikq43vyp4rlilt5jwxkqnnbqbcggtnqkqw5ve6vfrsvaug2nzq",
+    "bafybeifnwubu5f6ldktvhzgkcidkdzrexi2n4pibyfk4j4kcq2yeep7xdi"
+  ],
+  "pass": 12,
+  "fail": 0,
+  "skip": 1,
+  "total": 12,
+  "ok": true,
+  "checks": {
+    "crawl-seals-one-content-addressed-doc-per-seed-1": true,
+    "the-index-seals-to-a-real-ipfs-object-sha256-cidv1-2": true,
+    "the-index-resolves-re-derives-through-the-gateway-3": true,
+    "the-index-cid-is-deterministic-re-derivable-4": true,
+    "a-car-shared-index-re-loads-and-its-corpus-state-matches-5": true,
+    "the-re-loaded-manifest-carries-every-indexed-doc-6": true,
+    "the-loaded-index-answers-a-meaning-query-network-free-re-7": true,
+    "every-indexed-source-cid-resolves-re-derives-from-the-sh-8": true,
+    "the-orchestrator-composes-a-page-over-the-index-citing-i-9": true,
+    "querying-composing-over-the-loaded-index-used-zero-netwo-10": true,
+    "a-tampered-index-block-is-refused-at-resolve-11": true,
+    "the-crawl-exercised-the-fixture-fetch-then-the-index-is--12": true
+  }
+}

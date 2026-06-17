@@ -11,7 +11,7 @@
   holospace card. Web3 reads are governed (read-only host allowlist) and seal a hosc:Egress receipt.
   Q is the spine, not a sidecar: every resolved card is indexed into a private corpus and the Ask-Q box
   runs Q.recall (model-free BM25⊕graph) across everything you've resolved.
-    backbone:  /sbin/holo-omni-unified.mjs → { /sbin/holo-omni.mjs · /sbin/holo-omni-web3.mjs }
+    backbone:  /sbin/holo-omni-unified.mjs → { /sbin/holo-omni-object.mjs · /sbin/holo-omni-web3.mjs }
     Q:         /usr/lib/holo/q/holo-q-corpus.js + holo-q-recall.js   (deterministic, zero models)
   Nothing here is trusted: the hash is. Read-only by default — value-moves go through the wallet bridge.
 -->
@@ -145,6 +145,28 @@
 import { resolveUnified, classifyUnified } from "../../../sbin/holo-omni-unified.mjs";
 import { createCorpus } from "../../lib/holo/q/holo-q-corpus.js";
 import { createRecall } from "../../lib/holo/q/holo-q-recall.js";
+import { createDiscovery, linkedDataAdapter } from "../../../sbin/holo-discover.mjs";
+import { createSemantic } from "../../../sbin/holo-semantic.mjs";
+import { publishToKStore } from "../../../sbin/holo-web-snapshot.mjs";
+import { loadIndexFromCar, indexAdapter } from "../../../sbin/holo-index.mjs";
+import { resolveEmbedder } from "../../lib/holo/q/holo-q-embed.js";   // never-throw: bge-small if it loads, else a deterministic floor
+import { verifyPointer } from "../../../sbin/holo-index-pointer.mjs"; // T2: the signed mutable pointer to the CURRENT index
+
+// the pinned index-authority pubkey (Ed25519, hex). A pointer signed by any other key is refused; an older
+// seq than we've accepted is refused (rollback). Update the index by publishing a higher-seq pointer — no
+// code change — and clients follow it, verified.
+const PINNED_INDEX_PUB = "028982a7282a3268bd26f62bd0e2cb39a3b95a604f347e8edc6294df13554b37";
+async function checkIndexPointer(loadedCid) {
+  try {
+    const ptr = await (await fetch("./holo-index.ptr.json")).json();
+    const minSeq = parseInt(localStorage.getItem("holo:index-seq") || "-1", 10);
+    const v = await verifyPointer(ptr, { pinnedPub: PINNED_INDEX_PUB, minSeq });
+    if (!v.ok) return "unverified (" + v.reason + ")";
+    if (v.target !== loadedCid) return "stale CAR (≠ signed target)";
+    try { localStorage.setItem("holo:index-seq", String(v.seq)); } catch {}
+    return "✓ seq " + v.seq;
+  } catch { return "unsigned"; }
+}
 
 const $ = (id) => document.getElementById(id);
 const qIn = $("q"), results = $("results"), laneEl = $("lane");
@@ -157,6 +179,30 @@ const recall = createRecall({ corpus, synth: null });
 // fetchImpl: optionally route cross-origin web fetches through the dev host proxy (for the web-URL leg).
 const sameOrigin = (u) => { try { return new URL(u, location.href).origin === location.origin; } catch { return false; } };
 function proxyFetch(u, opts) { const s = String(u); if ($("proxy").checked && /^https?:\/\//i.test(s) && !sameOrigin(s)) return fetch("/web?url=" + encodeURIComponent(s), opts); return fetch(s, opts); }
+
+// ── the SEMANTIC orchestrator: a natural-language query → discover across the open semantic web → fuse →
+//    compose a self-verifying κ-page citing L5-verified source CIDs (holo-semantic over holo-discover). The
+//    discovery index is UNTRUSTED — every cited CID re-derives at resolve. Wired into the NL lane below. ──
+//    It starts on live linked-data, then UPGRADES to also query the pre-built, self-verifying κ-index
+//    (holo-index.car) the moment it loads: that source answers network-free, re-derived on load (Law L5),
+//    and RRF fuses its hits with the live ones. Index missing/unreachable → live linked-data only.
+let semantic = createSemantic({ discovery: createDiscovery({ adapters: [linkedDataAdapter()], fetchImpl: proxyFetch }) });
+let indexInfo = null;   // sidecar metadata (count + builtAt) → honest staleness on the card
+(async () => {
+  try {
+    const embedder = await resolveEmbedder();   // ONE embedder for docs + queries (same vector space); never throws
+    const car = new Uint8Array(await (await fetch("./holo-index.car")).arrayBuffer());
+    const loaded = await loadIndexFromCar(car, { embedder });   // index search is now hybrid (vector ⊕ BM25 ⊕ RRF)
+    const pointer = await checkIndexPointer(loaded.indexCid);   // verify the signed mutable pointer attests this index
+    try { indexInfo = await (await fetch("./holo-index.json")).json(); } catch {}
+    if (indexInfo) indexInfo.pointer = pointer;
+    // LEARN sink: a live-discovered (long-tail) source is indexed into the SAME corpus the offline κ-index
+    // adapter reads → the index grows from use, so the next ask for it is served offline, network-free.
+    const learn = async (sources) => { let n = 0; for (const s of sources || []) { if (!s || !s.cid || loaded.docs.has(s.cid)) continue; try { await loaded.corpus.index({ id: s.cid, text: s.text || (s.title + "\n" + (s.extract || "")), meta: { cid: s.cid, title: s.title } }); loaded.docs.set(s.cid, { cid: s.cid, title: s.title, text: s.text || s.extract || s.title, meta: {} }); if (s.blocks) for (const [c, b] of s.blocks) loaded.blocks.set(c, b); n++; } catch {} } return n; };
+    semantic = createSemantic({ discovery: createDiscovery({ adapters: [indexAdapter(loaded), linkedDataAdapter()], fetchImpl: proxyFetch }), learn });
+    if (window.__omni) { window.__omni.semantic = semantic; window.__omni.index = loaded; window.__omni.embedder = embedder; window.__omni.indexInfo = indexInfo; }
+  } catch (e) { /* no pre-built index asset → live linked-data discovery only */ }
+})();
 
 // live lane chip as you type
 qIn.addEventListener("input", () => {
@@ -176,10 +222,11 @@ async function run(v) {
   card.innerHTML = `<div class="hd"><div class="glyph" style="background:#1d2840;color:#7d8aa6">…</div><div><div class="ttl">Resolving…</div><div class="meta">${esc(v)}</div></div></div>`;
   results.prepend(card);
   let r;
-  try { r = await resolveUnified(v, { fetchImpl: proxyFetch, timeoutMs: 22000 }); }
+  try { r = await resolveUnified(v, { fetchImpl: proxyFetch, timeoutMs: 22000, semantic, semanticOpts: { onStage: (s) => { try { streamPaint(card, v, s); } catch {} } } }); }
   catch (e) { r = { ok: false, lane: "unknown", reason: String(e && e.message || e) }; }
   try {
-    if (r.lane === "nl") await renderNL(card, r);
+    if (r.kind === "semantic") await renderSemantic(card, r);   // NL → discovered, fused, sealed κ-page
+    else if (r.lane === "nl") await renderNL(card, r);          // (no result / private recall fallback)
     else if (!r.ok) card.innerHTML = `<div class="hd"><div class="glyph" style="background:#5a2230;color:#f87171">✕</div><div><div class="ttl">Could not resolve</div><div class="meta">${esc(v)}</div></div><span class="badge">${esc(r.lane||"")}</span></div><div class="err">${esc(r.reason || "unknown")}</div>`;
     else if (r.lane === "web3") await renderWeb3(card, r);
     else await renderObject(card, r, v);
@@ -280,6 +327,42 @@ async function renderObject(card, r, v) {
       <div><div class="ttl">${esc(short(v, 22))}</div><div class="meta">${esc(r.label || kindLabel)} · via ${esc(r.via || "-")}${sizeKb ? " · " + sizeKb : ""}</div></div><span class="badge object">${esc(kindLabel)}</span></div>`
     + previewHtml(r) + sealStrip(r, null) + qStrip(captionObject(r, v));
   wireCard(card);
+}
+
+// ── STREAMING: paint the card as the answer streams — tier first, then each verified source as it seals,
+//    before the composed page is ready. The first credible result appears fast; the rest fill in. ──
+const credChip = (s) => `<span style="color:var(--good)">✓ L5</span>${s.authority != null ? ` · <span style="color:var(--warn)">auth ${Math.round(s.authority * 100)}</span>` : ""}${s.source ? ` · <span style="color:#566c8a">${esc(s.source)}</span>` : ""}`;
+function streamPaint(card, query, s) {
+  if (s.phase === "tier") {
+    card.innerHTML = `<div class="hd">${glyphFor("#fbbf24", "Q")}<div><div class="ttl">${esc(query)}</div><div class="meta">semantic web · ${esc(s.tier)} · searching ${esc((s.probes || []).join(" ⊕ "))}…</div></div><span class="badge nl">semantic</span></div>`
+      + `<div class="body"><div class="strm"></div><div class="strmstatus row"><div class="k" style="color:var(--dim)">streaming</div><div class="v" style="color:var(--dim)">resolving verified sources…</div></div></div>`;
+  } else if (s.phase === "source") {
+    const strm = card.querySelector(".strm"); const sx = s.source;
+    if (strm) strm.insertAdjacentHTML("beforeend", `<div class="row" style="animation:in .2s"><div class="k">[${s.index}] ${credChip(sx)}</div><div class="v">${esc(sx.title || sx.entityId || "")} · <span style="color:#566c8a">${esc(short(sx.cid, 8))}</span></div></div>`);
+  } else if (s.phase === "composed") {
+    const st = card.querySelector(".strmstatus .v"); if (st) st.textContent = "composing the verified κ-page…";
+  }
+}
+
+// ── NL → SEMANTIC: a discovered, fused, sealed κ-page citing L5-verified source CIDs ─────────────────
+async function renderSemantic(card, r) {
+  if (!r.ok) {                                            // discovery found nothing verifiable → private recall fallback
+    const out = await runRecall(r.query);
+    card.innerHTML = `<div class="hd">${glyphFor("#fbbf24", "Q")}<div><div class="ttl">${esc(r.query)}</div><div class="meta">no public source · Q.recall fallback</div></div><span class="badge nl">ask Q</span></div><div class="body">${out.html}</div>`;
+    return;
+  }
+  try { await publishToKStore(r.blocks); } catch {}       // publish the composed page + every source to the local commons → /ipfs/<cid>/ resolves, network-free
+  const cred = (s) => `<span style="color:var(--good)">✓ L5</span>${s.authority != null ? ` · <span style="color:var(--warn)">auth ${Math.round(s.authority * 100)}</span>` : ""}${s.source ? ` · <span style="color:#566c8a">${esc(s.source)}</span>` : ""}`;
+  const srcRows = (r.sources || []).map((s, i) => `<div class="row"><div class="k">[${i + 1}] ${cred(s)}</div><div class="v"><a class="link" data-cid="ipfs://${esc(s.cid)}" href="#">${esc(s.title || s.entityId || "")}</a> · <span style="color:#566c8a">${esc(short(s.cid, 8))}</span></div></div>`).join("");
+  const ans = r.answer ? `<div class="row"><div class="k">answer</div><div class="v" style="font:13px/1.5 system-ui;color:#cbd6ea">${esc(r.answer)}</div></div>` : "";
+  const preview = r.html ? `<div class="pv"><iframe sandbox="allow-same-origin" src="${URL.createObjectURL(new Blob([r.html], { type: "text/html" }))}"></iframe></div>` : "";
+  const idxLine = indexInfo ? `<div style="color:var(--dim);font:11px var(--mono);margin-bottom:9px">κ-index · ${indexInfo.count} docs · built ${esc((indexInfo.builtAt || "").slice(0, 10))} · pointer ${esc(indexInfo.pointer || "—")} · ${esc(short(indexInfo.indexCid || "", 7))}</div>` : "";
+  const tierTag = r.tier === "live" ? `live${r.learned ? " · learned +" + r.learned : ""}` : "offline";
+  card.innerHTML = `<div class="hd">${glyphFor("#fbbf24", "Q")}<div><div class="ttl">${esc(r.query)}</div><div class="meta">semantic web → ${r.sources.length} verified source${r.sources.length === 1 ? "" : "s"} · ${esc(tierTag)} · ${esc((r.probes || []).join(" ⊕ "))}</div></div><span class="badge nl">semantic</span></div>`
+    + `<div class="body">${idxLine}${ans}${srcRows}</div>` + preview + sealStrip(r, null)
+    + `<div class="seal"><span class="ok">✓ composed κ-page · every source re-derived (Law L5)</span><a class="open" href="/ipfs/${esc(r.cid)}/" target="_blank" rel="noopener" style="margin-left:auto">Open κ-page ↗</a></div>`;
+  wireCard(card);
+  try { corpus.index({ id: r.cid, text: `${r.query}\n${(r.sources || []).map((s) => s.title).join("\n")}\n${r.answer || ""}`, meta: { path: "semantic" } }).catch(() => {}); } catch {}
 }
 
 // ── NL → Q (recall across the corpus) ───────────────────────────────────────────────────────────────

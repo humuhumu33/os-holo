@@ -1,6 +1,6 @@
 {
   "source": "system/docs/adr/",
-  "count": 90,
+  "count": 91,
   "adrs": [
     {
       "num": "022",
@@ -721,6 +721,14 @@
       "full": "0110-holo-playground-canvas.md",
       "status": "Accepted",
       "href": "https://github.com/humuhumu33/os-holo/blob/main/system/docs/adr/0110-holo-playground-canvas.md"
+    },
+    {
+      "num": "0111",
+      "slug": "0111-holo-boot-root",
+      "title": "0111-holo-boot-root.md",
+      "full": "0111-holo-boot-root.md",
+      "status": "Accepted",
+      "href": "https://github.com/humuhumu33/os-holo/blob/main/system/docs/adr/0111-holo-boot-root.md"
     }
   ]
 }

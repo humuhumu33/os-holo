@@ -39,7 +39,7 @@ function travelLine(scope, manifest, sealerMod) {
 // ❤️ Share verb) toggles the carriage. Content renders into the shared aside's body.
 export function mountShare(trigger, { getHolospace, getWorkspace, onImport, requireEverythingAuth } = {}) {
   injectStyles();
-  const aside = createAside({ id: "share", title: "Share", logo: HOLO_MARK, defaultW: 460, minW: 380, maxW: 620 });
+  const aside = createAside({ id: "share", title: "Share", logo: HOLO_MARK });   // golden scale + collapse chevron from the shared template
   const body = aside.body;
   const file = document.createElement("input"); file.type = "file"; file.accept = ".car,application/vnd.ipld.car"; file.style.display = "none"; aside.el.appendChild(file);
   let _scope = "holospace", _sealed = null, _view = "share", _gated = false;

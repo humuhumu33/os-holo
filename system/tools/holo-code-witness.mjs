@@ -16,9 +16,9 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const APP_DIR = "C:/Users/pavel/Desktop/Hologram Apps/apps/code";
-const SHARED = "C:/Users/pavel/Desktop/Hologram OS2/system/os/usr/lib/holo";
-const HOLOGRAM_OS = "C:/Users/pavel/Desktop/hologram-os/os";
+const APP_DIR = join(here, "../../../holo-apps/apps/code");
+const SHARED = join(here, "../os/usr/lib/holo");
+const HOLOGRAM_OS = join(here, "../os/usr/lib/holo");
 
 // the SAME content-addressing primitives relock-app / build-app use — re-derivation, not a re-hash.
 const { sha256hex, sriOf, mbSha256 } = await import(pathToFileURL(join(HOLOGRAM_OS, "holo-uor.mjs")));

@@ -17,9 +17,10 @@
 // approval). Pure ESM, no DOM, browser+Node. It REUSES the existing chain crypto (holo-eth / holo-solana)
 // and the existing κ-sealer (holo-q-receipt) — this file is glue, not a new engine.
 
-import { Rpc, encodeCall, decodeWord, decodeString, selector, namehash, isAddress, isHash32 } from "../usr/lib/holo/holo-eth.js";
+import { Rpc, encodeCall, decodeWord, decodeString, selector, namehash, isAddress, isHash32, hexToBytes, bytesToHex } from "../usr/lib/holo/holo-eth.js";
 import { SolanaSource, isSolAddress, isSolSig, fmtSol, LAMPORTS } from "../usr/lib/holo/holo-solana.js";
 import { address, jcs, sha256hex } from "../usr/lib/holo/q/holo-q-receipt.mjs";
+import { decodeContenthash } from "../usr/lib/holo/holo-ipfs.js";   // EIP-1577 contenthash bytes → { protocol:"ipfs"|"ipns", cid } — the web3-name → IPFS-content bridge
 
 // ── CAIP-2 chain table (the normal form). EVM chains share one reader; Solana has its own. ──────────
 // caip → { name, symbol, decimals, rpcs (failover, first to answer wins), explorer, accent, kind }.
@@ -117,16 +118,36 @@ async function evmCall(rpc, to, sig, args = []) {
 async function tryEvmString(rpc, to, sig) { try { const r = await evmCall(rpc, to, sig); return decodeString(r) || null; } catch { return null; } }
 async function tryEvmUint(rpc, to, sig)   { try { const r = await evmCall(rpc, to, sig); return decodeWord(r, "uint256").toString(); } catch { return null; } }
 
-// resolve an ENS name → { address, resolver } via Registry.resolver(node) then resolver.addr(node).
+// Decode an ABI-encoded dynamic `bytes` return (offset, length, data) → 0x-hex, or null if empty. Same
+// head/length layout as decodeString, but it keeps the raw bytes (contenthash is NOT utf8). Reuses the
+// eth byte helpers so there is no second hex codec. BigInt parses the 0x-words decodeWord-style.
+function decodeAbiBytesHex(dataHex) {
+  const b = hexToBytes(dataHex);
+  if (b.length < 64) return null;
+  try {
+    const off = Number(BigInt(bytesToHex(b.subarray(0, 32))));
+    const len = Number(BigInt(bytesToHex(b.subarray(off, off + 32))));
+    if (!len) return null;                                      // empty contenthash → no content set
+    return bytesToHex(b.subarray(off + 32, off + 32 + len));
+  } catch { return null; }
+}
+
+// resolve an ENS name → { address, resolver, node, contenthash } via Registry.resolver(node), then
+// resolver.addr(node) and resolver.contenthash(node) (EIP-1577). contenthash is the web3-name → content
+// bridge: its bytes are multicodec-prefixed (0xe3 ipfs-ns / 0xe5 ipns-ns) and decode to a real CID —
+// decoded HERE by holo-ipfs.decodeContenthash, so an ENS name carries a verifiable IPFS object.
 async function ensResolve(rpc, name) {
   const node = namehash(name);                                 // namehash already returns 0x-prefixed hex
   const resolverHex = await evmCall(rpc, ENS_REGISTRY, "resolver(bytes32)", [node]);
   const resolver = decodeWord(resolverHex, "address");
-  if (!resolver || resolver.toLowerCase() === ZERO_ADDR) return { address: null, resolver: null, node };
+  if (!resolver || resolver.toLowerCase() === ZERO_ADDR) return { address: null, resolver: null, node, contenthash: null };
   let addr = null;
   try { addr = decodeWord(await evmCall(rpc, resolver, "addr(bytes32)", [node]), "address"); } catch {}
   if (addr && addr.toLowerCase() === ZERO_ADDR) addr = null;
-  return { address: addr, resolver, node };
+  let contenthash = null;                                      // a resolver may not implement EIP-1577 (the call reverts) → null
+  try { const chHex = decodeAbiBytesHex(await evmCall(rpc, resolver, "contenthash(bytes32)", [node])); if (chHex) contenthash = decodeContenthash(chHex); } catch {}
+  if (contenthash && !contenthash.cid) contenthash = null;     // a protocol we don't carry to content (e.g. swarm) → no bridge
+  return { address: addr, resolver, node, contenthash };
 }
 
 // ── the resolver ────────────────────────────────────────────────────────────────────────────────
@@ -152,7 +173,12 @@ export async function resolveWeb3(ref, cfg = {}) {
     else return { ok: false, kind: "web3", reason: "unhandled web3 kind: " + p.kind, ms: ms() };
     const kappa = await sealCard(out.card);
     const receipt = await sealEgress({ verb: "web3.read." + out.subkind, hosts: out.hosts, generated: kappa, caller });
-    return { ok: true, kind: "web3", subkind: out.subkind, caip: out.caip || p.caip, kappa, card: out.card, receipt, ms: ms() };
+    // If the resolved object carries a content reference (ENS contenthash → ipfs/ipns), surface it at the
+    // envelope level: the caller can hand `content` straight to the object lane (resolveAny) → the gateway
+    // resolves + re-derives it (Law L5). The web3 card's κ already SEALS the contenthash, so the bridge is
+    // itself self-verifying — an untrusted RPC can only mislabel a name, never forge the content's bytes.
+    return { ok: true, kind: "web3", subkind: out.subkind, caip: out.caip || p.caip, kappa, card: out.card, receipt,
+      ...(out.content ? { content: out.content, cid: out.cid } : {}), ms: ms() };
   } catch (e) {
     return { ok: false, kind: "web3", subkind: p.kind, reason: String((e && e.message) || e), ms: ms() };
   }
@@ -220,16 +246,21 @@ async function doEnsName(p, allow, mine) {
   }
   const chain = W3_CHAINS[ETH]; const rpc = evmRpc(chain.rpcs, allow);
   const hosts = new Set(); for (const u of chain.rpcs) if (allow.has(hostOf(u))) hosts.add(hostOf(u));
-  const { address: addr, resolver, node } = await ensResolve(rpc, p.name);
+  const { address: addr, resolver, node, contenthash } = await ensResolve(rpc, p.name);
+  // The content bridge: an ipfs/ipns contenthash becomes a follow-able object reference (the SAME shape
+  // the object lane resolves), so a name → a κ-verified page, not just an address.
+  const content = contenthash && contenthash.cid ? contenthash.protocol + "://" + contenthash.cid : null;
   const card = {
     ...W3, "@type": "holo:Name", "holo:name": p.name, "holo:ns": "ENS", "holo:caip": ETH,
     "holo:node": node, "holo:resolver": resolver,
     "holo:address": addr, "holo:avatar": addr ? "https://metadata.ens.domains/mainnet/avatar/" + p.name : null,
+    ...(contenthash ? { "holo:contenthash": { "holo:protocol": contenthash.protocol, "holo:cid": contenthash.cid || null } } : {}),
+    ...(content ? { "holo:content": content } : {}),
     "holo:explorer": addr ? chain.explorer + "/address/" + addr : "https://app.ens.domains/name/" + p.name,
     ...(addr && mine.evm && mine.evm.toLowerCase() === addr.toLowerCase() ? { "holo:mine": true } : {}),
   };
   if (addr) hosts.add("metadata.ens.domains");
-  return { subkind: "name", caip: ETH, card, hosts };
+  return { subkind: "name", caip: ETH, card, hosts, ...(content ? { content, cid: contenthash.cid } : {}) };
 }
 
 async function doEvmTx(caip, hash, allow) {

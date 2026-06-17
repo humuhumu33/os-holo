@@ -9,7 +9,7 @@
 <link rel="icon" type="image/svg+xml" href="../os/usr/share/icons/hologram-dark.svg" />
 <!-- apply the saved appearance before first paint, exactly as the gateway does, so there is no flash and
      this object seams straight out of the homepage rather than reading as a separate website page. -->
-<script>var d=document.documentElement;d.setAttribute("data-theme","dark");d.setAttribute("data-immersive","full");</script>
+<script>var d=document.documentElement;d.setAttribute("data-theme","dark");d.setAttribute("data-immersive","full");try{if(window.self!==window.top)d.setAttribute("data-embed","1");}catch(e){d.setAttribute("data-embed","1");}</script>
 <style>
   /* ════════════════════════════════════════════════════════════════════════════════════════════
      THE DOWNLOAD HOLOSPACE. A landscape computer window on the OS desktop, sized like the app
@@ -297,8 +297,10 @@
     .live{ min-height:calc(var(--u) * 4); }
   }
 
-  /* ── responsive: stack the panes on narrow / portrait screens; never overflow the window. ────── */
-  @media (max-width:840px), (max-height:560px){
+  /* ── responsive: stack the panes only on narrow / portrait screens. A short LANDSCAPE window keeps
+     the two panes side by side (stacking it would only make it taller) — the laptop-compaction query
+     above shrinks the rhythm so it still fits with no scroll. ──────────────────────────────────── */
+  @media (max-width:840px){
     .win-body{ flex-direction:column; overflow-y:auto; }
     .pane{ overflow:visible; }
     .pane-l{ width:100%; border-right:0; border-bottom:1px solid var(--line); }
@@ -311,6 +313,19 @@
     *{ animation:none !important; }
     .bg, .deskbar, .win, .spec{ transition:opacity .2s ease !important; opacity:1; transform:none; filter:none; }
   }
+
+  /* ── EMBED — inside the gateway's doc-window: drop our own window chrome + backdrop (the doc-window
+     supplies them) and FILL the frame exactly, so the whole object fits with no inner scroll — the
+     same fit-to-viewport model as standalone, never a tall flowing document. ──────────────────── */
+  :root[data-embed] html, :root[data-embed] body{ height:100%; overflow:hidden; background:transparent; }
+  :root[data-embed] body::before{ display:none; }
+  :root[data-embed] .bg, :root[data-embed] .deskbar{ display:none; }
+  :root[data-embed] .desk{ position:fixed; inset:0; padding:0; display:flex; }
+  :root[data-embed] .win{ max-width:none; width:100%; height:100%; margin:0; border:0;
+    border-radius:0; box-shadow:none; background:transparent; -webkit-backdrop-filter:none; backdrop-filter:none;
+    opacity:1; transform:none; }
+  :root[data-embed] .win-bar{ display:none; }
+  :root[data-embed] .win-body{ overflow:hidden; }
 </style>
 </head>
 <body>
@@ -350,11 +365,11 @@
       <section class="pane pane-l">
         <p class="kicker"><span class="dot" aria-hidden="true"></span>Coming soon to every platform</p>
         <h1>A supercomputer you already own.</h1>
-        <p class="lede">The power is already in your hands. Hologram turns it into a supercomputer that is yours alone. <b>Fast, free, private.</b></p>
+        <p class="lede">Hologram turns this machine into one that answers to you alone. <b>Fast, free, private.</b></p>
         <p class="now"><span class="pulse" aria-hidden="true"></span>Runs today in any browser. <a href="../">Power up &rarr;</a></p>
 
         <div class="platforms">
-          <p class="cap">Native apps, on their way</p>
+          <p class="cap">Native apps</p>
           <div class="plat-list" id="plats">
             <div class="plat-row" data-os="win"><span class="lg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4.6 10.6 3.6V11H3V4.6Zm0 14.8 7.6 1V13H3v6.4ZM11.6 3.4 21 2v9.6h-9.4V3.4Zm0 17.2L21 22v-9.4h-9.4v8Z"/></svg></span><span class="pn">Windows</span><span class="tag">Soon</span></div>
             <div class="plat-row" data-os="mac"><span class="lg"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.9-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.8-3-.8-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7 2-1.1 2.8-2.2c.9-1.3 1.2-2.5 1.3-2.6-.1 0-2.4-1-2.4-3.6Zm-2.3-6.6c.6-.8 1-1.8.9-2.9-.9 0-2 .6-2.6 1.4-.6.7-1.1 1.7-1 2.7 1 .1 2-.5 2.7-1.2Z"/></svg></span><span class="pn">macOS</span><span class="tag">Soon</span></div>
@@ -369,7 +384,7 @@
       <section class="pane pane-r">
         <div>
           <div class="label">This machine</div>
-          <h2 class="head">You already hold real power.</h2>
+          <h2 class="head">The power is already here.</h2>
         </div>
 
         <div class="specs" id="specs">
@@ -725,7 +740,8 @@
   });
 
   // ── close like an app: the red light, Esc, or the empty desk return you home with a soft power-down.
-  function home(){ if (BODY.classList.contains("closing")) return; BODY.classList.add("closing"); setTimeout(function(){ location.href = "../"; }, 210); }
+  function home(){ if (document.documentElement.getAttribute("data-embed") === "1") return;   /* embedded: the doc-window owns closing */
+    if (BODY.classList.contains("closing")) return; BODY.classList.add("closing"); setTimeout(function(){ location.href = "../"; }, 210); }
   DOC.getElementById("close").addEventListener("click", function(e){ e.stopPropagation(); home(); });
   DOC.getElementById("desk").addEventListener("mousedown", function(e){ if (e.target && e.target.id === "desk") home(); });
   DOC.addEventListener("keydown", function(e){ if (e.key === "Escape") home(); });

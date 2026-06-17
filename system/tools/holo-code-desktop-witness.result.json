@@ -1,0 +1,29 @@
+{
+  "spec": "Holo Code Desktop (holo-code-desktop) — browser-first Desktop GUI κ-object wrapping the apps/code engine; reuse-first, sealed, L5 re-derivable, conscience-gated, Q-brained, honest about the browser execution boundary.",
+  "authority": "re-derivation of the shipped bytes (hash KAT, Law L5) + execution of the reused apps/code engine logic (no browser, no server) · external authorities: holospaces vv/ (CC-*), ADR-033 conscience, ADR-0101 streaming κ-models",
+  "tier": "target",
+  "witnessed": true,
+  "covers": [
+    "Holo Code Desktop is the browser-first Desktop GUI shell for the witnessed Holo Code engine (apps/code), sealed as its OWN κ-object whose closure + root RE-DERIVE to their content address (Law L5)",
+    "It REUSES the proven engine (agent · tools · providers) and the Holo Q (QVAC) streaming on-device brain unchanged — the Desktop is an additive surface, not a fork",
+    "The GUI is COMPOSED from existing OS surfaces — <holo-window> panes, a 3-tab shell (Chat · Code · Cowork), Monaco editor, XTerm terminal — reuse over handwritten widgets",
+    "The visual diff view renders edit_file diffs with per-line accept/reject wired to the holo-files content-addressed VFS write (the only mutation path)",
+    "The familiar Claude Code permission modes (default · plan · auto · acceptEdits · bypass) are surfaced on the fail-closed conscience floor (ADR-033)",
+    "Execution-dependent features (run · build · test · terminal-exec · worktrees · schedule · ssh · cowork) are present but honestly DISABLED-WITH-AFFORDANCE (requires the native host) — never faked"
+  ],
+  "appPresent": true,
+  "checks": {
+    "engineImportable": true,
+    "qBrainSeam": true,
+    "manifestConforms": true,
+    "closureReDerives": true,
+    "rootReDerives": true,
+    "reusesEngine": true,
+    "composedGuiShell": true,
+    "diffViewAcceptReject": true,
+    "permissionModesSurfaced": true,
+    "qBrainWired": true,
+    "executionAffordance": true
+  },
+  "failed": []
+}

@@ -1,0 +1,70 @@
+{
+  "witnessed": true,
+  "passed": 10,
+  "failed": 0,
+  "covers": [
+    "round-trip — get(put(B)) returns B byte-for-byte",
+    "κ-identity across backends — OpfsKappaStore κ ≡ MemKappaStore κ ",
+    "dedup — the same bytes always yield the same κ (stored once)",
+    "distinct — different bytes yield a different κ",
+    "contains — present κ true, absent κ false",
+    "differential TCK — κ identical AND bytes equal vs the MemKappaSt",
+    "pin survives hot-cache pressure (200 puts past HOT_MAX) — pinned",
+    "evict is correctness-free — unpinned κ evicts (get→null), pinned",
+    "PERSISTENCE — after a page reload (in-memory cache gone), the st",
+    "no fatal page errors"
+  ],
+  "results": [
+    {
+      "name": "round-trip — get(put(B)) returns B byte-for-byte",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "κ-identity across backends — OpfsKappaStore κ ≡ MemKappaStore κ for the same bytes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "dedup — the same bytes always yield the same κ (stored once)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "distinct — different bytes yield a different κ",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "contains — present κ true, absent κ false",
+      "ok": true,
+      "detail": "present:true absent:false"
+    },
+    {
+      "name": "differential TCK — κ identical AND bytes equal vs the MemKappaStore oracle",
+      "ok": true,
+      "detail": "12/12"
+    },
+    {
+      "name": "pin survives hot-cache pressure (200 puts past HOT_MAX) — pinned κ still resolves",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "evict is correctness-free — unpinned κ evicts (get→null), pinned κ refuses eviction",
+      "ok": true,
+      "detail": "evicted:true gone:true pinnedRefused:true"
+    },
+    {
+      "name": "PERSISTENCE — after a page reload (in-memory cache gone), the store serves the bytes from OPFS, byte-identical (L3: the store is the memory)",
+      "ok": true,
+      "detail": "found:true identical:true"
+    },
+    {
+      "name": "no fatal page errors",
+      "ok": true,
+      "detail": "clean"
+    }
+  ],
+  "spec": "W2 — the browser OpfsKappaStore (os/usr/lib/holo/holo-opfs-kappastore.mjs) implements the holospaces KappaStore contract (put/get/contains/pin) over OPFS, content-addressed by κ. Witnessed in real Chromium: round-trip, κ-identity/dedup, differential vs MemKappaStore, contains/pin/evict, and PERSISTENCE across a page reload (served from OPFS, not memory) — proving Law L3 (the store is the memory) survives a restart in a browser tab."
+}

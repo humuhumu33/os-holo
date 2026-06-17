@@ -1,0 +1,42 @@
+{
+  "witnessed": true,
+  "target": "https://humuhumu33.github.io/os-holo/os/",
+  "liveLane": "pass",
+  "passed": 5,
+  "failed": 0,
+  "covers": [
+    "the deployed OS is a secure context and the κ Service Worker tak",
+    "PROD cache-first confirmed — a boot path serves from the κ cache",
+    "ORIGIN BLOCKED — the OS still boots offline from the κ-keyed con",
+    "every boot-critical path serves from cache with the origin block",
+    "no fatal page errors while booting offline"
+  ],
+  "results": [
+    {
+      "name": "the deployed OS is a secure context and the κ Service Worker takes control (prod runtime)",
+      "ok": true,
+      "detail": "secure:true controlled:true host:humuhumu33.github.io"
+    },
+    {
+      "name": "PROD cache-first confirmed — a boot path serves from the κ cache while online (x-holo-cache:hit, not DEV-fresh)",
+      "ok": true,
+      "detail": "shell.html → 200/hit"
+    },
+    {
+      "name": "ORIGIN BLOCKED — the OS still boots offline from the κ-keyed content cache (L3 + serverless)",
+      "ok": true,
+      "detail": "booted offline · body.children=39"
+    },
+    {
+      "name": "every boot-critical path serves from cache with the origin blocked (zero network)",
+      "ok": true,
+      "detail": "2/2"
+    },
+    {
+      "name": "no fatal page errors while booting offline",
+      "ok": true,
+      "detail": "clean"
+    }
+  ],
+  "spec": "W1 sufficient proof against the live deploy (prod cache-first mode): full online boot under SW control, then origin blocked (setOffline) + reload — the OS must still boot from the κ-keyed content cache with zero network. Proves L3 + serverless live, the strongest re-runnable serverless proof (vs the gate's committed boolean)."
+}

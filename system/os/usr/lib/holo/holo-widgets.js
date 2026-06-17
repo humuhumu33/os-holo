@@ -819,7 +819,7 @@
         '</svg>' +
         '<div class="lab" style="position:absolute;text-align:center;line-height:1.05;pointer-events:none">' +
           '<div class="big" style="font-weight:200;font-variant-numeric:tabular-nums;letter-spacing:-.01em;font-size:clamp(22px,calc(var(--hw-w,190px)*.2),60px)"></div>' +
-          '<div class="sub" style="margin-top:.5em;font-size:clamp(11px,calc(var(--hw-w,190px)*.062),15px);letter-spacing:.06em;opacity:.6"></div>' +
+          '<div class="sub" style="margin-top:.5em;font-size:clamp(12px,calc(var(--hw-w,190px)*.074),18px);letter-spacing:.06em;opacity:.6"></div>' +
         '</div>';
       host.body.appendChild(ring);
       var prog = ring.querySelector(".prog"), big = ring.querySelector(".big"), sub = ring.querySelector(".sub");

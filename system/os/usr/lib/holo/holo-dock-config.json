@@ -29,7 +29,6 @@
   ],
   "holo": {
     "pins": [
-      "org.hologram.HoloFiles",
       "org.hologram.HoloBrowser",
       "org.hologram.HoloWorkspace",
       "org.hologram.HoloQ"

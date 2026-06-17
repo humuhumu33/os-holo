@@ -46,6 +46,7 @@
     "Holo Product is OPERATIVE — the SDK exposes product() AND the scaffolder builds new products on the foundation (manifest builtOn + conformsTo + a DECISION.md method record)": true
   },
   "linkBad": [
+    "hosprod:ux: etc/holo-ux/doctrine.uor.json does not re-derive",
     "hosprod:ui-engine: usr/lib/holo/holo-theme.js does not re-derive",
     "hosprod:ui-layout: usr/lib/holo/holo-mobile.css does not re-derive"
   ],

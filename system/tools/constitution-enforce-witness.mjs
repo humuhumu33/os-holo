@@ -21,7 +21,7 @@ import { sealConstitution, admit, decisionFor } from "../os/usr/lib/holo/holo-ad
 import { verifyConstitution, evaluate, PRINCIPLES, PINNED, RED_LINE } from "../os/usr/lib/holo/holo-conscience.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const APPS = "C:/Users/pavel/Desktop/Hologram Apps";
+const APPS = process.env.HOLO_APPS_REPO || join(here, "../../../holo-apps");
 const write = (r) => writeFileSync(join(here, "constitution-enforce-witness.result.json"), JSON.stringify(r, null, 2) + "\n");
 const checks = {};
 

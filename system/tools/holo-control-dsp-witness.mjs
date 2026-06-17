@@ -12,7 +12,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const DSP = "C:/Users/pavel/Desktop/Hologram Apps/apps/control/holo-control-dsp.js";
+const DSP = join(here, "../../../holo-apps/apps/control/holo-control-dsp.js");
 const d = await import(pathToFileURL(DSP));
 
 const checks = {}; const fail = [];

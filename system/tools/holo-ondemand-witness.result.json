@@ -1,0 +1,21 @@
+{
+  "@type": "holo:WitnessResult",
+  "witness": "holo-ondemand",
+  "step": "G2",
+  "indexGrew": 3,
+  "pass": 9,
+  "fail": 0,
+  "total": 9,
+  "ok": true,
+  "checks": {
+    "a-covered-query-is-served-from-the-offline-tier-1": true,
+    "the-offline-answer-used-zero-network-2": true,
+    "an-uncovered-query-escalates-to-the-live-on-demand-tier-3": true,
+    "live-discovery-actually-hit-the-network-4": true,
+    "the-live-answer-is-about-the-long-tail-topic-jazz-5": true,
+    "the-discovered-source-was-learned-into-the-offline-index-6": true,
+    "the-now-learned-query-is-served-from-the-offline-tier-7": true,
+    "the-repeat-used-zero-new-network-learned-instant-8": true,
+    "the-repeat-still-answers-about-jazz-9": true
+  }
+}

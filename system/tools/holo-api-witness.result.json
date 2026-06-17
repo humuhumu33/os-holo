@@ -11,7 +11,7 @@
   ],
   "sample": {
     "ingestedKappa": "did:holo:sha256:d851655c45ceb6301e90a6d8016d33dabc2eaac9a36cbf222ea93a7d1487e5a8",
-    "entitlement": "did:holo:sha256:822b35417c6e3fac14d90a71f1932c46d7d352556f9665fe43a5b0be1d77d9bd",
+    "entitlement": "did:holo:sha256:adf871a293ef7e5f1c7b26dd440ef2ae9e1745ed34ae9b75307e39989d1e4741",
     "price": {
       "amount": 0.01,
       "unit": "HOLO",

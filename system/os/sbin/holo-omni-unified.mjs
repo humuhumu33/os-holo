@@ -11,7 +11,7 @@
 // "what is this?" chip before the resolve completes. Pure ESM, no DOM. This file is the thin seam the
 // magical bar sits on: paste anything → one verified κ-object → render → Q-act.
 
-import { resolveAny, parseRef } from "./holo-omni.mjs";
+import { resolveAny, parseRef } from "./holo-omni-object.mjs";
 import { parseWeb3Ref, resolveWeb3 } from "./holo-omni-web3.mjs";
 import { parseOnionRef, resolveOnion } from "./holo-omni-onion.mjs";
 
@@ -61,7 +61,22 @@ export async function resolveUnified(input, cfg = {}) {
     return { ...r, lane: "object", label: cls.label, ms: r.ms != null ? r.ms : ms() };
   }
   if (cls.lane === "nl") {
-    // The unifier does not own a model — it tags the input so the caller routes it to Q (recall/ask/fuse).
+    // If the host wired a SEMANTIC orchestrator (holo-semantic.createSemantic), a natural-language query
+    // becomes a sealed, self-verifying κ-object like every other lane: discover across the open semantic
+    // web → fuse → compose a page citing L5-verified source CIDs → seal. The discovery index is untrusted;
+    // each cited CID re-derives at resolve. With no orchestrator wired, the unifier owns no model and just
+    // TAGS the input so the caller routes it to Q (recall/ask/fuse) — the prior, unchanged behavior.
+    if (cfg.semantic && typeof cfg.semantic.answer === "function") {
+      const q = String(input).trim();
+      try {
+        const r = await cfg.semantic.answer(q, { synthesize: !!cfg.synthesize, ...(cfg.semanticOpts || {}) });
+        if (r && r.ok) return { ok: true, lane: "nl", kind: "semantic", label: cls.label, query: q,
+          kappa: r.did, cid: r.cid, did: r.did, probes: r.probes, tier: r.tier, learned: r.learned, sources: r.sources, answer: r.answer, mode: r.mode, html: r.html, blocks: r.blocks, manifest: r.manifest, ms: r.ms != null ? r.ms : ms() };
+        return { ok: false, lane: "nl", kind: "semantic", label: cls.label, query: q, reason: (r && r.reason) || "no verifiable result", ms: ms() };
+      } catch (e) {
+        return { ok: false, lane: "nl", kind: "semantic", label: cls.label, query: q, reason: String((e && e.message) || e), ms: ms() };
+      }
+    }
     return { ok: true, lane: "nl", kind: "nl", label: cls.label, query: String(input).trim(), ms: ms() };
   }
   return { ok: false, lane: "unknown", kind: "unknown", reason: "unrecognised address: " + String(input).trim(), ms: ms() };

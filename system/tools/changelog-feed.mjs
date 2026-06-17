@@ -41,7 +41,7 @@ const entries = releases.map((r) => {
   return `  <entry>
     <title>v${xml(r.version)}</title>
     <id>${xml(id)}</id>
-    <link href="${xml(SITE)}/changelog.html"/>
+    <link href="${xml(SITE)}/docs/changelog.html"/>
     <updated>${r.date ? r.date + "T00:00:00Z" : updated}</updated>
     <content type="html">${xml(html)}</content>
   </entry>`;
@@ -51,8 +51,8 @@ const feed = `<?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>Hologram OS — Changelog</title>
   <subtitle>Notable changes, generated from the repository history.</subtitle>
-  <id>${SITE}/changelog.html</id>
-  <link href="${SITE}/changelog.html"/>
+  <id>${SITE}/docs/changelog.html</id>
+  <link href="${SITE}/docs/changelog.html"/>
   <link rel="self" type="application/atom+xml" href="${SITE}/feed.xml"/>
   <updated>${updated}</updated>
   <author><name>Hologram OS</name></author>

@@ -21,6 +21,7 @@ import { resolveByKappa } from "./sbin/holo-resolver.mjs";    // the κ-verified
 import { ipfsPeer, bridgePeer } from "./sbin/holo-peers.mjs"; // recovery transports: IPFS Trustless Gateways · WebRTC mesh (page bridge)
 import * as holoIpfs from "./usr/lib/holo/holo-ipfs.js";      // a sha-256 κ IS a CIDv1 sha2-256 — IPFS adopted, not bridged (import-safe: no network, no top-level effects)
 import { parseIpfsPath, makeGetBlock, resolveIpfsPath, directoryListingHtml, ipfsErrorHtml, injectNavReporter } from "./sbin/holo-ipfs-gateway.mjs";   // the VERIFIED /ipfs/<cid>/<path> path gateway — browse the object graph natively, every block re-derived (L5)
+import { OpfsKappaStore } from "./usr/lib/holo/holo-opfs-kappastore.mjs";   // -04- durable κ-store (OPFS): a persistence tier BEHIND KCACHE that survives Cache-Storage eviction (Law L3)
 
 const BASE = new URL(self.registration.scope).pathname;       // "/" at a root/user site, "/<repo>/" under a project site
 // DEV (localhost) — live source is edited on disk, so the closure's κ pins are intentionally stale.
@@ -41,6 +42,17 @@ const COI = {
 const KCACHE = "holo-kappa-v2";   // content-addressed response cache: key = κ-route URL, so identical bytes are stored ONCE and shared across every app (dedup), and a re-open is network-free. Only VERIFIED bytes are ever cached. (bumped v1→v2 to force a SW re-activate so the fresh closure — new wallet κ — is served.)
 const IMPORTS = "holo-imports-v1";   // IMPORTED-app surfaces (ADR-0093): the page caches an imported app's holospace.json + its self-verifying κ-objects here, so /~<id>/mcp + /~<id>/api answer for an in-memory import with NO origin server. Must match holo-import-agent.SW_IMPORTS_CACHE + swCacheEntries.
 const kKey = (axis, hex) => `${BASE}.holo/${axis}/${hex}`;
+
+// ── -04- · OpfsKappaStore: the DURABLE persistence tier behind KCACHE ──────────────────────────────
+// KCACHE (Cache Storage) is the hot tier; OPFS is the address space (Law L3 — the store is the
+// memory). Verified bytes are written through to OPFS at store time; on a KCACHE miss the SW serves
+// from OPFS network-free, so durability SURVIVES Cache-Storage eviction. Best-effort + feature-
+// detected: if OPFS is unavailable in this worker, KSTORE stays null and the SW behaves EXACTLY as
+// before (no regression). put() is the L5 trust boundary — only κ-verified bytes are ever written.
+let KSTORE = null, _ksTried = false;
+async function kstore() { if (_ksTried) return KSTORE; _ksTried = true; try { KSTORE = await OpfsKappaStore.open("holo-fhs-kstore"); } catch { KSTORE = null; } return KSTORE; }
+const _SWT = { html: "text/html", js: "text/javascript", mjs: "text/javascript", json: "application/json", jsonld: "application/ld+json", css: "text/css", wasm: "application/wasm", webmanifest: "application/manifest+json", svg: "image/svg+xml", png: "image/png", woff2: "font/woff2", map: "application/json", txt: "text/plain" };
+const ctOf = (rel) => _SWT[(rel.split(".").pop() || "").toLowerCase()] || "application/octet-stream";
 
 // ── SELF-HEAL (ADR-0067): turn the dead-end refusal into RECOVERY. A content address is a perfect
 // lie-detector but not a healer — so when the origin serves a WRONG byte (κ mismatch), 404s, or is
@@ -67,7 +79,7 @@ const mimeOf = (rel) => MIME[String(rel).split(".").pop().toLowerCase()] || "app
 // un-rewritten file). No-op at a root deploy (BASE === "/"), so dev + user-site boots are byte-unchanged.
 const HTMLISH = (rel) => rel === "" || rel.endsWith("/") || /\.html?$/i.test(rel);
 const SUBPATH_PREFIXES = ["_shared", "sbin", "usr", "lib", "lib64", "pkg", "apps", "etc", "var", "opt", "srv", "boot", "bin", "home", "root", "mnt", "media", ".well-known", ".holo", "ipfs", "ipns"];
-const TOPLEVEL_MODULES = ["holo-resolver.mjs", "holo-sources.mjs", "holo-peers.mjs", "holo-uor.mjs", "holo-object.mjs", "holo-wire.mjs", "holo-sw.js", "holo-launch.mjs", "holo-omni.mjs", "holo-boot-sw-register.mjs", "holo-heal-boot.mjs", "browser-sw.js"];   // OS modules imported as a bare-root specifier "/holo-*.mjs" (fhsMap routes them to sbin/ or lib/)
+const TOPLEVEL_MODULES = ["holo-resolver.mjs", "holo-sources.mjs", "holo-peers.mjs", "holo-wire.mjs", "holo-launch.mjs", "holo-omni.mjs", "holo-boot-sw-register.mjs", "holo-heal-boot.mjs", "browser-sw.js"];   // OS modules imported as a bare-root specifier "/holo-*.mjs" (fhsMap routes them to sbin/ or lib/)
 const FLAT_SRC = "^/(?:" + SUBPATH_PREFIXES.map((p) => p.replace(/[.]/g, "\\.")).join("|") + ")(?:/|$)";   // matches an origin-absolute OS-flat path "/usr/…", "/.holo/…" — NOT a BASE-rooted one
 const reroot = (v) => (typeof v === "string" && /^\/(?!\/)/.test(v)) ? BASE + v.slice(1) : v;   // origin-absolute "/x" → "BASE x"; leaves //, https://, bare, relative alone
 const rerootMap = (obj) => { const o = {}; for (const [k, v] of Object.entries(obj || {})) o[reroot(k)] = (v && typeof v === "object") ? rerootMap(v) : reroot(v); return o; };
@@ -475,6 +487,19 @@ self.addEventListener("fetch", (event) => {
       const cache = await caches.open(KCACHE);
       const hit = await cache.match(kKey(axis, expect));
       if (hit) return finalize(await hit.arrayBuffer(), hit, rel, { "x-holo-cache": "hit" });
+
+      // tier 1 · the DURABLE κ-store (OPFS, Law L3): KCACHE missed, but if these VERIFIED bytes are on
+      // disk, serve them network-free — durability that survives Cache-Storage eviction (-04-). Re-warm
+      // the hot tier on the way out. Best-effort: any OPFS error falls through to the origin fetch.
+      try {
+        const ks = await kstore();
+        const ob = ks && await ks.getByKey(axis, expect);
+        if (ob) {
+          const h = new Headers(COI); h.set("content-type", ctOf(rel));
+          try { await cache.put(kKey(axis, expect), new Response(ob.slice(0), { headers: h })); } catch {}
+          return finalize(ob.slice(0), new Response(ob.slice(0), { headers: h }), rel, { "x-holo-cache": "opfs" });
+        }
+      } catch { /* OPFS unavailable → origin fetch below */ }
     }
 
     const phys = fhsMap(rel) || rel;                          // mapped FHS path, else the path as-is
@@ -503,6 +528,7 @@ self.addEventListener("fetch", (event) => {
       }
       const out = finalize(buf, resp, rel, { "x-holo-cache": "miss" });
       try { (await caches.open(KCACHE)).put(kKey(axis, expect), withHeaders(buf.slice(0), resp)); } catch {}   // cache the VERIFIED (un-rewritten) bytes by κ — deduped, network-free next time
+      try { const ks = await kstore(); if (ks) await ks.putVerified(axis, expect, new Uint8Array(buf)); } catch {}   // -04- write-through to the DURABLE tier (OPFS) — survives Cache-Storage eviction
       return out;
     }
     if (expect) return finalize(await resp.arrayBuffer(), resp, rel, { "x-holo-cache": "dev-fresh" });   // DEV path request: served fresh, never cached, never refused
