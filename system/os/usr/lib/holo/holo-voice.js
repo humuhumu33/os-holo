@@ -1674,13 +1674,12 @@
       "#holo-voice-menu .hv-note{margin-top:.5rem;font-size:12px;opacity:.6;line-height:1.35}" +
       // ── Q PANEL: a right-docked, non-modal carriage (reuses --holo-aside-w → the holospace glides left,
       // exactly like Wallet) so you SEE the OS and converse with Q at once. The Claude-extension layout. ──
-      "#q-panel{position:fixed;top:0;right:0;bottom:0;width:var(--holo-aside,min(420px,92vw));z-index:9000;display:flex;flex-direction:column;" +
+      "#q-panel{position:fixed;top:0;right:0;bottom:0;width:var(--ha-gw,min(420px,92vw));z-index:9000;display:flex;flex-direction:column;" +
       "background:var(--holo-glass-acrylic-bg,rgba(15,19,27,.94));-webkit-backdrop-filter:blur(28px) saturate(1.6);backdrop-filter:blur(28px) saturate(1.6);" +
       "border-left:1px solid var(--holo-glass-border,rgba(255,255,255,.14));box-shadow:-14px 0 44px rgba(0,0,0,.46);color:var(--holo-ink,#e9eef7);" +
       "font:14.5px/1.5 var(--holo-font-sans,system-ui,-apple-system,'Segoe UI',sans-serif);transform:translateX(100%);opacity:0;pointer-events:none;" +
       "transition:transform .34s cubic-bezier(.2,.8,.2,1),opacity .3s}" +
       "#q-panel[data-show=\"1\"]{transform:none;opacity:1;pointer-events:auto}" +
-      "#q-panel .qp-grip{position:absolute;left:-3px;top:0;bottom:0;width:7px;cursor:ew-resize;z-index:2}" +
       "#q-panel .qp-head{display:flex;align-items:center;gap:.6rem;padding:.7rem .55rem .7rem .8rem;border-bottom:1px solid var(--holo-glass-border,rgba(255,255,255,.1));flex:0 0 auto}" +
       "#q-panel .qp-orb{width:34px;height:34px;flex:0 0 auto;border-radius:50%}" +
       "#q-panel .qp-id{min-width:0}" +
@@ -1690,6 +1689,8 @@
       "#q-panel .qp-scope:hover{background:rgba(255,255,255,.1)}" +
       "#q-panel .qp-icon{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;opacity:.65;font-size:14px}" +
       "#q-panel .qp-icon:hover{opacity:1;background:rgba(255,255,255,.08)}" +
+      "#q-panel .qp-close{font-size:18px;line-height:1;transition:transform .12s,opacity .12s,background .12s}" +
+      "#q-panel .qp-close:hover{transform:translateX(2px)}" +
       "#q-panel .qp-thread{flex:1 1 auto;overflow-y:auto;padding:1rem .85rem;display:flex;flex-direction:column;gap:.65rem}" +
       "#q-panel .qp-msg{max-width:90%;padding:.55rem .78rem;border-radius:15px;white-space:pre-wrap;word-break:break-word;animation:qp-rise .26s cubic-bezier(.2,.8,.2,1)}" +
       "@keyframes qp-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}" +
@@ -2348,12 +2349,11 @@
     css();
     qPanel = DOC.createElement("aside"); qPanel.id = "q-panel"; qPanel.setAttribute("aria-label", "Q — your on-device assistant");
     qPanel.innerHTML =
-      '<div class="qp-grip"></div>' +
       '<div class="qp-head"><canvas class="qp-orb"></canvas>' +
         '<div class="qp-id"><div class="qp-title">' + (CFG.wakeWord || "Q") + '</div><div class="qp-sub">on-device · private</div></div>' +
         '<button class="qp-scope" title="What Q can see and act on">🌐 Whole OS</button>' +
         '<div class="qp-icon qp-immersive" title="Immersive voice mode">🎙</div>' +
-        '<div class="qp-icon qp-close" title="Close (Esc)">✕</div></div>' +
+        '<div class="qp-icon qp-close" title="Collapse (Esc)" aria-label="Collapse panel">»</div></div>' +
       '<div class="qp-thread"><div class="qp-empty">Ask me anything, or tell me what to do.<br><br>I can see and act across your whole OS — open apps, change settings, drive what’s on screen.</div></div>' +
       '<div class="qp-compose"><textarea class="qp-in" rows="1" placeholder="Ask ' + (CFG.wakeWord || "Q") + '…"></textarea>' +
         '<button class="qp-mic" title="Talk to Q">🎙</button><button class="qp-send" title="Send">↑</button></div>';
@@ -2370,17 +2370,15 @@
     qScopeBtn.addEventListener("click", function () { qScope = qScope === "os" ? "tab" : "os"; qScopeBtn.textContent = qScopeLabel(); try { W.localStorage.setItem("holo.voice.scope", qScope); } catch (e) {} speakToast(qScope === "os" ? "Q can act across the whole OS." : "Q is focused on this space."); });
     qPanel.querySelector(".qp-immersive").addEventListener("click", function () { openLive(); });
     qPanel.querySelector(".qp-close").addEventListener("click", closeQPanel);
-    // drag the left grip to resize; keep the holospace inset in sync
-    (function () { var grip = qPanel.querySelector(".qp-grip"), drag = false, sx = 0, sw = 0;
-      grip.addEventListener("pointerdown", function (e) { drag = true; sx = e.clientX; sw = qPanel.offsetWidth; try { grip.setPointerCapture(e.pointerId); } catch (er) {} e.preventDefault(); });
-      grip.addEventListener("pointermove", function (e) { if (!drag) return; var w = Math.max(320, Math.min(680, sw + (sx - e.clientX))); qPanel.style.width = w + "px"; if (qPanelOpen) DOC.documentElement.style.setProperty("--holo-aside-w", w + "px"); });
-      grip.addEventListener("pointerup", function (e) { drag = false; try { grip.releasePointerCapture(e.pointerId); } catch (er) {} });
-    })();
+    // golden scale is ratio-locked (no drag-resize) — just keep the holospace inset in sync as the
+    // responsive width tracks the viewport, exactly like every other right carriage.
+    W.addEventListener("resize", function () { if (qPanelOpen) try { DOC.documentElement.style.setProperty("--holo-aside-w", qPanel.offsetWidth + "px"); } catch (e) {} });
     return qPanel;
   }
   function openQPanel() {
     buildQPanel();
     if (qPanelOpen) { qInput && qInput.focus(); return; }
+    try { W.HoloAside && W.HoloAside.closeAll && W.HoloAside.closeAll(); } catch (e) {}   // one carriage at a time — Q closes Play · Share · Notify · Create · Wallet
     qPanelOpen = true; qPanel.setAttribute("data-show", "1");
     try { DOC.documentElement.style.setProperty("--holo-aside-w", (qPanel.offsetWidth || 420) + "px"); DOC.documentElement.classList.add("q-panel-open"); } catch (e) {}
     if (btn) btn.setAttribute("data-on", "1");

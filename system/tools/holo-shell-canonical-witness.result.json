@@ -1,7 +1,7 @@
 {
   "witnessed": false,
-  "passed": 16,
-  "failed": 2,
+  "passed": 15,
+  "failed": 3,
   "covers": [
     "the canonical shell is served from OS2 (",
     "the served shell IS the spatial holospac",
@@ -10,7 +10,6 @@
     "the greeter's default session + fallback",
     "holospace.html folds a normal app link i",
     "no duplicate DEFAULT shell in the catalo",
-    "the old duplicate shell CODE is retired ",
     "the retired shells are unreachable — no ",
     "the ONE shared embed guard exists in the",
     "the shell is sealed in the OS-wide κ-rou",
@@ -59,11 +58,11 @@
     {
       "name": "no duplicate DEFAULT shell in the catalog (a kept self-contained app is exempt)",
       "ok": true,
-      "detail": "42 apps · self-contained exempt: org.hologram.HoloBrowser"
+      "detail": "41 apps · self-contained exempt: org.hologram.HoloBrowser"
     },
     {
       "name": "the old duplicate shell CODE is retired (holospaces/browser · holospaces/sdk · apps/sdk)",
-      "ok": true,
+      "ok": false,
       "detail": ""
     },
     {
@@ -84,7 +83,7 @@
     {
       "name": "the shell is sealed in the OS-wide κ-route closure (a did:holo content address)",
       "ok": true,
-      "detail": "κ 9942bc4628c3e163…"
+      "detail": "κ ae83f4bf3c6824d1…"
     },
     {
       "name": "the served shell RE-DERIVES to its sealed κ — tamper-refused (Law L5)",
@@ -104,7 +103,7 @@
     {
       "name": "the shell is anchored on the unified UOR substrate (carries its did:holo:blake3 σ-axis κ)",
       "ok": true,
-      "detail": "blake3 0c98b102f6fa087d…"
+      "detail": "blake3 a5646ebdafecb95d…"
     },
     {
       "name": "the served shell RE-DERIVES to its substrate κ via OS2 BLAKE3 (≡ substrate kappa(), Law L5 / CC-51)",

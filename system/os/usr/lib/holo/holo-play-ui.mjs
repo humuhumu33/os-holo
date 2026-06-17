@@ -17,7 +17,7 @@ const catLabel = (c) => CAT_NAME[c] || String(c || "App").replace(/Application$/
 
 export function mountPlay(trigger, { launch } = {}) {
   injectStyles();
-  const aside = createAside({ id: "play", title: "Play", defaultW: 560, minW: 440, maxW: 1100 });
+  const aside = createAside({ id: "play", title: "Play" });   // golden scale + collapse chevron come from the shared template
   const body = aside.body;
   let _loaded = false, _items = [], _cat = "All", _activeId = null;
 
@@ -86,8 +86,8 @@ function injectStyles() {
   s.textContent = `
   .ply{--phi:1.618;--s1:5px;--s2:8px;--s3:13px;--s4:21px;--s5:34px;
     flex:1 1 auto;display:flex;flex-direction:column;min-height:0;
-    font:16px/1.55 var(--win-font,ui-sans-serif,system-ui);color:#e9e9ee;
-    background:radial-gradient(135% 78% at 50% -12%, #14141f 0%, #0c0c10 44%, #0a0a0b 100%)}
+    font:16px/1.55 var(--win-font,ui-sans-serif,system-ui);color:var(--holo-ink,#e9e9ee);
+    background:radial-gradient(135% 78% at 50% -12%, rgba(30,30,46,.42) 0%, transparent 60%)}   /* translucent — the carriage glass frosts through */
   .ply-load{margin:auto;max-width:34ch;padding:var(--s5) var(--s4);color:#8a8a92;font-size:16px;line-height:1.6;text-align:center}
 
   /* category rail — pill chips, horizontal scroll, soft fade where they run off-frame */

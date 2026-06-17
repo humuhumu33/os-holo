@@ -492,20 +492,6 @@
       "hosfs:fhs": "/usr/share/holospaces/video"
     },
     {
-      "@id": "did:holo:sha256:4df84b13e2dcefc69cce6ff33f626b394f2b9eef8bef457270abfe8063cb1205",
-      "@type": [
-        "schema:SoftwareApplication",
-        "schema:WebApplication"
-      ],
-      "schema:name": "Holo Wallet",
-      "schema:identifier": "org.hologram.HoloWallet",
-      "schema:description": "A self-custodial, multi-chain wallet one seed, every chain, for humans and AI agents.",
-      "schema:applicationCategory": "FinanceApplication",
-      "dcat:landingPage": "apps/wallet/index.html",
-      "schema:image": "apps/wallet/icon.svg",
-      "hosfs:fhs": "/usr/share/holospaces/wallet"
-    },
-    {
       "@id": "did:holo:sha256:a2b54fc09ef724cb06c5bc8562f257333de87ef17de84d3da90f4147551b833f",
       "@type": [
         "schema:SoftwareApplication",

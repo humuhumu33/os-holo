@@ -47,11 +47,6 @@
     (kids || []).forEach(function (c) { if (c) n.appendChild(c); });
     return n;
   }
-  function letterIcon(name) {
-    var ch = (name || "?").trim().charAt(0).toUpperCase() || "?";
-    var svg = '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="9" fill="currentColor" opacity="0.16"/><text x="20" y="27" font-size="20" font-family="system-ui,sans-serif" text-anchor="middle" fill="currentColor">' + ch + "</text></svg>";
-    return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
-  }
   function actionBtn(label, svg, fn) {
     var b = el("button", { "class": "holo-dock-action", title: label, "aria-label": label, html: svg });
     b.addEventListener("click", fn);
@@ -75,6 +70,87 @@
     tools: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.6-.6-2.5z"/></svg>',
     settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.81 1.17V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 7.5 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.18 14H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.5a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 10 3.18V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 2.4 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 20.82 10H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
   };
+  // ── app glyphs ──────────────────────────────────────────────────────────────────────────────────
+  // Every dock tile reads as the SAME monochrome line glyph (uniform 24·stroke 2) as the navigator
+  // categories above — so the left rail looks like one coherent desktop-OS sidebar instead of a mix of
+  // each app's own coloured icon. A curated pictogram per app where one is obvious, else a keyword
+  // match on the name, else a clean stroked letter tile (so a freshly pinned/added app matches too).
+  var IG = {
+    browser: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/></svg>',
+    code: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"/></svg>',
+    q: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.4"/><ellipse cx="12" cy="12" rx="10" ry="4.2"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(120 12 12)"/></svg>',
+    files: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+    music: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>',
+    video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m10 9 5 3-5 3z"/></svg>',
+    doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>',
+    git: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 8.5v7M18 11.5c0 3-4 2-8 4"/></svg>',
+    cloud: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.3A3.5 3.5 0 0 1 17 18z"/></svg>',
+    cube: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5"/></svg>',
+    hub: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="4" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M12 6.5v3M10.3 13.5 6.3 16.4M13.7 13.5l4 2.9"/></svg>',
+    sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M4 17h6"/><circle cx="17" cy="7" r="2.5"/><circle cx="14" cy="17" r="2.5"/></svg>',
+    shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>',
+    terminal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="m7 9 3 3-3 3M13 15h4"/></svg>',
+    tools: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.6-.6-2.5z"/></svg>',
+    camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><circle cx="12" cy="12.5" r="3.5"/><path d="M9 6l1.5-2h3L15 6"/></svg>',
+    compass: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>',
+    chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6"/></svg>',
+    coin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8h4.5a2 2 0 0 1 0 4H9h5a2 2 0 0 1 0 4H9M11 6v12"/></svg>',
+    flag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 5h11l-1.5 3L16 11H5"/></svg>',
+    book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h9a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5z"/><path d="M16 6h3v14h-5"/></svg>',
+    layout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg>',
+    apps: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+  };
+  // app id → glyph (exact match wins)
+  var APP_GLYPHS = {
+    "org.hologram.HoloBrowser": IG.browser,
+    "org.hologram.HoloWorkspace": IG.code,
+    "org.hologram.HoloCode": IG.terminal,
+    "org.hologram.HoloQ": IG.q,
+    "org.hologram.HoloFiles": IG.files,
+    "org.hologram.HoloSearch": IG.search,
+    "org.hologram.HoloMusic": IG.music, "org.hologram.HoloAmp": IG.music, "org.hologram.HoloPlayer": IG.music,
+    "org.hologram.HoloVideo": IG.video, "org.hologram.HoloStream": IG.video,
+    "org.hologram.HoloDocs": IG.doc, "org.hologram.HoloNotepad": IG.doc, "org.hologram.HoloNotepadPP": IG.doc, "org.hologram.HoloTerms": IG.doc,
+    "org.hologram.HoloGit": IG.git,
+    "org.hologram.HoloCloud": IG.cloud,
+    "org.hologram.HoloIpfs": IG.cube,
+    "org.hologram.HoloHub": IG.hub,
+    "org.hologram.HoloControl": IG.sliders,
+    "org.hologram.HoloPrivacy": IG.shield,
+    "org.hologram.HoloForge": IG.tools,
+    "org.hologram.HoloCapture": IG.camera, "org.hologram.HologramMeet": IG.camera,
+    "org.hologram.HoloAtlas": IG.compass, "org.hologram.HoloAtlas96": IG.compass, "org.hologram.HoloCosmos": IG.compass,
+    "org.hologram.HoloTrade": IG.chart,
+    "org.hologram.HoloBtc": IG.coin, "org.hologram.HoloBrc": IG.coin, "org.hologram.HoloEVM": IG.coin, "org.hologram.HoloEtherscan": IG.coin,
+    "org.hologram.HoloF1": IG.flag,
+    "org.hologram.HoloGuide": IG.book,
+    "org.hologram.HoloUI": IG.layout,
+    "org.hologram.HoloOS": IG.apps,
+    "org.hologram.QvacSdk": IG.q,
+  };
+  // keyword → glyph (substring of the lowercased app name, when no exact id match)
+  var NAME_GLYPHS = [
+    ["browser", IG.browser], ["workspace", IG.code], ["code", IG.terminal], ["terminal", IG.terminal],
+    ["search", IG.search], ["music", IG.music], ["amp", IG.music], ["player", IG.music],
+    ["video", IG.video], ["stream", IG.video], ["meet", IG.camera], ["capture", IG.camera],
+    ["doc", IG.doc], ["note", IG.doc], ["terms", IG.doc], ["book", IG.book], ["guide", IG.book],
+    ["git", IG.git], ["cloud", IG.cloud], ["ipfs", IG.cube], ["hub", IG.hub], ["files", IG.files],
+    ["control", IG.sliders], ["privacy", IG.shield], ["forge", IG.tools], ["atlas", IG.compass],
+    ["cosmos", IG.compass], ["trade", IG.chart], ["scan", IG.coin], ["btc", IG.coin], ["brc", IG.coin],
+    ["evm", IG.coin], ["miner", IG.coin], ["f1", IG.flag], ["ui", IG.layout], ["os", IG.apps],
+  ];
+  function lineLetter(name) {
+    var ch = (name || "?").trim().charAt(0).toUpperCase() || "?";
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><text x="12" y="16.4" font-size="11" font-family="system-ui,sans-serif" font-weight="600" text-anchor="middle" fill="currentColor" stroke="none">' + ch + "</text></svg>";
+  }
+  function appGlyph(id) {
+    if (APP_GLYPHS[id]) return APP_GLYPHS[id];
+    var name = (appInfo(id).name || "").toLowerCase();
+    for (var i = 0; i < NAME_GLYPHS.length; i++) if (name.indexOf(NAME_GLYPHS[i][0]) >= 0) return NAME_GLYPHS[i][1];
+    return lineLetter(appInfo(id).name);
+  }
+  function glyphIcon(id, cls) { return el("span", { "class": cls || "holo-dock-icon", html: appGlyph(id) }); }
   function dirOf(s) { var m = String(s || "").match(/([^\/]+)\/[^\/]*$/); return m ? m[1] : ""; }
 
   // ── the bundle model — a pin entry is an app id (string) OR a group {id,name,items:[id…]} ──
@@ -142,7 +218,6 @@
     }).catch(function () { return {}; });
   }
   function appInfo(id) { return STATE.catalog[id] || { id: id, name: String(id).split(".").pop(), icon: null }; }
-  function iconSrc(id) { var i = appInfo(id); return i.icon || letterIcon(i.name); }
 
   // ── shell adaptation (World/SDK vs Platform Manager) ───────────────────────────────────────────
   function inSdk() { return !!(W.__world && W.__world.launchById); }
@@ -361,9 +436,8 @@
     if (id === VINYL_ID && W.HoloVinyl && W.HoloVinyl.dockTile) return vinylTile(id);
     var info = appInfo(id);
     var li = el("li", { "class": "holo-dock-item", "data-app": id, "data-key": id, draggable: "true" });
-    var img = el("img", { "class": "holo-dock-icon", src: iconSrc(id), alt: "", draggable: "false" });
-    img.addEventListener("error", function () { this.src = letterIcon(info.name); });
-    var tile = el("button", { "class": "holo-dock-tile", title: info.name, "aria-label": info.name }, [img, el("span", { "class": "holo-dock-label", text: info.name })]);
+    var icon = glyphIcon(id);
+    var tile = el("button", { "class": "holo-dock-tile", title: info.name, "aria-label": info.name }, [icon, el("span", { "class": "holo-dock-label", text: info.name })]);
     tile.addEventListener("click", function (e) { if (ctrlMenu(e, function () { openItemMenu(e, id); })) return; launch(id); });
     li.appendChild(tile);
     li.appendChild(el("span", { "class": "holo-dock-dot" }));
@@ -376,7 +450,7 @@
   function groupTile(group) {
     var li = el("li", { "class": "holo-dock-item holo-dock-group", "data-key": group.id, "data-group": group.id, draggable: "true" });
     var grid = el("span", { "class": "holo-dock-stack" });
-    group.items.slice(0, 4).forEach(function (mid) { grid.appendChild(el("img", { "class": "holo-dock-mini", src: iconSrc(mid), alt: "", draggable: "false" })); });
+    group.items.slice(0, 4).forEach(function (mid) { grid.appendChild(glyphIcon(mid, "holo-dock-mini")); });
     var n = group.items.length;
     var tile = el("button", { "class": "holo-dock-tile holo-dock-stack-tile", title: group.name + " · " + n + " items", "aria-label": group.name }, [grid]);
     if (n > 4) tile.appendChild(el("span", { "class": "holo-dock-stack-more", text: "+" + (n - 4) }));
@@ -608,9 +682,7 @@
     g.items.forEach(function (mid) {
       var info = appInfo(mid);
       var m = el("div", { "class": "holo-dock-item", "data-app": mid, title: info.name });
-      var img = el("img", { "class": "holo-dock-icon", src: iconSrc(mid), alt: "", draggable: "false" });
-      img.addEventListener("error", function () { this.src = letterIcon(info.name); });
-      var t = el("button", { "class": "holo-dock-tile", "aria-label": info.name }, [img]);
+      var t = el("button", { "class": "holo-dock-tile", "aria-label": info.name }, [glyphIcon(mid)]);
       t.addEventListener("click", function () { launch(mid); });
       m.appendChild(t); m.appendChild(el("span", { "class": "holo-dock-dot" }));
       m.appendChild(el("span", { "class": "holo-dock-fly-label", text: info.name }));
@@ -725,7 +797,7 @@
     ids.slice(0, 28).forEach(function (id) {
       var info = STATE.catalog[id];
       var b = mbtn(info.name, function () { groupId ? addToGroup(groupId, id) : setPins(pins().concat([id])); if (groupId) reopenGroup(groupId); });
-      b.insertBefore(el("img", { src: info.icon || letterIcon(info.name), alt: "", width: "18", height: "18", style: "border-radius:5px" }), b.firstChild);
+      b.insertBefore(glyphIcon(id, "holo-dock-menu-glyph"), b.firstChild);
       menu.appendChild(b);
     });
     var r = e && e.currentTarget && e.currentTarget.getBoundingClientRect ? e.currentTarget.getBoundingClientRect() : { left: (e && e.clientX) || 60, top: (e && e.clientY) || 60 };

@@ -131,6 +131,8 @@
 }
 .holo-dock-tile:active { transform: scale(0.95); transition-duration: 0.05s; }
 .holo-dock-icon { width: var(--hd-icon); height: var(--hd-icon); display: block; pointer-events: none; object-fit: contain; }
+/* the line glyphs are inline <svg> in a span — make them fill the icon box (tiles + bundle minis) */
+.holo-dock-icon svg, .holo-dock-mini svg { width: 100%; height: 100%; display: block; }
 .holo-dock-logo { width: calc(var(--hd-icon) * 1.04); height: calc(var(--hd-icon) * 1.04); }
 
 /* Active (running) — an accent-tinted chip + a dot. The dot is ABSOLUTE so every item equals the chip
@@ -367,6 +369,8 @@
 .holo-dock-menu hr { border: 0; border-top: 1px solid var(--hd-border); margin: var(--hd-pad) 0; }
 .holo-dock-menu .holo-dock-menu-head { padding: var(--hd-sp2) var(--hd-sp3); color: var(--hd-ink-dim); font-size: var(--hd-text-sm); }
 .holo-dock-menu button img { flex: 0 0 auto; }
+.holo-dock-menu-glyph { flex: 0 0 auto; width: 18px; height: 18px; display: inline-block; color: var(--hd-ink-dim); }
+.holo-dock-menu-glyph svg { width: 100%; height: 100%; display: block; }
 
 /* ── Smooth load — fade in once laid out, so no boot measure/reflow jerk is ever seen (holo-dock.js). */
 #holo-dock { opacity: 0; transition: opacity 0.24s ease; }
