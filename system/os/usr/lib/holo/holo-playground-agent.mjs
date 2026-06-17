@@ -266,6 +266,20 @@ export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp 
     ta.focus();
   }
 
+  // ── Ask AI: pipe THIS element up to the shell as chat context, so a natural-language prompt ("make this
+  //    blue") targets it. We keep a LIVE reference (pendingAsk) so the shell's replace-element command swaps
+  //    the exact node back in — no fragile string matching. The serialized html is ephemeral-stripped (L5). ──
+  let pendingAsk = null;
+  function actAskAI() {
+    closeMenu();
+    try {
+      const el = target; if (!el) return;
+      pendingAsk = el;
+      const tag = (el.tagName || "el").toLowerCase();
+      const brief = (el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 48);
+      postUp({ t: "holo-live-edit", op: "chat-select", surfaceId: curSurfaceId || surfaceId, tag: tag, brief: brief, html: serializeNode(el) });
+    } catch (e) {}
+  }
   function openMenu(x, y) {
     closeMenu();
     menuEl = doc.createElement("div"); menuEl.className = "holo-pg-menu"; menuEl.setAttribute(EPHEMERAL, "");
@@ -274,6 +288,7 @@ export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp 
       b.onclick = fn; menuEl.appendChild(b);
     };
     const sep = () => { const s = doc.createElement("div"); s.className = "sep"; menuEl.appendChild(s); };
+    item("✦&nbsp; Ask AI to change this", actAskAI);
     item("✎&nbsp; Edit source", actEdit);
     item("✏️&nbsp; Edit text", actText, "dbl-click");
     item("⎘&nbsp; Duplicate", actDuplicate);
@@ -373,6 +388,14 @@ export function createPlaygroundAgent({ doc, win = null, surfaceId = "", postUp 
     const m = e && e.data;
     if (!m || m.t !== "holo-live-edit") return;
     if (m.op === "playground-mode" && (m.surfaceId === surfaceId || m.surfaceId == null)) { setActive(!!m.on); return; }
+    if (m.op === "replace-element" && (m.surfaceId === surfaceId || m.surfaceId == null) && pendingAsk && typeof m.html === "string") {
+      try { const el = pendingAsk; pendingAsk = null;
+        const tmp = doc.createElement("template"); tmp.innerHTML = m.html;
+        const frag = tmp.content || tmp; const nodes = [...(frag.childNodes || [])];
+        if (nodes.length && el.parentNode) { for (const nn of nodes) el.parentNode.insertBefore(nn.cloneNode(true), el); el.remove(); commitEdit(); }   // swap the live element + reseal → the κ flows up
+      } catch (e) {}
+      return;
+    }
     if (m.op === "sealed" && m.surfaceId === surfaceId) {
       const k = String(m.kappa || "").split(":").pop() || "";
       if (m.changed) toast("✦ sealed · κ " + k.slice(0, 8) + "…");

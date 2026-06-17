@@ -3249,6 +3249,13 @@
           .cs-composer{margin:10px 14px 14px;border:1px solid #2a2a31;border-radius:16px;background:#161619;padding:12px 14px;
             transition:border-color .15s,box-shadow .15s}
           .cs-composer:focus-within{box-shadow:0 0 0 3px #2563eb22}
+          /* the selection context chip — shows which element the next prompt will target */
+          .cs-selchip{display:flex;align-items:center;gap:8px;margin:0 0 9px;padding:5px 6px 5px 10px;border-radius:10px;
+            background:color-mix(in srgb,var(--accent,#5b8cff) 16%,#161619);border:1px solid color-mix(in srgb,var(--accent,#5b8cff) 40%,transparent)}
+          .cs-selchip-tag{font:600 12px var(--holo-font-mono,ui-monospace,monospace);color:#cdd9ff;flex:0 0 auto}
+          .cs-selchip-brief{font-size:12px;color:#9aa6c2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0}
+          .cs-selchip-x{flex:0 0 auto;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;cursor:pointer;color:#9aa6c2;font-size:12px}
+          .cs-selchip-x:hover{background:#ffffff18;color:#fff}
           .cs-composer:focus-within{border-color:#3a3a44}
           .cs-composer textarea{width:100%;background:transparent;border:0;outline:none;color:#e7e7ea;resize:none;
             font:14px/1.5 var(--win-font,ui-sans-serif,system-ui);min-height:24px;max-height:170px;display:block}
@@ -4066,6 +4073,41 @@
           setBusy(false);
           addMsg("assistant", 'Stopped. <span style="color:#8b8b92">Kept what is on screen the studio is yours again.</span>');   // every shown state is a real sealed κ, so it is safe to keep
         }
+        // ── element chat-context (M1 stretch): "✦ Ask AI" on an element (in Select mode) pipes it up here.
+        //    We show a context chip on the composer and scope the NEXT natural-language prompt to that exact
+        //    element — "make this blue" targets it. The change round-trips through the agent (replace-element),
+        //    which swaps the live node + reseals, so it stays in sync and Publish captures it. ──
+        studio.selection = null;
+        studio.setSelection = function (sel) { studio.selection = sel; renderSelChip(); try { ask.focus(); } catch (e) {} };
+        function renderSelChip() {
+          let chip = ov.querySelector("#cs-selchip");
+          if (!studio.selection) { if (chip) chip.remove(); return; }
+          const s = studio.selection;
+          if (!chip) { chip = document.createElement("div"); chip.id = "cs-selchip"; chip.className = "cs-selchip";
+            const comp = ov.querySelector(".cs-composer"); comp.insertBefore(chip, comp.firstChild); }
+          chip.innerHTML = '<span class="cs-selchip-tag">✦ &lt;' + csEsc(s.tag) + '&gt;</span>' +
+            (s.brief ? '<span class="cs-selchip-brief">' + csEsc(s.brief) + '</span>' : '') +
+            '<span class="cs-selchip-x" title="Clear selection">✕</span>';
+          chip.querySelector(".cs-selchip-x").onclick = function () { studio.selection = null; renderSelChip(); };
+        }
+        async function holoElementEdit(instruction, sel, m) {
+          const myGen = ++studio.gen; setBusy(true); const stale = function () { return myGen !== studio.gen; };
+          try {
+            const Q = (typeof window !== "undefined") ? (window.Q || window.HoloTrinity) : null;
+            if (!Q || typeof Q.create !== "function") { if (m) m.innerHTML = "Element edit needs the Q surface."; return; }
+            const prompt = 'Rewrite ONLY this HTML element to apply the change: "' + instruction + '".\nElement:\n' + sel.html + '\nReturn ONLY the modified element HTML — no markdown fences, no explanation, no surrounding document.';
+            const res = await Q.create(prompt, { id: "el:" + ((node && node.id) || "app"), params: { elementEdit: true, element: sel.html, instruction: instruction } });
+            if (stale()) return;
+            let out = res && res.value ? String(res.value).trim() : "";
+            out = out.replace(/^```[a-z]*\s*/i, "").replace(/\s*```\s*$/i, "").trim();   // strip a code fence if the model added one
+            if (!out) { if (m) m.innerHTML = 'Nothing came back. <span style="color:#8b8b92">Try rephrasing.</span>'; return; }
+            const el = mounted.get(node.id); const f = el && el.querySelector("iframe");   // hand the new element DOWN → agent swaps it + reseals → syncFromSurface mirrors it back
+            if (f && f.contentWindow) f.contentWindow.postMessage({ t: "holo-live-edit", op: "replace-element", surfaceId: node.id, html: out }, "*");
+            studio.selection = null; renderSelChip();
+            if (m) m.innerHTML = 'Changed the <b style="font-style:normal">&lt;' + csEsc(sel.tag) + '&gt;</b> ✦';
+          } catch (e) { if (!stale() && m) m.innerHTML = "Edit error: " + csEsc(String((e && e.message) || e)); }
+          finally { if (!stale()) setBusy(false); }
+        }
         function send() {
           if (studio.busy) return;                        // a run is in flight — the ■ Stop control is the only action until it ends
           const v = ask.value.trim(); if (!v) return; ask.value = ""; ask.style.height = "auto"; addMsg("user", csEsc(v));
@@ -4074,6 +4116,12 @@
             view("pv");
             const m = addMsg("assistant", 'Importing <b style="font-style:normal">' + csEsc(v) + '</b>…');
             holoImport(v, m).catch(function (e) { m.innerHTML = 'Couldn\'t import that — ' + csEsc(String((e && e.message) || e)) + '. <span style="color:#8b8b92">Check the link, or try the ↓ Import button.</span>'; });
+          }
+          else if (studio.editable && studio.selection && mode !== "Chat") {   // a selection is active → scope the change to THAT element ("make this blue")
+            view("pv");
+            const sel = studio.selection;
+            const m = addMsg("assistant", 'Changing the <b style="font-style:normal">&lt;' + csEsc(sel.tag) + '&gt;</b> — ' + csEsc(v) + '…');
+            holoElementEdit(v, sel, m).catch(function (e) { m.innerHTML = 'Edit error: ' + csEsc(String((e && e.message) || e)); });
           }
           else if (studio.editable && mode !== "Chat") {   // a natural-language prompt in Build mode → build/refine a holospace in real time
             view("pv");
@@ -4922,6 +4970,11 @@
             const el = mounted.get(m.surfaceId); const f = el && el.querySelector("iframe");
             if (f && ev.source === f.contentWindow) setPlaygroundMode(!!m.on);
             return;
+          }
+          // M1 stretch: "✦ Ask AI" on an element → pipe it into the open studio's composer as chat context.
+          if (m && m.t === "holo-live-edit" && m.op === "chat-select" && studio && studio.node && studio.node.id === m.surfaceId && studio.setSelection) {
+            const el = mounted.get(m.surfaceId); const f = el && el.querySelector("iframe");
+            if (f && ev.source === f.contentWindow) { studio.setSelection({ tag: m.tag, brief: m.brief, html: m.html }); return; }   // unforgeable sender
           }
           _pgHost.handle(ev);
           // M1 point-and-edit: a Playground edit that landed on the CREATE preview surface → mirror it into
