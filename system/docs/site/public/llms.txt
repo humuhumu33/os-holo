@@ -23,7 +23,7 @@
 - [Agent doors](/docs/reference/agent-doors): MCP, NANDA, A2A, the .well-known map.
 
 ## Architecture
-- [Architecture decisions](/docs/architecture/adrs): 90 ADRs, the primary sources (generated).
+- [Architecture decisions](/docs/architecture/adrs): 91 ADRs, the primary sources (generated).
 
 ## Machine-readable
 - [conformance.json](/docs/reference/conformance.json): the gate's rows as data.

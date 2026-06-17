@@ -145,6 +145,11 @@
 import { resolveUnified, classifyUnified } from "../../../sbin/holo-omni-unified.mjs";
 import { createCorpus } from "../../lib/holo/q/holo-q-corpus.js";
 import { createRecall } from "../../lib/holo/q/holo-q-recall.js";
+import { createDiscovery, linkedDataAdapter } from "../../../sbin/holo-discover.mjs";
+import { createSemantic } from "../../../sbin/holo-semantic.mjs";
+import { publishToKStore } from "../../../sbin/holo-web-snapshot.mjs";
+import { loadIndexFromCar, indexAdapter } from "../../../sbin/holo-index.mjs";
+import { resolveEmbedder } from "../../lib/holo/q/holo-q-embed.js";   // never-throw: bge-small if it loads, else a deterministic floor
 
 const $ = (id) => document.getElementById(id);
 const qIn = $("q"), results = $("results"), laneEl = $("lane");
@@ -157,6 +162,23 @@ const recall = createRecall({ corpus, synth: null });
 // fetchImpl: optionally route cross-origin web fetches through the dev host proxy (for the web-URL leg).
 const sameOrigin = (u) => { try { return new URL(u, location.href).origin === location.origin; } catch { return false; } };
 function proxyFetch(u, opts) { const s = String(u); if ($("proxy").checked && /^https?:\/\//i.test(s) && !sameOrigin(s)) return fetch("/web?url=" + encodeURIComponent(s), opts); return fetch(s, opts); }
+
+// ── the SEMANTIC orchestrator: a natural-language query → discover across the open semantic web → fuse →
+//    compose a self-verifying κ-page citing L5-verified source CIDs (holo-semantic over holo-discover). The
+//    discovery index is UNTRUSTED — every cited CID re-derives at resolve. Wired into the NL lane below. ──
+//    It starts on live linked-data, then UPGRADES to also query the pre-built, self-verifying κ-index
+//    (holo-index.car) the moment it loads: that source answers network-free, re-derived on load (Law L5),
+//    and RRF fuses its hits with the live ones. Index missing/unreachable → live linked-data only.
+let semantic = createSemantic({ discovery: createDiscovery({ adapters: [linkedDataAdapter()], fetchImpl: proxyFetch }) });
+(async () => {
+  try {
+    const embedder = await resolveEmbedder();   // ONE embedder for docs + queries (same vector space); never throws
+    const car = new Uint8Array(await (await fetch("./holo-index.car")).arrayBuffer());
+    const loaded = await loadIndexFromCar(car, { embedder });   // index search is now hybrid (vector ⊕ BM25 ⊕ RRF)
+    semantic = createSemantic({ discovery: createDiscovery({ adapters: [indexAdapter(loaded), linkedDataAdapter()], fetchImpl: proxyFetch }) });
+    if (window.__omni) { window.__omni.semantic = semantic; window.__omni.index = loaded; window.__omni.embedder = embedder; }
+  } catch (e) { /* no pre-built index asset → live linked-data discovery only */ }
+})();
 
 // live lane chip as you type
 qIn.addEventListener("input", () => {
@@ -176,10 +198,11 @@ async function run(v) {
   card.innerHTML = `<div class="hd"><div class="glyph" style="background:#1d2840;color:#7d8aa6">…</div><div><div class="ttl">Resolving…</div><div class="meta">${esc(v)}</div></div></div>`;
   results.prepend(card);
   let r;
-  try { r = await resolveUnified(v, { fetchImpl: proxyFetch, timeoutMs: 22000 }); }
+  try { r = await resolveUnified(v, { fetchImpl: proxyFetch, timeoutMs: 22000, semantic }); }
   catch (e) { r = { ok: false, lane: "unknown", reason: String(e && e.message || e) }; }
   try {
-    if (r.lane === "nl") await renderNL(card, r);
+    if (r.kind === "semantic") await renderSemantic(card, r);   // NL → discovered, fused, sealed κ-page
+    else if (r.lane === "nl") await renderNL(card, r);          // (no result / private recall fallback)
     else if (!r.ok) card.innerHTML = `<div class="hd"><div class="glyph" style="background:#5a2230;color:#f87171">✕</div><div><div class="ttl">Could not resolve</div><div class="meta">${esc(v)}</div></div><span class="badge">${esc(r.lane||"")}</span></div><div class="err">${esc(r.reason || "unknown")}</div>`;
     else if (r.lane === "web3") await renderWeb3(card, r);
     else await renderObject(card, r, v);
@@ -280,6 +303,24 @@ async function renderObject(card, r, v) {
       <div><div class="ttl">${esc(short(v, 22))}</div><div class="meta">${esc(r.label || kindLabel)} · via ${esc(r.via || "-")}${sizeKb ? " · " + sizeKb : ""}</div></div><span class="badge object">${esc(kindLabel)}</span></div>`
     + previewHtml(r) + sealStrip(r, null) + qStrip(captionObject(r, v));
   wireCard(card);
+}
+
+// ── NL → SEMANTIC: a discovered, fused, sealed κ-page citing L5-verified source CIDs ─────────────────
+async function renderSemantic(card, r) {
+  if (!r.ok) {                                            // discovery found nothing verifiable → private recall fallback
+    const out = await runRecall(r.query);
+    card.innerHTML = `<div class="hd">${glyphFor("#fbbf24", "Q")}<div><div class="ttl">${esc(r.query)}</div><div class="meta">no public source · Q.recall fallback</div></div><span class="badge nl">ask Q</span></div><div class="body">${out.html}</div>`;
+    return;
+  }
+  try { await publishToKStore(r.blocks); } catch {}       // publish the composed page + every source to the local commons → /ipfs/<cid>/ resolves, network-free
+  const srcRows = (r.sources || []).map((s, i) => `<div class="row"><div class="k">[${i + 1}] ${esc(s.source || "")}</div><div class="v"><a class="link" data-cid="ipfs://${esc(s.cid)}" href="#">${esc(s.title || s.entityId || "")}</a> · <span style="color:#566c8a">${esc(short(s.cid, 8))}</span></div></div>`).join("");
+  const ans = r.answer ? `<div class="row"><div class="k">answer</div><div class="v" style="font:13px/1.5 system-ui;color:#cbd6ea">${esc(r.answer)}</div></div>` : "";
+  const preview = r.html ? `<div class="pv"><iframe sandbox="allow-same-origin" src="${URL.createObjectURL(new Blob([r.html], { type: "text/html" }))}"></iframe></div>` : "";
+  card.innerHTML = `<div class="hd">${glyphFor("#fbbf24", "Q")}<div><div class="ttl">${esc(r.query)}</div><div class="meta">semantic web → ${r.sources.length} verified source${r.sources.length === 1 ? "" : "s"} · ${esc((r.probes || []).join(" ⊕ "))}</div></div><span class="badge nl">semantic</span></div>`
+    + `<div class="body">${ans}${srcRows}</div>` + preview + sealStrip(r, null)
+    + `<div class="seal"><span class="ok">✓ composed κ-page · every source re-derived (Law L5)</span><a class="open" href="/ipfs/${esc(r.cid)}/" target="_blank" rel="noopener" style="margin-left:auto">Open κ-page ↗</a></div>`;
+  wireCard(card);
+  try { corpus.index({ id: r.cid, text: `${r.query}\n${(r.sources || []).map((s) => s.title).join("\n")}\n${r.answer || ""}`, meta: { path: "semantic" } }).catch(() => {}); } catch {}
 }
 
 // ── NL → Q (recall across the corpus) ───────────────────────────────────────────────────────────────

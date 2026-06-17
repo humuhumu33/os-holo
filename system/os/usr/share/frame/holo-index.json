@@ -1,0 +1,92 @@
+{
+  "@type": "holo:SemanticIndex",
+  "indexCid": "bafybeic4bxkmkxjecnv4ijgszggreq7u4geqdtb5msapxqkzgnlkdyvlb4",
+  "did": "did:holo:sha256:5c0dd4c55d24136bc424d2c98d1243f4e18901cc3d6480fbc1593356a1e2ab0f",
+  "stateKappa": "did:holo:sha256:02da9805b6a0a4dc474674b9af9a97f6e82dc739f88c202759a5d25a596b7b82",
+  "car": "holo-index.car",
+  "carBytes": 16469,
+  "count": 9,
+  "docs": [
+    {
+      "cid": "bafybeicm4qa5mvmqqn4fmixf5lpwfesxbejnszt2g2upztznymhre6di5q",
+      "title": "Julius Caesar",
+      "meta": {
+        "source": "wikidata",
+        "entityId": "Q1048",
+        "query": "Julius Caesar"
+      }
+    },
+    {
+      "cid": "bafybeicz6qhs4clrlrpj32vpwoiee2zfzxiqdwqawydghru4eh5s2fooya",
+      "title": "Ancient Greece",
+      "meta": {
+        "source": "wikidata",
+        "entityId": "Q11772",
+        "query": "ancient Greece"
+      }
+    },
+    {
+      "cid": "bafybeid5fhowl2zdk3fqwww2ym5265aruawqm6qzk3mysowaly7cc3hymi",
+      "title": "Ancient Rome",
+      "meta": {
+        "source": "wikidata",
+        "entityId": "Q1747689",
+        "query": "ancient Rome"
+      }
+    },
+    {
+      "cid": "bafybeidkb5maxe4cukxvo5z6lrkmotkyfgu3acsaklvsflyokfndv7p5ny",
+      "title": "Punic Wars",
+      "meta": {
+        "source": "wikidata",
+        "entityId": "Q124988",
+        "query": "Punic Wars"
+      }
+    },
+    {
+      "cid": "bafybeiehnbz3il4irtvcfdxw63ib6uynxiyiemukicfuwbvodrsocxa66u",
+      "title": "Roman Senate",
+      "meta": {
+        "source": "wikidata",
+        "entityId": "Q130614",
+        "query": "Roman Senate"
+      }
+    },
+    {
+      "cid": "bafybeiet5xbk5zt7rw7fmxycohc3jihgdleanfdd2isn5xr3n2ztp4hvw4",
+      "title": "Roman Republic",
+      "meta": {
+        "source": "wikidata",
+        "entityId": "Q17167",
+        "query": "Roman Republic"
+      }
+    },
+    {
+      "cid": "bafybeifgzpbgxujicxa6csl3jmijqef2vum4d375kmqc4zpvbdi5ezxysu",
+      "title": "Augustus",
+      "meta": {
+        "source": "wikidata",
+        "entityId": "Q770041",
+        "query": "Augustus"
+      }
+    },
+    {
+      "cid": "bafybeiggnksfn3ub2y5yqduhezfvh63h2bxqdawxnchqr54ze2y6jhrkmu",
+      "title": "Colosseum",
+      "meta": {
+        "source": "wikidata",
+        "entityId": "Q10285",
+        "query": "Colosseum"
+      }
+    },
+    {
+      "cid": "bafybeigztixmo26zw7imfdfociq4mnyispboqykh26m7masfkm57xjbog4",
+      "title": "Roman Empire",
+      "meta": {
+        "source": "wikidata",
+        "entityId": "Q2277",
+        "query": "Roman Empire"
+      }
+    }
+  ]
+}

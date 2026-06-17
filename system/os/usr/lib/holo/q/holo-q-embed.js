@@ -188,4 +188,21 @@ export async function autowire({ mux, fetch, remote = false, onProgress } = {}) 
   }
 }
 
-export default { createEmbedder, reevaluate, autowire };
+// resolveEmbedder({ remote, onProgress }) — a standalone, NEVER-THROW embedder for a surface that has no
+// mux (a page). It DECIDES ONCE: the unified OS embedder (HoloVoice/EmbeddingGemma) if present, else the
+// real bge-small via transformers, else — on ANY load failure — a deterministic reference floor. Deciding
+// once is the correctness point: document vectors (index build) and query vectors must share ONE space, so
+// a session never mixes a real-model doc vector with a floor query vector. embed() never throws.
+export async function resolveEmbedder({ remote = false, onProgress } = {}) {
+  const real = createEmbedder({ remote });
+  const HV = (typeof globalThis !== "undefined") && globalThis.HoloVoice;
+  if (HV && typeof HV.embed === "function") return real;        // embed() delegates to the OS embedder; no load needed
+  try { await real.load(onProgress); return real; }             // bge-small live (WebGPU→WASM)
+  catch (e) {
+    const DIM = 256;
+    const floor = (text) => { const o = new Array(DIM).fill(0); for (const w of String(text).toLowerCase().match(/[a-z0-9]+/g) || []) o[fnv1a(w) % DIM] += 1; const n = Math.sqrt(o.reduce((a, x) => a + x * x, 0)) || 1; return o.map((x) => x / n); };
+    return { id: "reference-floor", info: () => ({ ready: true, model: "reference-floor", device: "cpu" }), async embed(t) { return floor(t); }, similarity: cosine, fellBackTo: "reference-floor", reason: String((e && e.message) || e) };
+  }
+}
+
+export default { createEmbedder, reevaluate, autowire, resolveEmbedder };

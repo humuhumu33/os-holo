@@ -1,0 +1,27 @@
+{
+  "@type": "holo:WitnessResult",
+  "witness": "holo-semantic-render",
+  "stage": 1,
+  "query": "history of ancient Rome",
+  "discoveredCid": "bafybeigihziiqapuyhxrwnq6bmichxfb5q3r3travpkpfahp5k6dqflwca",
+  "renderedPageCid": "bafybeidyfrlnetgxd43zzhk6lm5qcbe4rrudk7pubyswziscbfy6iul7le",
+  "renderedPageDid": "did:holo:sha256:782c56d24cd71f379c9d5e5b3b01049c8c68357df40e256ca2420971e4517f59",
+  "pass": 12,
+  "fail": 0,
+  "total": 12,
+  "ok": true,
+  "checks": {
+    "each-page-seals-to-a-real-ipfs-object-sha256-cidv1-unixf-1": true,
+    "q-recall-returns-ranked-results-for-a-meaning-query-2": true,
+    "the-top-hit-is-the-rome-object-semantic-discovery-not-ex-3": true,
+    "the-fused-ranking-used-more-than-one-retriever-bm25-vect-4": true,
+    "ens-contenthash-decodes-to-ipfs-the-same-cid-web3-name-c-5": true,
+    "gateway-resolves-the-object-s-directory-to-its-index-htm-6": true,
+    "resolved-re-derived-bytes-are-the-rome-page-law-l5-end-t-7": true,
+    "a-tampered-block-is-refused-a-lying-source-cannot-forge--8": true,
+    "the-rendered-page-is-a-real-cidv1-sha256-9": true,
+    "the-rendered-page-cid-is-stable-across-runs-re-derivable-10": true,
+    "the-rendered-page-has-a-did-holo-twin-same-bytes-every-a-11": true,
+    "the-sealed-page-resolves-through-the-gateway-and-cites-t-12": true
+  }
+}

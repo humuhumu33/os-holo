@@ -13,6 +13,7 @@ import * as holoIpfs from "../usr/lib/holo/holo-ipfs.js";
 import { assembleUnixFs } from "./holo-omni.mjs";
 import { IPFS_GATEWAYS } from "./holo-peers.mjs";
 import { discoverGateways } from "./holo-routing.mjs";
+import { selectRender, kindOfContentType } from "./holo-object.mjs";
 
 const MIME = {
   html: "text/html", htm: "text/html", css: "text/css", js: "text/javascript", mjs: "text/javascript",
@@ -38,6 +39,29 @@ export function sniff(bytes, name) {
   if (head.startsWith("<!doctype html") || head.startsWith("<html") || head.startsWith("<svg")) return head.startsWith("<svg") ? "image/svg+xml" : "text/html";
   let printable = 0; for (const c of bytes.subarray(0, 256)) if (c === 9 || c === 10 || c === 13 || (c >= 32 && c < 127)) printable++;
   return printable > bytes.subarray(0, 256).length * 0.85 ? "text/plain" : "application/octet-stream";
+}
+
+// dispatchRender(bytes, name) — the SINGLE serve-time render dispatch the SW imports. If the bytes are a
+// UOR envelope that DECLARES a render contract, honor it (a self-describing object chooses how it renders);
+// otherwise fall back to the existing extension/magic-byte sniff. Pure over ALREADY-VERIFIED bytes — trust
+// is recovered upstream by re-derivation (Law L5), never here. Returns { kind, contentType }.
+export function dispatchRender(bytes, name) {
+  const obj = tryParseUor(bytes);
+  if (obj && obj.render) {
+    const r = selectRender(obj);
+    return { kind: r.kind, contentType: r.contentType || mimeOf(name) || sniff(bytes, name) };
+  }
+  const ct = mimeOf(name) || sniff(bytes, name);
+  return { kind: kindOfContentType(ct), contentType: ct };
+}
+// tryParseUor(bytes) → a UOR envelope object | null. A UOR object is canonical JSON-LD with @context + a
+// content-derived id; anything that does not parse as one is left to the byte sniffer untouched.
+function tryParseUor(bytes) {
+  try {
+    if (!bytes || bytes.length > 1 << 20) return null;            // contracts are tiny; don't parse large media
+    const o = JSON.parse(new TextDecoder("utf-8", { fatal: false }).decode(bytes));
+    return (o && o["@context"] && typeof o.id === "string" && o.id.startsWith("did:holo:")) ? o : null;
+  } catch { return null; }
 }
 
 // parseIpfsPath(rel) → { ns, root, path } | null. rel is the BASE-stripped path, e.g. "ipfs/<cid>/a/b.html".
@@ -247,4 +271,4 @@ export function ipfsErrorHtml(p, out) {
 <body><div class="c"><div class="g">⬡</div><div class="t">Couldn't resolve this object</div><div class="s">ipfs://${esc(p.root)}${p.path ? "/" + esc(p.path) : ""}</div><div class="r">${esc(out.reason || "no source served a verified copy")} · ${esc(out.status || 502)}</div></div></body></html>`;
 }
 
-export default { parseIpfsPath, makeGetBlock, resolveIpfsPath, directoryListingHtml, ipfsErrorHtml, injectNavReporter, navReporter, mimeOf, sniff };
+export default { parseIpfsPath, makeGetBlock, resolveIpfsPath, directoryListingHtml, ipfsErrorHtml, injectNavReporter, navReporter, mimeOf, sniff, dispatchRender };

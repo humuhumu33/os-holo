@@ -1,0 +1,27 @@
+{
+  "@type": "holo:WitnessResult",
+  "witness": "holo-discover",
+  "stage": 2,
+  "query": "history of ancient Rome",
+  "discoveredCid": "bafybeiejhmm3255mblybcrd64zdirenlztuwaljnyrbc6p7awarx6ll35m",
+  "entityId": "Q1747689",
+  "source": "wikidata",
+  "pass": 11,
+  "fail": 0,
+  "skip": 1,
+  "total": 11,
+  "ok": true,
+  "checks": {
+    "discover-returns-linked-data-candidates-for-a-meaning-qu-1": true,
+    "the-top-candidate-is-a-typed-entity-semantic-web-identit-2": true,
+    "discoverandseal-yields-a-sealed-object-for-the-query-3": true,
+    "the-discovered-cid-is-a-real-ipfs-object-sha256-cidv1-4": true,
+    "the-discovered-cid-is-deterministic-re-derivable-re-seal-5": true,
+    "the-gateway-resolves-the-discovered-object-to-its-index--6": true,
+    "resolved-re-derived-bytes-carry-the-discovered-content-e-7": true,
+    "a-tampered-block-is-refused-at-resolve-trust-recovered-n-8": true,
+    "corpus-is-empty-before-discovery-the-cid-was-not-pre-see-9": true,
+    "q-recall-ranks-the-discovered-non-seeded-object-for-the--10": true,
+    "the-fixture-fetch-was-actually-exercised-no-hidden-netwo-11": true
+  }
+}

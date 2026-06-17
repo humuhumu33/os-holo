@@ -1,0 +1,54 @@
+{
+  "@type": "holo:WitnessResult",
+  "witness": "holo-semantic",
+  "stage": 3,
+  "query": "history of ancient Rome",
+  "composedCid": "bafybeiczeulmu52f4g3zdtxfec6tbhzv4uaepmbyqvkfjt7qiv2q4dnh4a",
+  "probes": [
+    "history of ancient Rome",
+    "ancient Rome"
+  ],
+  "sources": [
+    {
+      "cid": "bafybeibsiyotfbqgbuztoy3xuq5vritggqivsm6pyncym453bylttnlwwq",
+      "title": "Ancient Rome",
+      "entityId": "Q1747689",
+      "source": "wikidata",
+      "ref": "https://www.wikidata.org/wiki/Q1747689"
+    },
+    {
+      "cid": "bafybeig7gihl3rpb4c4cbguk32zszwp4uspknnfz7pwzwmztzawqwwd2ba",
+      "title": "History of Rome",
+      "entityId": "Q830852",
+      "source": "wikidata",
+      "ref": "https://www.wikidata.org/wiki/Q830852"
+    },
+    {
+      "cid": "bafybeibin6vypjqleqql3gks65qmicoivlph6hodrzpotqzbwrg5oh4ddi",
+      "title": "Roman Empire",
+      "entityId": "Q2277",
+      "source": "wikidata",
+      "ref": "https://www.wikidata.org/wiki/Q2277"
+    }
+  ],
+  "pass": 13,
+  "fail": 0,
+  "skip": 1,
+  "total": 13,
+  "ok": true,
+  "checks": {
+    "query-expansion-yields-verbatim-qualifier-stripped-probe-1": true,
+    "orchestrator-returns-a-sealed-composed-page-2": true,
+    "rrf-correction-top-fused-source-is-the-canonical-entity--3": true,
+    "multiple-sources-sealed-each-a-real-ipfs-object-sha256-c-4": true,
+    "the-composed-page-resolves-re-derives-and-cites-every-so-5": true,
+    "every-cited-source-cid-independently-resolves-re-derives-6": true,
+    "a-tampered-source-block-is-refused-at-resolve-7": true,
+    "the-composed-page-cid-is-deterministic-re-derivable-8": true,
+    "opt-in-synthesis-adds-a-cited-prose-answer-mode-synthesi-9": true,
+    "the-deterministic-core-composes-without-a-model-mode-com-10": true,
+    "resolveunified-nl-lane-sealed-kind-semantic-object-live--11": true,
+    "resolveunified-nl-lane-unchanged-when-no-orchestrator-wi-12": true,
+    "the-fixture-fetch-was-actually-exercised-no-hidden-netwo-13": true
+  }
+}
