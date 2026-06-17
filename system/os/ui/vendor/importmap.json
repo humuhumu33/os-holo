@@ -1,7 +1,7 @@
 {
   "imports": {
-    "holo://sha256:298058dc3128f88f85607f1fa3b675343861e8c49c57008f9857831dbe6aab49": "./button.js",
-    "holo://sha256:74436b47124b30450006656e08ce12276cf5883a6f23f7a95377242c0d6a1760": "./react.js"
+    "holo://sha256:298058dc3128f88f85607f1fa3b675343861e8c49c57008f9857831dbe6aab49": "/ui/vendor/button.js",
+    "holo://sha256:74436b47124b30450006656e08ce12276cf5883a6f23f7a95377242c0d6a1760": "/ui/vendor/react.js"
   },
   "integrity": {
     "button": "298058dc3128f88f85607f1fa3b675343861e8c49c57008f9857831dbe6aab49",
