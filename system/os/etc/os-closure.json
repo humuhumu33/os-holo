@@ -1302,12 +1302,12 @@
       ]
     },
     "boot/boot-manifest.json": {
-      "kappa": "did:holo:sha256:59cb019ab6d9400234c41a1b0ee1b0436585a667b03b6c713393003fa9c02670",
-      "sri": "sha256-WcsBmrbZQAI0xBobDuGwQ2WFpmewO2xxM5MAP6nAJnA=",
-      "multibase": "uEiBZywGattlAAjTEGhsO4bBDZYWmZ7A7bHEzkwA_qcAmcA",
+      "kappa": "did:holo:sha256:fd02738c60c4e2b180ad371c07452b8e9c437cb553a85a22885155dce7a62338",
+      "sri": "sha256-/QJzjGDE4rGArTccB0UrjpxDfLVTqFoiiFFV3OemIzg=",
+      "multibase": "uEiD9AnOMYMTisYCtNxwHRSuOnEN8tVOoWiKIUVXc56YjOA",
       "bytes": 5406,
       "alsoKnownAs": [
-        "did:holo:blake3:1ccd489d7198e743ee02daef45c30d7385536a4bb521eb3e9c23a101ac26bf80"
+        "did:holo:blake3:46b6e88903743d24a12c26fe6e5b11f3264156177add24f1b62801541157a60e"
       ]
     },
     "boot/icons/banner.svg": {
@@ -2481,22 +2481,22 @@
       ]
     },
     "shell.html": {
-      "kappa": "did:holo:sha256:0c2f74d367bf56f050fa9fd61071370da1a28e5c2a368dc33148f66d6a2d77c5",
-      "sri": "sha256-DC9002e/VvBQ+p/WEHE3DaGijlwqNo3DMUj2bWotd8U=",
-      "multibase": "uEiAML3TTZ79W8FD6n9YQcTcNoaKOXCo2jcMxSPZtai13xQ",
-      "bytes": 573141,
+      "kappa": "did:holo:sha256:a96f11dafc49a5d48ef95fc49616b1aa29624f4b6b5e958689892a513a4a17d9",
+      "sri": "sha256-qW8R2vxJpdSO+V/ElhaxqiliT0trXpWGiYkqUTpKF9k=",
+      "multibase": "uEiCpbxHa_Eml1I75X8SWFrGqKWJPS2telYaJiSpROkoX2Q",
+      "bytes": 577241,
       "alsoKnownAs": [
-        "did:holo:blake3:e9f4e1c9aab733d71cb4e946c3230963b7d297284c273419badb8392ef95922a"
+        "did:holo:blake3:b9f2802add47da61ea402376afb125f923083f614563ec263f2b5580d90f3ee2"
       ],
       "holo:within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
       "holo:atlasCoordinate": {
         "space": "Φ-Atlas-12288",
         "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
-        "cell": 8746,
-        "page": 34,
-        "byte": 42,
-        "r96": 42,
-        "phi": 8746
+        "cell": 3810,
+        "page": 14,
+        "byte": 226,
+        "r96": 34,
+        "phi": 3810
       }
     },
     "_shared/holo-gov.js": {

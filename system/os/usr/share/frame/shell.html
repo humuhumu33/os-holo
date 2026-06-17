@@ -3279,6 +3279,12 @@
             border-radius:8px;height:28px;padding:0 11px;line-height:1;font:600 12px var(--win-font,system-ui);
             cursor:pointer;box-sizing:border-box}
           .cs-import:hover{background:#2d333b;border-color:#3d444d;color:#fff}
+          /* Select & edit — a toggle that arms point-and-edit on the live preview (Lovable's "select to edit") */
+          .cs-select{display:flex;align-items:center;gap:5px;white-space:nowrap;background:#21262d;color:#c9d1d9;border:1px solid #30363d;
+            border-radius:8px;height:28px;padding:0 11px;line-height:1;font:600 12px var(--win-font,system-ui);cursor:pointer;box-sizing:border-box;transition:background .12s,border-color .12s,color .12s}
+          .cs-select:hover{background:#2d333b;border-color:#3d444d;color:#fff}
+          .cs-select.on{background:color-mix(in srgb,var(--accent,#5b8cff) 26%,#161619);border-color:var(--accent,#5b8cff);color:#fff;box-shadow:0 0 0 1px var(--accent,#5b8cff) inset}
+          .cs-select:focus-visible{outline:2px solid var(--accent,#5b8cff);outline-offset:2px}
           /* the ONE collapse control — the same » chevron every right carriage wears */
           .cs-collapse{flex:0 0 auto;width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:#9a9aa2;
             font-size:17px;line-height:1;cursor:pointer;display:grid;place-items:center;box-sizing:border-box;transition:background .12s,color .12s,transform .12s}
@@ -3377,7 +3383,9 @@
               '<button id="cs-tab-dev" title="DevTools full F12 (Elements · Console · Sources · Network), κ-CDP backed">Dev</button></div>' +
               '<div class="cs-addr"><span class="dot" id="cs-dot"></span><span class="u" id="cs-url">' + csEsc(addr) + '</span>' +
                 '<span class="ai" id="cs-ext" title="Open in new tab">↗</span><span class="ai" id="cs-refresh" title="Refresh">⟳</span></div>' +
-              '<div class="cs-cact"><button class="cs-import" id="cs-import" title="Import any κ holo app · object · GitHub repo paste a link, it just works">↓ Import</button><button class="cs-done" id="cs-done">Publish</button>' +
+              '<div class="cs-cact">' +
+                (r.editable ? '<button class="cs-select" id="cs-select" type="button" aria-pressed="false" title="Select & edit — click any element in the live preview to change it">⊹ Select</button>' : '') +   // point-and-edit: arm Playground on the preview surface
+                '<button class="cs-import" id="cs-import" title="Import any κ holo app · object · GitHub repo paste a link, it just works">↓ Import</button><button class="cs-done" id="cs-done">Publish</button>' +
                 '<button class="cs-collapse" id="cs-collapse" type="button" title="Collapse" aria-label="Collapse panel">»</button></div></div>' +
             '<div class="cs-stagewrap">' +
               '<div class="cs-stage" id="cs-stage"><iframe id="cs-fa" sandbox="allow-scripts allow-same-origin"></iframe>' +
@@ -3439,6 +3447,14 @@
             if (e.key === "Tab") { e.preventDefault(); const a = ta.selectionStart, b = ta.selectionEnd; ta.value = ta.value.slice(0, a) + "  " + ta.value.slice(b); ta.selectionStart = ta.selectionEnd = a + 2; paint(); queue(); }
             else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); render(ta.value); toast("✦ saved · " + urlEl.textContent); } });
           studio.applyLive = function (src) { ta.value = src; paint(); render(src); liveEditNow(src); };
+          // syncFromSurface(src) — a point-and-edit (Playground) already rendered on the live surface; MIRROR
+          // it into the editor + κ tracking so Publish captures it and Code stays true. Does NOT re-render or
+          // liveEdit (the surface already shows it; re-deriving the same source is an O(1) κ no-op anyway).
+          studio.syncFromSurface = function (src) {
+            try { if (studio.setCode) studio.setCode(src); else { ta.value = src; paint(); } } catch (e) {}
+            studio.curSrc = src;
+            try { studio.lastSavedK = repo.publishSource({ name: (node && node.name) || "app", source: src }).id; setUrl(studio.lastSavedK); } catch (e) {}
+          };
           // -- reveal the hologram-native VS Code editor: the vendored, K-sealed CodeMirror 6 engine
           //    from Holo Notepad++ (one-dark = VS Code dark, real syntax/fold/bracket/search), loaded by
           //    content address, cached, mounted over the instant fallback. The doc IS the holospace K --
@@ -4035,6 +4051,21 @@
           inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); run(); } else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); } });   // Esc dismisses ONLY the import bar — stop it bubbling to the studio-level Esc (which would close all of Create)
         }
         $$("cs-import").onclick = csImport;
+        // ── Select & edit (point-and-edit): arm Holo Playground on the PREVIEW SURFACE ONLY (a targeted
+        //    message, not the global desktop mode), so clicking any element in the full-tab preview lets you
+        //    edit it live — by its right-click menu (edit source/text · duplicate · hide · delete). Each edit
+        //    re-renders the surface AND mirrors back into the studio (syncFromSurface) so Publish captures it. ──
+        function armSelect(on) {
+          try { const el = mounted.get(node.id); const f = el && el.querySelector("iframe");
+            if (f && f.contentWindow) f.contentWindow.postMessage({ t: "holo-live-edit", op: "playground-mode", surfaceId: node.id, on: !!on }, "*"); } catch (e) {}
+        }
+        { const selBtn = $$("cs-select");
+          if (selBtn) selBtn.addEventListener("click", function () {
+            studio.selectMode = !studio.selectMode;
+            selBtn.classList.toggle("on", studio.selectMode); selBtn.setAttribute("aria-pressed", studio.selectMode ? "true" : "false");
+            armSelect(studio.selectMode);
+            toast(studio.selectMode ? "⊹ Select on — click any element in the preview to edit it" : "Select off");
+          }); }
         $$("cs-sug-x").onclick = function () { $$("cs-suggest").remove(); };
         $$("cs-sug-go").onclick = function () { addMsg("assistant", "Your holospace is one self-contained, content-addressed object (holo://…) it loads instantly, runs serverless, and any guest can open it with no sign-in. Solid foundation. ✦"); };
         ov.addEventListener("keydown", function (e) { if (e.key === "Escape") { e.preventDefault(); closeCreate(true); } });
@@ -4058,6 +4089,9 @@
       function closeCreate(apply) {
         if (!studio) return; const s = studio; studio = null;
         document.body.classList.remove("cs-active");   // leaving Create mode → desktop Privacy shield may return
+        // disarm point-and-edit on the surface so the preview never lingers in Select mode after Create closes
+        try { if (s.selectMode && s.node) { const el = mounted.get(s.node.id); const f = el && el.querySelector("iframe");
+          f && f.contentWindow && f.contentWindow.postMessage({ t: "holo-live-edit", op: "playground-mode", surfaceId: s.node.id, on: false }, "*"); } } catch (e) {}
         (function reflow() { let n = 0; const t = setInterval(function () { try { dispatchEvent(new Event("resize")); } catch (e) {} if (++n >= 8) clearInterval(t); }, 45); })();
         try { if (apply && s.editable && s.node && s.ta) applyEdit(s.node.id, s.ta.value); } catch (e) { console.warn("create: apply", e); }
         // reverse lift — settle the preview back onto its desktop window
@@ -4818,6 +4852,13 @@
             return;
           }
           _pgHost.handle(ev);
+          // M1 point-and-edit: a Playground edit that landed on the CREATE preview surface → mirror it into
+          // the open studio (verified sender) so the editor + Publish capture the change, not stale source.
+          if (m && m.t === "holo-live-edit" && m.op === "reseal" && typeof m.source === "string"
+              && studio && studio.node && studio.node.id === m.surfaceId && studio.syncFromSurface) {
+            const el = mounted.get(m.surfaceId); const f = el && el.querySelector("iframe");
+            if (f && ev.source === f.contentWindow) studio.syncFromSurface(m.source);   // unforgeable: only the surface's own frame
+          }
         } catch (e) {}
       });
       // Playground is OPT-IN and OFF BY DEFAULT, and it ALWAYS boots OFF: an editing/play mode (right-click edit,
