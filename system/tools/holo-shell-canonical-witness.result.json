@@ -83,7 +83,7 @@
     {
       "name": "the shell is sealed in the OS-wide κ-route closure (a did:holo content address)",
       "ok": true,
-      "detail": "κ a96f11dafc49a5d4…"
+      "detail": "κ 9ee2b702a70a0eb5…"
     },
     {
       "name": "the served shell RE-DERIVES to its sealed κ — tamper-refused (Law L5)",
@@ -103,7 +103,7 @@
     {
       "name": "the shell is anchored on the unified UOR substrate (carries its did:holo:blake3 σ-axis κ)",
       "ok": true,
-      "detail": "blake3 b9f2802add47da61…"
+      "detail": "blake3 80976a2e97081c2c…"
     },
     {
       "name": "the served shell RE-DERIVES to its substrate κ via OS2 BLAKE3 (≡ substrate kappa(), Law L5 / CC-51)",

@@ -3192,7 +3192,7 @@
           /* the composer fills the dock; the mirror stage is GONE (the live desktop is the canvas). The
              chrome bar (Preview/Code · κ · Publish) sits on top in either mode; PREVIEW hides the code area
              (watch the live desktop), CODE hides the chat (edit source) — both apply live via liveEdit. */
-          .cs-chat{order:2;flex:1 1 auto;min-height:0;width:auto;max-width:none;display:flex;flex-direction:column;background:transparent;
+          .cs-chat{order:2;flex:1 1 auto;min-height:0;width:auto;max-width:none;display:flex;flex-direction:column;background:transparent;position:relative;
             border-top:1px solid var(--holo-glass-border,rgba(255,255,255,.1))}
           #create-studio.code .cs-chat,#create-studio.dev .cs-chat{display:none}   /* Code/Dev replace the chat in the dock */
           #create-studio .cs-stage{display:none}                                    /* the mirror is gone — the live desktop is the canvas */
@@ -3208,6 +3208,25 @@
           .cs-brand b{font-size:14px;display:flex;align-items:center;gap:5px}
           .cs-brand small{font-size:11px;color:#7c7c84;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
           .cs-chead .ic{margin-left:auto;display:flex;gap:12px;color:#7c7c84;font-size:16px}
+          .cs-chead .ic #cs-hist-btn:hover{color:#fff}
+          /* version history dropdown — anchored under the header inside the chat column */
+          .cs-history{position:absolute;left:12px;right:12px;top:58px;z-index:30;max-height:62%;overflow-y:auto;
+            background:var(--holo-surface,#15161a);border:1px solid var(--holo-border,#2a2a31);border-radius:13px;
+            box-shadow:0 18px 50px rgba(0,0,0,.5);padding:7px;display:flex;flex-direction:column;gap:2px}
+          .cs-hist-head{font:600 12px var(--win-font,system-ui);color:#9a9aa2;padding:6px 8px 8px;display:flex;align-items:center;gap:7px}
+          .cs-hist-head span{background:#26262d;border-radius:999px;padding:1px 8px;color:#cdd3df;font-size:11px}
+          .cs-hist-empty{color:#8b8b92;font-size:13px;padding:4px 8px 10px}
+          .cs-hist-row{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:transparent;border:0;
+            border-radius:9px;padding:8px 9px;cursor:pointer;color:#d2d2d8;font:13px var(--win-font,system-ui)}
+          .cs-hist-row:hover{background:#202028}
+          .cs-hist-row.cur{background:color-mix(in srgb,var(--accent,#5b8cff) 14%,transparent)}
+          .cs-hist-n{font-weight:700;color:#cdd3df;min-width:30px}
+          .cs-hist-lbl{color:#9a9aa2;text-transform:capitalize;flex:0 0 auto}
+          .cs-hist-k{font-family:var(--holo-font-mono,ui-monospace,monospace);color:#7c9cff;font-size:11.5px;margin-left:auto}
+          .cs-hist-tag{font-size:11px;border-radius:999px;padding:2px 8px;flex:0 0 auto}
+          .cs-hist-tag.cur{background:#1f3a2a;color:#34d399}
+          .cs-hist-tag.rev{background:#26262d;color:#cdd3df}
+          .cs-hist-row:hover .cs-hist-tag.rev{background:var(--accent,#5b8cff);color:#fff}
           .cs-thread{flex:1;overflow-y:auto;min-height:0;padding:6px 14px 4px;display:flex;flex-direction:column}
           .cs-msg{padding:0;margin:14px 0;font-size:14px;line-height:1.7;color:#d2d2d8}
           .cs-msg.assistant{font-style:italic;color:#cfcfd6}
@@ -3363,7 +3382,7 @@
         ov.innerHTML =
           '<div class="cs-chat">' +
             '<div class="cs-chead"><div class="cs-logo"></div><div class="cs-brand"><b>' + csEsc(name) + ' <span style="color:#7c7c84">⌄</span></b>' +
-              '<small>Previewing live</small></div><div class="ic"><span title="History">⟲</span><span title="Panel">▥</span></div></div>' +
+              '<small>Previewing live</small></div><div class="ic"><span id="cs-hist-btn" title="Version history — revert to any past edit" role="button" tabindex="0">⟲</span><span title="Panel">▥</span></div></div>' +
             '<div class="cs-thread" id="cs-thread">' + (r.editable   // a calm first-run invite — dissolves on the first real message (addMsg removes #cs-empty)
               ? '<div class="cs-empty" id="cs-empty"><div class="cs-empty-h">Your studio</div>' +
                 '<div class="cs-empty-sub">Describe it and it builds, live. Paste a GitHub repo to make it yours. Or drop in HTML and watch it run every change is a content-addressed κ. Publish when it\'s yours.</div>' +
@@ -3427,6 +3446,39 @@
             back.classList.add("on"); front.classList.remove("on"); dot.classList.remove("beat"); void dot.offsetWidth; dot.classList.add("beat"); };
           back.srcdoc = wrapDoc(src);
         }
+        // ── version history (free, from the substrate): every edit is already a content-addressed κ, so the
+        //    lineage costs nothing. We keep an ordered out-of-band log (κ + its source) at meaningful commits
+        //    — a build, a point-and-edit, a save, an import — and let you revert to any past version. This is
+        //    Lovable's version history; Holo gets it for nothing. Revert re-renders a past source; editing on
+        //    from there continues the κ chain (a branch is implicit, no fork bookkeeping needed). ──
+        studio.history = [];
+        function recordVersion(k, src, label) {
+          if (!k || src == null) return;
+          const h = studio.history;
+          if (h.length && h[h.length - 1].k === k) { h[h.length - 1].label = label || h[h.length - 1].label; return; }   // same κ → just relabel
+          h.push({ k: k, src: src, ts: Date.now(), label: label || "edit" });
+          if (h.length > 80) h.shift();   // bound the log
+        }
+        function toggleHistory() {
+          const existing = ov.querySelector("#cs-history"); if (existing) { existing.remove(); return; }
+          const p = document.createElement("div"); p.id = "cs-history"; p.className = "cs-history";
+          const h = studio.history;
+          if (!h.length) { p.innerHTML = '<div class="cs-hist-head">Versions</div><div class="cs-hist-empty">No versions yet your edits land here.</div>'; }
+          else {
+            p.innerHTML = '<div class="cs-hist-head">Versions <span>' + h.length + '</span></div>' +
+              h.slice().reverse().map(function (e, i) { const idx = h.length - i; const cur = e.k === studio.lastSavedK;
+                return '<button class="cs-hist-row' + (cur ? " cur" : "") + '" data-k="' + csEsc(e.k) + '">' +
+                  '<span class="cs-hist-n">v' + idx + '</span><span class="cs-hist-lbl">' + csEsc(e.label || "edit") + '</span>' +
+                  '<span class="cs-hist-k">holo://' + String(e.k).split(":").pop().slice(0, 7) + '…</span>' +
+                  (cur ? '<span class="cs-hist-tag cur">current</span>' : '<span class="cs-hist-tag rev">revert</span>') + '</button>'; }).join("");
+          }
+          ov.querySelector(".cs-chat").appendChild(p);
+          p.querySelectorAll(".cs-hist-row").forEach(function (row) { row.addEventListener("click", function () {
+            const k = row.dataset.k, e = studio.history.filter(function (x) { return x.k === k; })[0];
+            if (e && studio.applyLive) { studio.applyLive(e.src); recordVersion(studio.lastSavedK, e.src, "revert");
+              addMsg("assistant", 'Reverted to <span class="k">holo://' + String(k).split(":").pop().slice(0, 7) + '…</span> edit on to branch from here. ✦'); }
+            p.remove(); }); });
+        }
         // liveEditNow — drive the REAL mounted holospace through the liveEdit primitive (zero mirror): the
         // edit re-renders the live iframe in place + advances its κ, exactly as an agent's edit would. For an
         // app holospace this updates the actual running app; the Home/desktop case is the staged compositor.
@@ -3434,6 +3486,9 @@
         // initial mirror — EXACTLY the screen that was in the tab
         if (r.mirror.url) { fa.src = r.mirror.url; fa.classList.add("on"); }
         else { studio.lastK = repo.publishSource({ name: node.name || "app", source: r.src }).id; fa.srcdoc = r.mirror.srcdoc; fa.classList.add("on"); }
+        if (r.editable && r.src != null) recordVersion(studio.lastSavedK, r.src, "start");   // seed the version log with the opening source
+        { const hb = $$("cs-hist-btn"); if (hb) { hb.style.cursor = "pointer"; hb.addEventListener("click", toggleHistory);
+            hb.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleHistory(); } }); } }
         // ── code view (when editable) ──
         if (r.editable) {
           var paint = function () { hl.innerHTML = csHighlight(ta.value);
@@ -3445,7 +3500,7 @@
           ta.addEventListener("scroll", function () { hl.parentElement.scrollTop = ta.scrollTop; hl.parentElement.scrollLeft = ta.scrollLeft; gutter.scrollTop = ta.scrollTop; });
           ta.addEventListener("keydown", function (e) {
             if (e.key === "Tab") { e.preventDefault(); const a = ta.selectionStart, b = ta.selectionEnd; ta.value = ta.value.slice(0, a) + "  " + ta.value.slice(b); ta.selectionStart = ta.selectionEnd = a + 2; paint(); queue(); }
-            else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); render(ta.value); toast("✦ saved · " + urlEl.textContent); } });
+            else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); render(ta.value); recordVersion(studio.lastSavedK, ta.value, "save"); toast("✦ saved · " + urlEl.textContent); } });
           studio.applyLive = function (src) { ta.value = src; paint(); render(src); liveEditNow(src); };
           // syncFromSurface(src) — a point-and-edit (Playground) already rendered on the live surface; MIRROR
           // it into the editor + κ tracking so Publish captures it and Code stays true. Does NOT re-render or
@@ -3454,6 +3509,7 @@
             try { if (studio.setCode) studio.setCode(src); else { ta.value = src; paint(); } } catch (e) {}
             studio.curSrc = src;
             try { studio.lastSavedK = repo.publishSource({ name: (node && node.name) || "app", source: src }).id; setUrl(studio.lastSavedK); } catch (e) {}
+            recordVersion(studio.lastSavedK, src, "select-edit");
           };
           // -- reveal the hologram-native VS Code editor: the vendored, K-sealed CodeMirror 6 engine
           //    from Holo Notepad++ (one-dark = VS Code dark, real syntax/fold/bracket/search), loaded by
@@ -3482,7 +3538,7 @@
               const state = CM.EditorState.create({
                 doc: ta.value,
                 extensions: [
-                  CM.keymap.of([{ key: "Mod-s", preventDefault: true, run: function (v) { render(v.state.doc.toString()); toast("✦ saved · " + urlEl.textContent); return true; } }]),
+                  CM.keymap.of([{ key: "Mod-s", preventDefault: true, run: function (v) { const s = v.state.doc.toString(); render(s); recordVersion(studio.lastSavedK, s, "save"); toast("✦ saved · " + urlEl.textContent); return true; } }]),
                   CM.lineNumbers(), CM.highlightActiveLineGutter(), CM.highlightSpecialChars(),
                   CM.history(), CM.foldGutter(), CM.drawSelection(), CM.dropCursor(),
                   CM.EditorState.allowMultipleSelections.of(true), CM.indentOnInput(),
@@ -3922,6 +3978,7 @@
             if (stale()) return;                                          // canceled or superseded → drop it
             if (!res || !res.value) { if (m) m.innerHTML = 'Nothing came back for <b style="font-style:normal">' + csEsc(label) + '</b>.'; return; }
             (studio.applyLive ? studio.applyLive(res.value) : render(res.value)); studio.curSrc = res.value; studio.iterations = (studio.iterations || 0) + 1;
+            recordVersion(studio.lastSavedK, res.value, "import");
             try { window.HoloJourney && window.HoloJourney.mark("first-import"); } catch (e) {}   // Q Companion: the web became yours, on your terms
             const li = _lastImport;
             if (li && li.runnable) {
@@ -3955,6 +4012,12 @@
           const editing = (studio.iterations || 0) > 0;
           const _id = "create:" + ((node && node.id) || "app");
           const _params = { editing: editing, current: editing ? studio.curSrc : null };
+          // iterate-with-memory (M2): on a REFINE, ground the change in this build's own context via Q.recall.
+          // Best-effort + honest: any miss falls straight through, so the working path is never broken.
+          if (editing && Q && typeof Q.recall === "function") {
+            try { const rc = await Q.recall(prompt, { synthesize: false }); if (rc && rc.ok && (rc.answer || (rc.chunks && rc.chunks.length))) _params.recall = { answer: rc.answer || null, cited: (rc.chunks || []).length }; } catch (e) {}
+            if (stale()) return;
+          }
           let deltas = 0;
           const _onPartial = function (partial, e) {
             if (stale() || !partial) return; deltas++;
@@ -3963,12 +4026,21 @@
           };
           if (m && !editing) m.innerHTML = _csTplMsg(prompt) + ' <span style="color:#8b8b92">· waking the on-device model (first build loads it once)</span>';   // honest warm-up: the instant template is on screen, never a dead wait
           try {
-            const res = window.Q
+            let res = null;
+            // prefer the COMPOUND model on a refine (Q.fuse, ADR-0098) — higher quality where it matters most.
+            // Honest + safe: an unready panel returns a notice (no value) → we fall straight back to Q.create.
+            if (editing && Q && typeof Q.fuse === "function") {
+              try { const f = await Q.fuse(prompt, { id: _id, params: _params, onPartial: _onPartial });
+                if (!stale() && f && f.value) { res = f; studio._lastTier = "compound · fuse"; } } catch (e) {}
+              if (stale()) return;
+            }
+            if (!res) res = window.Q
               ? await window.Q.create(prompt, { id: _id, params: _params, onPartial: _onPartial })
               : await Q.create({ id: _id, task: "create", input: prompt, render: false, params: _params, onPartial: _onPartial });
             if (stale()) return;                                          // canceled or superseded → drop the result, keep what is on screen
             if (res && res.value) {
               (studio.applyLive ? studio.applyLive(res.value) : render(res.value)); studio.curSrc = res.value; studio.iterations = (studio.iterations || 0) + 1;
+              recordVersion(studio.lastSavedK, res.value, editing ? "refine" : "build");
               try { window.HoloJourney && window.HoloJourney.mark("first-creation"); } catch (e) {}   // Q Companion: you authored something → Q invites you to verify it
               const o1 = res.cached && res.cached !== false;
               const tier = o1 ? (res.cached + " · O(1) κ-memo") : (studio._lastTier || "template");
@@ -3997,7 +4069,7 @@
         function send() {
           if (studio.busy) return;                        // a run is in flight — the ■ Stop control is the only action until it ends
           const v = ask.value.trim(); if (!v) return; ask.value = ""; ask.style.height = "auto"; addMsg("user", csEsc(v));
-          if (studio.editable && /<\/?[a-z!][\s\S]*>/i.test(v)) { studio.applyLive(v); view("pv"); setTimeout(function () { addMsg("assistant", 'Rendered your changes ✓ <span class="k">' + urlEl.textContent + "</span>"); }, 60); }
+          if (studio.editable && /<\/?[a-z!][\s\S]*>/i.test(v)) { studio.applyLive(v); recordVersion(studio.lastSavedK, v, "paste"); view("pv"); setTimeout(function () { addMsg("assistant", 'Rendered your changes ✓ <span class="k">' + urlEl.textContent + "</span>"); }, 60); }
           else if (studio.editable && (repoRefShape(v) || isRepoRef(v))) {   // a GitHub URL → IMPORT the repo as a Holo app (ADR-0092); route on shape so a paste never silently builds
             view("pv");
             const m = addMsg("assistant", 'Importing <b style="font-style:normal">' + csEsc(v) + '</b>…');
