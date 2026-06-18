@@ -12,7 +12,7 @@
 //   3 · κ-route. /.holo/sha256/<hex> resolves a byte-set by content directly.
 //   4 · Cross-origin isolation. Stamp COOP/COEP/CORP so crossOriginIsolated works without headers.
 
-import { fhsMap } from "./lib/holo-fhs-map.mjs";
+import { fhsMap, devFreshAllowed } from "./lib/holo-fhs-map.mjs";
 import { blake3hex } from "./usr/lib/holo/holo-blake3.mjs";   // pure-JS BLAKE3 ≡ the substrate's kappo() (crypto.subtle has no BLAKE3)
 import { makeArchiveStore } from "./usr/lib/holo/holo-onnx-kstore.mjs";   // ADR-0101 Seam A: serve a content-addressed .holo model by its blake3 κ from the κ-store (IndexedDB), re-derived (L5)
 import { makeServer as makeMcpServer, descriptor as mcpDescriptor, buildAppRegistry as buildMcpAppRegistry } from "./usr/lib/holo/mcp/holo-mcp-core.mjs";   // the node-free MCP engine → the SW IS a serverless MCP endpoint
@@ -24,10 +24,16 @@ import { parseIpfsPath, makeGetBlock, resolveIpfsPath, directoryListingHtml, ipf
 import { OpfsKappaStore } from "./usr/lib/holo/holo-opfs-kappastore.mjs";   // -04- durable κ-store (OPFS): a persistence tier BEHIND KCACHE that survives Cache-Storage eviction (Law L3)
 
 const BASE = new URL(self.registration.scope).pathname;       // "/" at a root/user site, "/<repo>/" under a project site
-// DEV (localhost) — live source is edited on disk, so the closure's κ pins are intentionally stale.
-// In dev we serve PATH requests FRESH (no by-κ cache, no L5 refusal) so edits show without a reload;
-// κ-route requests stay content-addressed/cached (immutable by definition). Prod keeps full L1/L5.
-const DEV = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(self.location.hostname);
+// DEV-FRESH — live source is edited on disk, so the closure's κ pins are intentionally stale. In dev
+// we serve PATH requests FRESH (no by-κ cache, no L5 refusal) so edits show without a reload; κ-route
+// requests stay content-addressed/cached (immutable by definition). Prod keeps full L1/L5.
+//
+// L5 (audit M1): dev-fresh is an EXPLICIT opt-in, NEVER hostname alone. The sealed source ships
+// ALLOW_DEV_FRESH=false, so a production deploy keeps full re-derive+refuse even when served from a
+// localhost origin (a packaged app, a local proxy, a prod build run locally). Only the dev server
+// (tools/holo-serve-fhs.mjs) flips this true when it serves the SW — a deliberate dev action.
+const ALLOW_DEV_FRESH = false;
+const DEV = devFreshAllowed(ALLOW_DEV_FRESH, self.location.hostname);
 const COI = {
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Embedder-Policy": "credentialless",

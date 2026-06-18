@@ -1,7 +1,7 @@
 {
   "spec": "The Holo UI readability floor (ADR-0057, --holo-font-min) is ENFORCED across every served holospace application: no app may introduce a sub-floor px font-size in its authored shell beyond its committed baseline (a ratchet that only burns down).",
   "authority": "ADR-0057 (minimum text size) · ADR-0030 (Holo UI) · WCAG 2.2 (1.4.4 Resize Text) · the 'betterer' no-new-violations ratchet · static analysis of the served app repo",
-  "witnessed": true,
+  "witnessed": false,
   "covers": [
     "holo-ui",
     "font-min",
@@ -11,8 +11,101 @@
     "ratchet"
   ],
   "floor": 16,
-  "appsScanned": 42,
-  "baselinedTotal": 45,
-  "regressions": [],
+  "appsScanned": 46,
+  "baselinedTotal": 69,
+  "regressions": [
+    {
+      "app": "holo-3d",
+      "was": 0,
+      "now": 5,
+      "added": 5,
+      "sample": [
+        {
+          "line": 42,
+          "px": 14,
+          "snippet": "#screen > div { white-space:pre; font:14px monospace; color:#fff; }"
+        },
+        {
+          "line": 53,
+          "px": 12,
+          "snippet": "#panel .hint{ margin-top:.7rem; color:var(--dim); white-space:pre-wrap; font-size:12px;}"
+        },
+        {
+          "line": 56,
+          "px": 12,
+          "snippet": "background:rgba(13,17,23,.7); border:1px solid var(--line); border-radius:999px; padding:."
+        }
+      ]
+    },
+    {
+      "app": "holo-linux",
+      "was": 0,
+      "now": 11,
+      "added": 11,
+      "sample": [
+        {
+          "line": 134,
+          "px": 12,
+          "snippet": "border-radius: 5px; padding: 0.24rem 0.55rem; cursor: pointer; font: inherit; font-size: 1"
+        },
+        {
+          "line": 142,
+          "px": 12.5,
+          "snippet": "color: var(--fg); border-radius: 8px; padding: 0.5rem 0.85rem; font-size: 12.5px; opacity:"
+        },
+        {
+          "line": 153,
+          "px": 12,
+          "snippet": "#find .fc { color: var(--faint); font-size: 12px; min-width: 2.6rem; text-align: right; fo"
+        }
+      ]
+    },
+    {
+      "app": "holo-x86",
+      "was": 0,
+      "now": 4,
+      "added": 4,
+      "sample": [
+        {
+          "line": 26,
+          "px": 12,
+          "snippet": "padding: 0.35rem 0.85rem; background: #0b0e13; border-bottom: 1px solid var(--line); font-"
+        },
+        {
+          "line": 40,
+          "px": 14,
+          "snippet": "#screen > div { white-space: pre; font: 14px/1.06 \"Cascadia Mono\", Menlo, Consolas, monosp"
+        },
+        {
+          "line": 53,
+          "px": 12,
+          "snippet": "#panel .hint { margin-top: 0.8rem; color: var(--dim); white-space: pre-wrap; font-size: 12"
+        }
+      ]
+    },
+    {
+      "app": "surfacedemo",
+      "was": 0,
+      "now": 4,
+      "added": 4,
+      "sample": [
+        {
+          "line": 5,
+          "px": 13,
+          "snippet": "h3 { margin: 0 0 4px; } #status { font-size: 13px; opacity: .85; margin-bottom: 16px; }"
+        },
+        {
+          "line": 8,
+          "px": 12,
+          "snippet": ".lbl { font-size: 12px; opacity: .65; }"
+        },
+        {
+          "line": 10,
+          "px": 12,
+          "snippet": "pre { background: #111418; padding: 12px; border-radius: 8px; white-space: pre-wrap; margi"
+        }
+      ]
+    }
+  ],
   "improvements": []
 }

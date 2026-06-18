@@ -1,7 +1,7 @@
 {
   "spec": "Mobile conformance is ENFORCED across every served holospace application: the mechanics (48dp tap targets · 16px form controls · safe-area insets · no horizontal overflow · container-query window-size classes) are delivered automatically by the runtime-injected holo-mobile.css, and this ratchet fails the gate if any app introduces a NEW runtime-unfixable anti-pattern (100vh instead of 100dvh · a non-mobile or zoom-disabled viewport) beyond its committed baseline — so the corpus can only get MORE mobile-correct.",
   "authority": "WCAG 2.2 (§1.4.10 Reflow · §1.4.4 Resize Text · §2.5.8 Target Size) · Material Design 3 (48dp · adaptive window-size classes) · the 'betterer' no-new-violations ratchet · static analysis of the served app repo + the auto-injected runtime CSS layer",
-  "witnessed": true,
+  "witnessed": false,
   "covers": [
     "mobile",
     "touch-target",
@@ -13,8 +13,22 @@
     "ratchet",
     "a11y"
   ],
-  "appsScanned": 42,
-  "baselinedTotal": 17,
-  "regressions": [],
+  "appsScanned": 46,
+  "baselinedTotal": 18,
+  "regressions": [
+    {
+      "app": "surfacedemo",
+      "was": 0,
+      "now": 1,
+      "added": 1,
+      "sample": [
+        {
+          "rule": "no-viewport-meta",
+          "n": 1,
+          "note": "add <meta viewport width=device-width> (renders desktop-zoomed without it)"
+        }
+      ]
+    }
+  ],
   "improvements": []
 }

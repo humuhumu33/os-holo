@@ -246,15 +246,6 @@
         "did:holo:blake3:2629a63d9f2f5bac39499649f9bcf39b8455c760b46e94f753320c7d0e3fba06"
       ]
     },
-    "_shared/holo-capture.js": {
-      "kappa": "did:holo:sha256:2d53ce1c49fc48b844dc124639996cc9c3900c7f170c5a8b2432cefcb38af7ed",
-      "sri": "sha256-LVPOHEn8SLhE3BJGOZlsycOQDH8XDFqLJDLO/LOK9+0=",
-      "multibase": "uEiAtU84cSfxIuETcEkY5mWzJw5AMfxcMWoskMs78s4r37Q",
-      "bytes": 19532,
-      "alsoKnownAs": [
-        "did:holo:blake3:7533a12beb79f21ded9527c8ccc676e20e58ab3fba608814731c2b01ae410524"
-      ]
-    },
     "_shared/holo-collab.js": {
       "kappa": "did:holo:sha256:95525119b3406504eb9fde1503174f73519977810b9f1c523794b35c96ea0bef",
       "sri": "sha256-lVJRGbNAZQTrn94VAxdPc1GZd4ELnxxSN5SzXJbqC+8=",
@@ -271,24 +262,6 @@
       "bytes": 23494,
       "alsoKnownAs": [
         "did:holo:blake3:3dd20aa4b6b8aeed057e36285ae965eb2d03eecac9225b855060587c5a46f596"
-      ]
-    },
-    "_shared/holo-git.js": {
-      "kappa": "did:holo:sha256:72c6dbf1fc99475a5f6a03487ea7e0af32bb1b149436d7da9a4f7bf75f571ed1",
-      "sri": "sha256-csbb8fyZR1pfagNIfqfgrzK7GxSUNtfamk97919XHtE=",
-      "multibase": "uEiByxtvx_JlHWl9qA0h-p-CvMrsbFJQ219qaT3v3X1ce0Q",
-      "bytes": 38389,
-      "alsoKnownAs": [
-        "did:holo:blake3:8acb77af2ee20df0bb1e151383b5c4606af18e112c86943905ca8e39a106ea04"
-      ]
-    },
-    "_shared/holo-gitea.js": {
-      "kappa": "did:holo:sha256:590b49997966061b0382c89e3d092bccb09e9a8441a4c01edf9ff02dfbd792be",
-      "sri": "sha256-WQtJmXlmBhsDgsiePQkrzLCemoRBpMAe35/wLfvXkr4=",
-      "multibase": "uEiBZC0mZeWYGGwOCyJ49CSvMsJ6ahEGkwB7fn_At-9eSvg",
-      "bytes": 42839,
-      "alsoKnownAs": [
-        "did:holo:blake3:2500661f0003b3cbd0d764df8cd76bfd0826505b61081d1334eb13118d3387b5"
       ]
     },
     "_shared/holo-gpu.js": {
@@ -327,15 +300,6 @@
         "did:holo:blake3:04a0d5d588b91e1f3cc350c36152c26d4ad4f507bbcadcf3df641406716b481b"
       ]
     },
-    "_shared/holo-subsonic.js": {
-      "kappa": "did:holo:sha256:e714066ead15b5e498acac7c67a25d170b47fc183f6d8ab840f1e87a195f6a8b",
-      "sri": "sha256-5xQGbq0VteSYrKx8Z6JdFwtH/Bg/bYq4QPHoehlfaos=",
-      "multibase": "uEiDnFAZurRW15JisrHxnol0XC0f8GD9tirhA8eh6GV9qiw",
-      "bytes": 23654,
-      "alsoKnownAs": [
-        "did:holo:blake3:7dd1b79ba091d2d40d63dd8b337de883f13a98c881c55a47cef81a2edccfd87a"
-      ]
-    },
     "_shared/holo-memory.js": {
       "kappa": "did:holo:sha256:fcaaed0aca588d37c025166bf71abe74d1f23ccfbaf8a7a946d21cd817a74691",
       "sri": "sha256-/KrtCspYjTfAJRZr9xq+dNHyPM+6+KepRtIc2BenRpE=",
@@ -352,15 +316,6 @@
       "bytes": 25218,
       "alsoKnownAs": [
         "did:holo:blake3:1d608281446b96ca37e54399cd03c7d6622fcdfe931f09909ff3a9ee8fd33e79"
-      ]
-    },
-    "_shared/holo-roam.js": {
-      "kappa": "did:holo:sha256:2f44f2513b96dcb7d8b843a872d21013648d6d632cfa43bff570babb32e7ea52",
-      "sri": "sha256-L0TyUTuW3LfYuEOoctIQE2SNbWMs+kO/9XC6uzLn6lI=",
-      "multibase": "uEiAvRPJRO5bct9i4Q6hy0hATZI1tYyz6Q7_1cLq7MufqUg",
-      "bytes": 23322,
-      "alsoKnownAs": [
-        "did:holo:blake3:8507cb488ec1718bf1e95017eae9f6d2ad304708d334a5ffcec7418719045d5d"
       ]
     },
     "_shared/holo-zk.js": {
@@ -552,33 +507,6 @@
         "did:holo:blake3:c3b799788a22b60b6abbec1a9b98680283badeb2f259e4541189a3fa7432835d"
       ]
     },
-    "_shared/holo-obs.js": {
-      "kappa": "did:holo:sha256:76afc3e832806fa2e7a73bfe14f8cf6a6dc7f667a4ab59d308acc25c3c81f18d",
-      "sri": "sha256-dq/D6DKAb6Lnpzv+FPjPam3H9mekq1nTCKzCXDyB8Y0=",
-      "multibase": "uEiB2r8PoMoBvouenO_4U-M9qbcf2Z6SrWdMIrMJcPIHxjQ",
-      "bytes": 20542,
-      "alsoKnownAs": [
-        "did:holo:blake3:252f0788710023f2545c7d8aa79e035bf6b757a9fbcf5b74fbd4182797cdd610"
-      ]
-    },
-    "_shared/holo-owncast.js": {
-      "kappa": "did:holo:sha256:4e5f70986b872a4bf11a295a367f3d1572cf80344b5417c3b9d34b977bc90aae",
-      "sri": "sha256-Tl9wmGuHKkvxGilaNn89FXLPgDRLVBfDudNLl3vJCq4=",
-      "multibase": "uEiBOX3CYa4cqS_EaKVo2fz0Vcs-ANEtUF8O500uXe8kKrg",
-      "bytes": 9910,
-      "alsoKnownAs": [
-        "did:holo:blake3:1d2d28d760aab56bea9bf0453a07602ad99e58d513b352677b7e8db3258c0f99"
-      ]
-    },
-    "_shared/holo-pump.js": {
-      "kappa": "did:holo:sha256:96578eea512b71253392b6d097eb729c6b2b94f0882052ad43114804eb6d22e4",
-      "sri": "sha256-lleO6lErcSUzkrbQl+tynGsrlPCIIFKtQxFIBOttIuQ=",
-      "multibase": "uEiCWV47qUStxJTOSttCX63KcayuU8IggUq1DEUgE620i5A",
-      "bytes": 12708,
-      "alsoKnownAs": [
-        "did:holo:blake3:3f25e48c1e2a2f60ade306c59e4221e930f38c85ceb29a0fbe3ef477d64b0eb7"
-      ]
-    },
     "_shared/metamask/design-tokens.css": {
       "kappa": "did:holo:sha256:f790c5597eedd7c88af86cf57e45783b13ea15bea0e9f68dd938c6d0e3c61bdb",
       "sri": "sha256-95DFWX7t18iK+Gz1fkV4OxPqFb6g6faN2TjG0OPGG9s=",
@@ -696,24 +624,6 @@
       "bytes": 4910,
       "alsoKnownAs": [
         "did:holo:blake3:54bf7d392f6b4afe9a483330252ac5955686dfeca7043b08367ab21fdae7d34b"
-      ]
-    },
-    "holo-lan.mjs": {
-      "kappa": "did:holo:sha256:b6c1cf6df8d75f040bcc2b1849c88c7d3847bc0f73b335720c3fa4baa04d0865",
-      "sri": "sha256-tsHPbfjXXwQLzCsYSciMfThHvA9zszVyDD+kuqBNCGU=",
-      "multibase": "uEiC2wc9t-NdfBAvMKxhJyIx9OEe8D3OzNXIMP6S6oE0IZQ",
-      "bytes": 3252,
-      "alsoKnownAs": [
-        "did:holo:blake3:8d5d2139c0239faf95c12ee3e14571ae5194622dd405e474991a06b2794f7067"
-      ]
-    },
-    "holo-lan-relay-client.mjs": {
-      "kappa": "did:holo:sha256:1392207089f777a184dd8533320a0de51102c62abfdc2a22cd7c59364fca4623",
-      "sri": "sha256-E5IgcIn3d6GE3YUzMgoN5RECxiq/3CoizXxZNk/KRiM=",
-      "multibase": "uEiATkiBwifd3oYTdhTMyCg3lEQLGKr_cKiLNfFk2T8pGIw",
-      "bytes": 2578,
-      "alsoKnownAs": [
-        "did:holo:blake3:cae1d3eeb5fb13b82ae9364708212bd4ec70f6e072069835c1d2b548d6878047"
       ]
     },
     "_shared/holo-ipfs.js": {
@@ -1248,12 +1158,12 @@
       ]
     },
     "holo-fhs-sw.js": {
-      "kappa": "did:holo:sha256:80001f6be7ef7a1ef1a4d12314ce56d87aef9b9ca9fac10054cbd0a4183dd043",
-      "sri": "sha256-gAAfa+fveh7xpNEjFM5W2Hrvm5yp+sEAVMvQpBg90EM=",
-      "multibase": "uEiCAAB9r5-96HvGk0SMUzlbYeu-bnKn6wQBUy9CkGD3QQw",
-      "bytes": 45330,
+      "kappa": "did:holo:sha256:31271a2eac64b754d8bfc76f557f05a2bfe216d088158502fa03f12b84ed6a9b",
+      "sri": "sha256-MScaLqxkt1TYv8dvVX8For/iFtCIFYUC+gPxK4Ttaps=",
+      "multibase": "uEiAxJxourGS3VNi_x29VfwWiv-IW0IgVhQL6A_ErhO1qmw",
+      "bytes": 45749,
       "alsoKnownAs": [
-        "did:holo:blake3:21ecb5e8111862ce6247ca4de7d742bce5f05562950f73ad98a45db6517c7c36"
+        "did:holo:blake3:25f12ffdca395a5b5bff5711bee35531003d89db00ec360bcb4051445d481782"
       ]
     },
     "_shared/holo-fhs-map.mjs": {
@@ -1262,16 +1172,16 @@
       "multibase": "uEiCn4s6gJa2Ct5qqE6P9buWvKV9Ogznn1Cu2s6Ham5-YwA",
       "bytes": 3697,
       "alsoKnownAs": [
-        "did:holo:blake3:ce6818acc18c400f321f2644c92007511fea6762378729b3620a4a36edf06d92"
+        "did:holo:blake3:d3e3dcc7c28c666dfbad3c5b97272c05985149262335c1c5224f95dbe5164f3e"
       ]
     },
     "lib/holo-fhs-map.mjs": {
-      "kappa": "did:holo:sha256:030d796f1b7d1f5d46afe708fae75e74d0290d1a90ee872d39c3487e9ffb5230",
-      "sri": "sha256-Aw15bxt9H11Gr+cI+udedNApDRqQ7octOcNIfp/7UjA=",
-      "multibase": "uEiADDXlvG30fXUav5wj651500CkNGpDuhy05w0h-n_tSMA",
-      "bytes": 4217,
+      "kappa": "did:holo:sha256:2a4ddcd6573acb3d50f5c94060c7fd25134d820952678de5b227e69bd2280e74",
+      "sri": "sha256-Kk3c1lc6yz1Q9clAYMf9JRNNgglSZ43lsifmm9IoDnQ=",
+      "multibase": "uEiAqTdzWVzrLPVD1yUBgx_0lE02CCVJnjeWyJ-ab0igOdA",
+      "bytes": 4944,
       "alsoKnownAs": [
-        "did:holo:blake3:ce6818acc18c400f321f2644c92007511fea6762378729b3620a4a36edf06d92"
+        "did:holo:blake3:d3e3dcc7c28c666dfbad3c5b97272c05985149262335c1c5224f95dbe5164f3e"
       ]
     },
     "splash/splash-manifest.json": {
@@ -1689,21 +1599,21 @@
       ]
     },
     "_shared/holo-dock.js": {
-      "kappa": "did:holo:sha256:8729514ae24f91feabfbb412dffacfccb847fde488bfff2e665c0793f8b5cfb0",
-      "sri": "sha256-hylRSuJPkf6r+7QS3/rPzLhH/eSIv/8uZlwHk/i1z7A=",
-      "multibase": "uEiCHKVFK4k-R_qv7tBLf-s_MuEf95Ii__y5mXAeT-LXPsA",
-      "bytes": 65361,
+      "kappa": "did:holo:sha256:7c7e4c9bf3e858e1a52badc5672e829044037847f71736883d596f7685ad4444",
+      "sri": "sha256-fH5Mm/PoWOGlK63FZy6CkEQDeEf3FzaIPVlvdoWtREQ=",
+      "multibase": "uEiB8fkyb8-hY4aUrrcVnLoKQRAN4R_cXNog9WW92ha1ERA",
+      "bytes": 70158,
       "alsoKnownAs": [
-        "did:holo:blake3:13ce9c0578ba5426e04e1d40ef2456777c1e8c1f50f664f2b9f8261b52ff43c8"
+        "did:holo:blake3:cb417b9d6803711689f98a9fbdf3e620d5a9eccc3e192e08dc28869dc0f23274"
       ]
     },
     "_shared/holo-dock.css": {
-      "kappa": "did:holo:sha256:1841e287a3619fd4c75f65711c72acaff596f6ece0b0bc537a909bb3dcf1f2a3",
-      "sri": "sha256-GEHih6Nhn9THX2VxHHKsr/WW9uzgsLxTepCbs9zx8qM=",
-      "multibase": "uEiAYQeKHo2Gf1MdfZXEccqyv9Zb27OCwvFN6kJuz3PHyow",
-      "bytes": 33477,
+      "kappa": "did:holo:sha256:4ca0bff2dff104be20aa818ab3ba25fc5d146dda63758ac42968074cf7f3f9bb",
+      "sri": "sha256-TKC/8t/xBL4gqoGKs7ol/F0UbdpjdYrEKWgHTPfz+bs=",
+      "multibase": "uEiBMoL_y3_EEviCqgYqzuiX8XRRt2mN1isQpaAdM9_P5uw",
+      "bytes": 41981,
       "alsoKnownAs": [
-        "did:holo:blake3:b52dda782baa7dcfad8f122b8f9969cd5b6b3d702a7c9fcef85da7348f4156aa"
+        "did:holo:blake3:8dd204dd5298e4caf8419d91f42b1088fc48ef15f1b3a717c10fa38db687b778"
       ]
     },
     "_shared/holo-dock-config.json": {
@@ -2444,15 +2354,6 @@
         "did:holo:blake3:efd5eac8785ee6b7406f2e040de0fb73c4dc7068407b28f263f44c6beb94e90b"
       ]
     },
-    "_shared/holo-install.js": {
-      "kappa": "did:holo:sha256:75d102821acbbc97e9581b4284e3da90157a12ac49f0501e1a8d349d22831fa9",
-      "sri": "sha256-ddECghrLvJfpWBtChOPakBV6EqxJ8FAeGo00nSKDH6k=",
-      "multibase": "uEiB10QKCGsu8l-lYG0KE49qQFXoSrEnwUB4ajTSdIoMfqQ",
-      "bytes": 9734,
-      "alsoKnownAs": [
-        "did:holo:blake3:c70671cb2068ad9d6e092fd77e716a3d5bfc587e068335af7ad6f261901a78e7"
-      ]
-    },
     "_shared/holo-share-chrome.js": {
       "kappa": "did:holo:sha256:4796241429ff142a0e9c7d1df24ec78b2b34aedfa842c003f34cfd725e9dec0c",
       "sri": "sha256-R5YkFCn/FCoOnH0d8k7Hiys0rt+oQsAD80z9cl6d7Aw=",
@@ -2472,22 +2373,22 @@
       ]
     },
     "shell.html": {
-      "kappa": "did:holo:sha256:09db74267b30b7d5684f8faa1a9dbdfd3e08fe58ef1d4a4ece2b9cb9759c5f9d",
-      "sri": "sha256-Cdt0Jnswt9VoT4+qGp29/T4I/ljvHUpOziucuXWcX50=",
-      "multibase": "uEiAJ23QmezC31WhPj6oanb39Pgj-WO8dSk7OK5y5dZxfnQ",
-      "bytes": 589021,
+      "kappa": "did:holo:sha256:bf64a677513e8943d2f2e1169d173a2ab2a0738854921f6ec53029df5b186978",
+      "sri": "sha256-v2Smd1E+iUPS8uEWnRc6KrKgc4hUkh9uxTAp31sYaXg=",
+      "multibase": "uEiC_ZKZ3UT6JQ9Ly4RadFzoqsqBziFSSH27FMCnfWxhpeA",
+      "bytes": 599801,
       "alsoKnownAs": [
-        "did:holo:blake3:45aded07b5166246d051b10cd01cb958750d3b0e2f908a364c3a258a05f397d9"
+        "did:holo:blake3:0775734b6889c9896a9fe8152653a08c6196476c7bfd4ec5eb6a19963243fc6a"
       ],
       "holo:within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
       "holo:atlasCoordinate": {
         "space": "Φ-Atlas-12288",
         "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
-        "cell": 10201,
-        "page": 39,
-        "byte": 217,
-        "r96": 25,
-        "phi": 10201
+        "cell": 11370,
+        "page": 44,
+        "byte": 106,
+        "r96": 10,
+        "phi": 11370
       }
     },
     "_shared/holo-gov.js": {
@@ -3041,22 +2942,22 @@
       ]
     },
     "homepage.html": {
-      "kappa": "did:holo:sha256:852daf6d7649433eddf0c513a5f3897bb9ed9ff8e09958b9ef92ba22bf95b659",
-      "sri": "sha256-hS2vbXZJQz7d8MUTpfOJe7ntn/jgmVi575K6Ir+Vtlk=",
-      "multibase": "uEiCFLa9tdklDPt3wxROl84l7ue2f-OCZWLnvkroiv5W2WQ",
-      "bytes": 113985,
+      "kappa": "did:holo:sha256:f381b5efabd5da841153a08f66f638c15e2a116dc8679f06e702aef0f5528243",
+      "sri": "sha256-84G176vV2oQRU6CPZvY4wV4qEW3IZ58G5wKu8PVSgkM=",
+      "multibase": "uEiDzgbXvq9XahBFToI9m9jjBXioRbchnnwbnAq7w9VKCQw",
+      "bytes": 3093,
       "alsoKnownAs": [
-        "did:holo:blake3:9a999e978356b45c4aecd6662ebfe4cdaa8637dd360b48352d40d0ca7e50baba"
+        "did:holo:blake3:2f8d86b6609a4ee12c455d6de4668efd5ec9876e2e32f623f7480200439b1e32"
       ],
       "holo:within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
       "holo:atlasCoordinate": {
         "space": "Φ-Atlas-12288",
         "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
-        "cell": 6842,
-        "page": 26,
-        "byte": 186,
-        "r96": 90,
-        "phi": 6842
+        "cell": 3634,
+        "page": 14,
+        "byte": 50,
+        "r96": 50,
+        "phi": 3634
       }
     },
     "_shared/holo-appearance-boot.js": {
@@ -4365,23 +4266,68 @@
       ]
     },
     "wallet.html": {
-      "kappa": "did:holo:sha256:6a71ae5b6f9dff6300b35f58c168728c1638405688b45c78d5863b0d04016e71",
-      "sri": "sha256-anGuW2+d/2MAs19YwWhyjBY4QFaItFx41YY7DQQBbnE=",
-      "multibase": "uEiBqca5bb53_YwCzX1jBaHKMFjhAVoi0XHjVhjsNBAFucQ",
-      "bytes": 105222,
+      "kappa": "did:holo:sha256:731b9dcc144bfdb532d8e859a8950bbca4cca7fcf4841fcbb0813aa4b433cb62",
+      "sri": "sha256-cxudzBRL/bUy2OhZqJULvKTMp/z0hB/LsIE6pLQzy2I=",
+      "multibase": "uEiBzG53MFEv9tTLY6FmolQu8pMyn_PSEH8uwgTqktDPLYg",
+      "bytes": 110950,
       "alsoKnownAs": [
-        "did:holo:blake3:98193761f9b674d3194b4d340cb1b6d655b75f6af855f46778eabbbf38339b3c"
+        "did:holo:blake3:e095c555863a014b87fee4e1a252c187c2c7847bc8b004ba0886ebda53134648"
       ],
       "holo:within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
       "holo:atlasCoordinate": {
         "space": "Φ-Atlas-12288",
         "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
-        "cell": 6972,
-        "page": 27,
-        "byte": 60,
-        "r96": 60,
-        "phi": 6972
+        "cell": 5704,
+        "page": 22,
+        "byte": 72,
+        "r96": 72,
+        "phi": 5704
       }
+    },
+    "_shared/holo-render.js": {
+      "kappa": "did:holo:sha256:4f26a665b98ea307130bdc3c730a9022c51ca29e583328d6fb4bd5c8808e1ec3",
+      "sri": "sha256-TyamZbmOowcTC9w8cwqQIsUcop5YMyjW+0vVyICOHsM=",
+      "multibase": "uEiBPJqZluY6jBxML3DxzCpAixRyinlgzKNb7S9XIgI4eww",
+      "bytes": 23019,
+      "alsoKnownAs": [
+        "did:holo:blake3:4d9b318c52255a4dbff2a49579c6fac9c261dd47309b8beaae7571b978f4db16"
+      ]
+    },
+    "_shared/holo-surface.mjs": {
+      "kappa": "did:holo:sha256:b165dd8f6393ab4bee173943522ed144701077dc54827e1193f1d67c35272ed3",
+      "sri": "sha256-sWXdj2OTq0vuFzlDUi7RRHAQd9xUgn4Rk/HWfDUnLtM=",
+      "multibase": "uEiCxZd2PY5OrS-4XOUNSLtFEcBB33FSCfhGT8dZ8NScu0w",
+      "bytes": 24130,
+      "alsoKnownAs": [
+        "did:holo:blake3:d74808533df9b4c9de73c34dafac5ff7dfc0ef8bf788aa0734feb848c14fd3a6"
+      ]
+    },
+    "_shared/holo-memo.mjs": {
+      "kappa": "did:holo:sha256:67ae92bf0e51872ab843129e7ec79a4e7b5aa728faab2842f5d9824452e78e89",
+      "sri": "sha256-Z66Svw5Rhyq4QxKefseaTntapyj6qyhC9dmCRFLnjok=",
+      "multibase": "uEiBnrpK_DlGHKrhDEp5-x5pOe1qnKPqrKEL12YJEUueOiQ",
+      "bytes": 6557,
+      "alsoKnownAs": [
+        "did:holo:blake3:562e885c07996bb1e6399642dc8e9f5012cbfd71332908b93166471d95be09eb"
+      ]
+    },
+    "_shared/holo-compute.mjs": {
+      "kappa": "did:holo:sha256:687f6b4f40d027fe85fdcec3d0b6af5bf4ac15358b86d2ecf6a832c788fd7fbb",
+      "sri": "sha256-aH9rT0DQJ/6F/c7D0LavW/SsFTWLhtLs9qgyx4j9f7s=",
+      "multibase": "uEiBof2tPQNAn_oX9zsPQtq9b9KwVNYuG0uz2qDLHiP1_uw",
+      "bytes": 3600,
+      "alsoKnownAs": [
+        "did:holo:blake3:de3cb8f364f4aabc28deae40a1a04048888b04af84d5c829ed9a8fe58fe32640"
+      ]
+    },
+    "_shared/holo-blake3.mjs": {
+      "kappa": "did:holo:sha256:9d550953b127701d9f2287554929f584b478ad31dc9faddcc1105c0976b76ccb",
+      "sri": "sha256-nVUJU7EncB2fIodVSSn1hLR4rTHcn63cwRBcCXa3bMs=",
+      "multibase": "uEiCdVQlTsSdwHZ8ih1VJKfWEtHitMdyfrdzBEFwJdrdsyw",
+      "bytes": 6885,
+      "alsoKnownAs": [
+        "did:holo:blake3:baed532b9bd0c4fd713a55afe79cd0af6e1f66119f8e756ab5eb086005e342dd"
+      ]
     }
   }
 }

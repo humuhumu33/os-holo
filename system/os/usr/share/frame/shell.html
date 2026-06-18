@@ -3,15 +3,22 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <!-- MOBILE = the clean home, never the desktop. Phones/touch land on home-screen.html (clock · apps ·
+    <!-- MOBILE = the clean home, never the desktop. A real PHONE lands on home-screen.html (clock · apps ·
          Q) — all desktop complexity (tabs · omnibar · dock) is abstracted away. Synchronous + first, so
          we hand off before any shell work begins. Escape hatch: ?desktop=1 forces the full desktop; the
-         session query carries across. location.replace → no shell entry in history (Back won't loop). -->
+         session query carries across. location.replace → no shell entry in history (Back won't loop).
+
+         "Phone" is gated on a SMALL physical viewport, not merely a coarse pointer: a touchscreen
+         DESKTOP/laptop reports pointer:coarse yet has a large screen and must keep the full desktop. So we
+         require coarse AND a short side ≤ 600px (catches a handset in portrait OR landscape); a very narrow
+         desktop window (width ≤ 600) still gets the clean home too. -->
     <script>
       (function () {
         try {
-          var coarse = (window.matchMedia && matchMedia("(pointer: coarse)").matches) || innerWidth <= 600;
-          if (coarse && !/[?&]desktop=1\b/.test(location.search)) location.replace("home-screen.html" + location.search);
+          var phone =
+            (window.matchMedia && matchMedia("(pointer: coarse)").matches && Math.min(innerWidth, innerHeight) <= 600)
+            || innerWidth <= 600;
+          if (phone && !/[?&]desktop=1\b/.test(location.search)) location.replace("home-screen.html" + location.search);
         } catch (e) {}
       })();
     </script>
@@ -75,7 +82,7 @@
     <script type="module" src="/_shared/holo-compute.mjs"></script>
     <!-- Holo Sheet — the ONE OS modal primitive (window.HoloSheet): the launcher-clean centred card
          every choice / confirm / alert routes through. Pure <dialog> + --holo-* tokens, no deps. -->
-    <script src="/_shared/holo-sheet.js"></script>
+    <script defer src="/_shared/holo-sheet.js"></script>
     <!-- measurement harness — ONLY with ?metrics=1, so it never touches the default experience. -->
     <script>try{if(new URLSearchParams(location.search).has("metrics"))import("/_shared/holo-metrics.mjs");}catch(e){}</script>
     <!-- Holo Dock (ADR-0059): the universal native-feel bottom dock — the one consistent bar across
@@ -254,6 +261,10 @@
       /* tab manipulation — rearrange · group · detach (the Chrome-grade gesture, fully in-page) */
       #tabstrip .tab.grouped { border-bottom: 2px solid var(--tg, var(--accent)); }
       #tabstrip .tab.group-target { box-shadow: inset 0 0 0 2px var(--accent); }
+      /* a DEV tab (a build-in-progress, unpublished holospace) — a subtle, provisional cue: a dashed
+         accent underline (vs a group's solid bar) + an accent-tinted ✦ mark. Sheds it all on Publish. */
+      #tabstrip .tab.dev { border-bottom: 2px dashed color-mix(in srgb, var(--accent) 65%, transparent); }
+      #tabstrip .tab.dev .t-fav { color: var(--accent); opacity: 1; }
       #tabghost { position: fixed; z-index: 240; pointer-events: none; opacity: .92; display: flex; align-items: center; gap: 7px; padding: 0 10px; border-radius: var(--holo-radius, 9px); background: var(--holo-surface-2); color: var(--holo-ink); font: var(--holo-text-sm, 1rem) var(--win-font); box-shadow: 0 12px 32px rgba(0, 0, 0, .55); transform: scale(1.03); white-space: nowrap; }
       #tabdrop { position: fixed; z-index: 241; width: 3px; border-radius: 999rem; background: var(--accent); box-shadow: 0 0 8px var(--accent); pointer-events: none; display: none; }
       #tabdetach { position: fixed; z-index: 242; pointer-events: none; padding: 5px 11px; border-radius: 999rem; background: var(--accent); color: white; font: var(--holo-text-sm, 1rem) var(--win-font); font-weight: 600; opacity: 0; transition: opacity .1s ease; }
@@ -679,9 +690,9 @@
          holds nothing and must ask the host (holo-gov.js brokers it, stamping the recipient from what
          it mounted). holo-gov.js then SURFACES one shield per focused app — Terms (left) · Privacy
          (right) — so enforcement is visible. Universal by construction (holo-app-governed-witness). -->
-    <script src="/_shared/holo-terms.js" data-holo-shared="holo-terms.js"></script>
-    <script src="/_shared/holo-privacy.js" data-holo-shared="holo-privacy.js"></script>
-    <script src="/_shared/holo-gov.js" data-holo-shared="holo-gov.js"></script>
+    <script defer src="/_shared/holo-terms.js" data-holo-shared="holo-terms.js"></script>
+    <script defer src="/_shared/holo-privacy.js" data-holo-shared="holo-privacy.js"></script>
+    <script defer src="/_shared/holo-gov.js" data-holo-shared="holo-gov.js"></script>
   </head>
   <body>
     <div id="tabstrip" role="tablist" aria-label="Tabs"><button id="newtab" type="button" title="New tab" aria-label="New tab">+</button><button id="identity-btn" type="button" title="Sign in to access your wallet" aria-label="Sign in to access your wallet"><span class="ib-av" id="ib-av"></span><span class="ib-nm" id="ib-nm">Sign in</span></button><button id="notif-btn" type="button" title="Notifications" aria-label="Notifications" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button><button id="fullscreen-btn" type="button" title="Full screen" aria-label="Full screen"></button></div>
@@ -776,20 +787,37 @@
       import { capabilitiesToSandbox, linkFor } from "/holo-launch.mjs";
       import { classify, matches } from "/holo-omni.mjs";
       import { resolveAny, parseRef } from "/sbin/holo-omni-object.mjs";   // the discovery-backed κ-resolver (trustless gateways + Delegated Routing V1)
-      import { parseWeb3Ref, resolveWeb3 } from "/sbin/holo-omni-web3.mjs";   // the web3 leg: ENS · accounts · tokens · tx · CAIP → one sealed κ-card (governed read, hosc:Egress receipt)
       import { record as omniRemember, search as omniRecent } from "/sbin/holo-omni-index.mjs";   // the omnibar's MEMORY: it remembers + ranks everything you've opened (private, instant, holo-rank-aware)
       import { askPrivate as omniAsk, indexObject as omniIndexObject } from "/sbin/holo-omni-q.mjs";   // the omnibar's PRIVATE INTELLIGENCE: Q.recall (model-free BM25 ⊕ κ-graph) over your resolved corpus — ask a question, get YOUR stuff, on-device
-      import { classifyMedia, resolveMediaSource, mediaMime } from "/sbin/holo-media.mjs";   // the omnibar's MEDIA lane: a media address → κ-anchored streaming player (native Range/206 seeking; honest platform fallback)
-      import { web3CardDoc } from "/sbin/holo-omni-web3-card.mjs";            // render that κ-card as a verified inline tab
-      import { parseOnionRef, validateOnion, resolveOnion } from "/sbin/holo-omni-onion.mjs";   // the onion leg (ADR-0104): Tor v3 .onion → validated κ-card; browses via a configured transport (gateway · SOCKS5)
-      import { searchOnionWeb } from "/sbin/holo-onion-discover.mjs";   // discover: free-text → onion results via a clearnet onion index (Ahmia), each opens through the validated onion path
+      // PERF — the omnibar's HEAVY resolver legs are NOT loaded at boot. web3 (→ holo-eth · holo-solana ·
+      // holo-ipfs), onion (→ Tor transport), onion-discover and media are only needed once you FOCUS the
+      // omnibar and type/submit an address of that kind. They're lazy-loaded on first omnibar focus (and
+      // awaited at every resolve/dispatch entry point as a safety net), keeping the blockchain/onion/media
+      // stack (~0.3MB + its transitive chain crypto) off the boot path of a shell that hosts every app. The
+      // lightweight classifier (holo-omni.mjs · holo-omni-object.mjs) stays eager so as-you-type stays instant.
+      let parseWeb3Ref, resolveWeb3, web3CardDoc, parseOnionRef, validateOnion, resolveOnion, searchOnionWeb, classifyMedia, resolveMediaSource, mediaMime, searchDirectory;
+      let _omniLegsP = null;
+      function ensureOmniLegs() {
+        if (_omniLegsP) return _omniLegsP;
+        _omniLegsP = Promise.all([
+          import("/sbin/holo-omni-web3.mjs"), import("/sbin/holo-omni-web3-card.mjs"),
+          import("/sbin/holo-omni-onion.mjs"), import("/sbin/holo-onion-discover.mjs"), import("/sbin/holo-media.mjs"),
+          import("/_shared/holo-dweb.js"),   // the federated directory lane (knowledge · ENS · dapps · apps) — pulls holo-ipfs; only used in as-you-type suggestions, so off the boot path
+        ]).then(([w3, w3c, on, ond, md, dw]) => {
+          ({ parseWeb3Ref, resolveWeb3 } = w3); ({ web3CardDoc } = w3c);
+          ({ parseOnionRef, validateOnion, resolveOnion } = on); ({ searchOnionWeb } = ond);
+          ({ classifyMedia, resolveMediaSource, mediaMime } = md); ({ searchDirectory } = dw);
+        }).catch((e) => { console.warn("[omni] resolver legs failed to load:", (e && e.message) || e); });
+        return _omniLegsP;
+      }
       import { mountEgressConnect } from "/usr/share/holo-web-recorder/holo-egress-connect.mjs";   // "Connect the web" icon by the omnibar: live egress status + simplest install path
       import { resolveBootResume } from "/_shared/holo-workspace-sync-ui.mjs";   // Holo Workspace Sync (ADR-0105): boot-resume a #wks link / ?wks token (the sealer is dynamic-imported on use)
       import { createAside, registerAsideCloser, closeAllAsides, syncDockWidth } from "/_shared/holo-aside.mjs";   // Holo Aside: the ONE right side-carriage template shared by Create · Play · Share · Notify · Wallet (golden scale · slide · collapse chevron · single-open)
       import { mountShare } from "/_shared/holo-share-ui.mjs";   // Holo Share (ADR-0109): the ❤️ Share verb, rendered in the shared carriage — one link · file · sovereign cloud
       import { mountNotifications } from "/_shared/holo-notify.mjs";   // Holo Notify: the ONE notification surface — quiet toast → persistent Center carriage; home for Q's notes (window.HoloNotify)
       import { mountPlay } from "/_shared/holo-play-ui.mjs";   // Holo Play (ADR-0109): the ▶ Play verb — an immersive browse rail (categories + titles) in the shared carriage, launching holospaces live
-      import { searchDirectory } from "/_shared/holo-dweb.js";       // the federated directory: knowledge · ENS · dapps · apps — one content-addressed object graph
+      // searchDirectory (holo-dweb, → holo-ipfs) is loaded lazily with the omnibar legs (ensureOmniLegs, above) —
+      // it's only used in as-you-type suggestions, so it no longer pulls holo-ipfs onto the boot path.
       import { profileFor } from "/_shared/holo-platform.js";
       import { createKeymap, renderKeyboard } from "/_shared/holo-keys.js";
       import { createAutomation } from "/_shared/holo-auto.js";
@@ -1463,10 +1491,10 @@
         const strip = $("#tabstrip"), nt = $("#newtab");
         [...strip.querySelectorAll(".tab")].forEach((t) => t.remove());
         tabs.forEach((t, i) => {
-          const el = document.createElement("button"); el.type = "button"; el.className = "tab" + (i === activeTab ? " active" : "") + (t.pinned ? " pinned" : ""); el.setAttribute("role", "tab");
+          const el = document.createElement("button"); el.type = "button"; el.className = "tab" + (i === activeTab ? " active" : "") + (t.pinned ? " pinned" : "") + (t.dev ? " dev" : ""); el.setAttribute("role", "tab");
           const title = dropHolo((t.title || "New Tab").replace(/^🌐\s*/, ""));
-          const fav = document.createElement("span"); fav.className = "t-fav"; fav.textContent = t.home ? "⌂" : (t.addr ? schemeOf(t.addr).ic : "✦");
-          el.append(fav); el.title = (t.addr ? t.addr + " " : "") + title;
+          const fav = document.createElement("span"); fav.className = "t-fav"; fav.textContent = t.home ? "⌂" : (t.dev ? "✦" : (t.addr ? schemeOf(t.addr).ic : "✦"));
+          el.append(fav); el.title = (t.dev ? "Dev — building, not yet published · " : "") + (t.addr ? t.addr + " " : "") + title;
           if (!t.pinned) { const ttl = document.createElement("span"); ttl.className = "t-ttl"; ttl.textContent = title; el.append(ttl); }   // pinned = favicon only
           if (t.group && tabGroups[t.group]) { el.classList.add("grouped"); el.style.setProperty("--tg", tabGroups[t.group].color); }   // a Chrome-style colored tab group
           if (t.home) el.classList.add("home");   // the Home tab is permanent — no close button (selection + drag are delegated)
@@ -1497,6 +1525,11 @@
         resources: function () { navApp("org.hologram.HoloDocs"); },
         // generic openers the desktop launch tiles (Holo Widgets, ADR-0095/modes) call by app id
         openApp: function (appId, title) { try { return openHolospaceApp(appId, "", title || ""); } catch (e) {} },
+        // ── new-tab openers — the left NAV routes every launch through these so a click ALWAYS opens a
+        //    fresh, focused holospace tab (never hijacks the current surface) ──
+        openTab: function (appId, title, query) { try { newTab(title || ""); return openHolospaceApp(appId, query || "", title || ""); } catch (e) {} },
+        newTab: function () { try { newTab(); recordNav(); const o = $("#omni-addr"); if (o) o.focus(); } catch (e) {} },           // a fresh empty holospace tab, omnibar focused
+        searchTab: function () { try { newTab(""); recordNav(); } catch (e) {} const o = $("#omni-addr"); if (o) { o.focus(); o.select && o.select(); } },   // a fresh tab, ready to search
         wallet: function () { try { return window.HoloWallet && window.HoloWallet.open(); } catch (e) {} },   // the wallet is core OS chrome (the docked sovereign vault), not a catalog app — always opens the same surface
         q: function () { try { return window.Q && window.Q.summon && window.Q.summon(); } catch (e) {} },
       });
@@ -1517,13 +1550,32 @@
       function inTabSearch(q) { const t = tabs[activeTab]; return !!(t && t.appSearch && !isAddrLike(q)); }
       function forwardSearch(q) { const f = activeAppFrame(); if (f && f.contentWindow) { try { f.contentWindow.postMessage({ type: "holo:search", q: q }, "*"); } catch {} } }
       addEventListener("message", (e) => { const d = e.data; if (!d || d.type !== "holo:search:ready") return; const f = activeAppFrame(); if (f && e.source === f.contentWindow) { const t = tabs[activeTab]; if (t) { t.appSearch = true; t.searchLabel = d.app || cleanName(t.title); updateScope(); } } });
-      function selectTab(i) { if (i === activeTab || !tabs[i]) return; exitStudio(true); tabs[activeTab].snap = snapshotWorld(); activeTab = i; restoreWorld(tabs[i].snap); applyWidgets(i); renderTabs(); reflectOmni(); updateNav(); scheduleSave(); }
-      function newTab(title) { exitStudio(true); tabs[activeTab].snap = snapshotWorld(); tabs.push({ id: "t" + tabs.length + Math.random().toString(36).slice(2, 5), title: title || "New Tab", addr: "", snap: null }); activeTab = tabs.length - 1; restoreWorld(null); applyWidgets(activeTab); renderTabs(); reflectOmni(); updateNav(); scheduleSave(); return activeTab; }
+      function selectTab(i) { if (i === activeTab || !tabs[i]) return; exitStudio(true); tabs[activeTab].snap = snapshotWorld(); activeTab = i; restoreWorld(tabs[i].snap); applyWidgets(i); applyTabWall(tabs[i]); renderTabs(); reflectOmni(); updateNav(); scheduleSave(); }
+      function newTab(title) { exitStudio(true); tabs[activeTab].snap = snapshotWorld(); tabs.push({ id: "t" + tabs.length + Math.random().toString(36).slice(2, 5), title: title || "New Tab", addr: "", snap: null }); activeTab = tabs.length - 1; restoreWorld(null); applyWidgets(activeTab); applyTabWall(tabs[activeTab]); renderTabs(); reflectOmni(); updateNav(); scheduleSave(); return activeTab; }
+      // ── DEV TAB — Create opens its build-screen preview in its OWN fresh tab (not an overlay on the
+      //    originating tab). It stays a `dev` tab — a sandboxed build canvas, marked with a subtle cue —
+      //    until Publish seals it to an isolated, content-addressed κ holo app (publishDevTab). Every dev
+      //    tab is born on the canonical default ("Original") wallpaper, regardless of the desktop's pick. ──
+      function newDevTab(title) {
+        exitStudio(true); tabs[activeTab].snap = snapshotWorld();
+        const t = { id: "t" + tabs.length + Math.random().toString(36).slice(2, 5), title: title || "Untitled", addr: "", snap: null, dev: true };
+        tabs.push(t); activeTab = tabs.length - 1;
+        restoreWorld(null); applyWidgets(activeTab); applyTabWall(t);
+        renderTabs(); reflectOmni(); updateNav(); scheduleSave(); return activeTab;
+      }
+      // Publish: a dev tab graduates into a sealed κ holospace tab — drop the dev cue + its forced
+      // wallpaper, adopt the κ as the tab's address. Called from the studio's Publish action.
+      function publishDevTab(k) {
+        const t = tabs[activeTab]; if (!t || !t.dev || !k) return;
+        t.dev = false; delete t.wallK;
+        t.addr = "holo://" + String(k).split(":").pop();
+        renderTabs(); reflectOmni(); applyTabWall(t); scheduleSave();
+      }
       function closeTab(i) {
         if (!tabs[i] || tabs[i].home || tabs.length <= 1) return;   // the Home tab is permanent
         const wasActive = i === activeTab; tabs.splice(i, 1);
         if (activeTab > i || activeTab >= tabs.length) activeTab = Math.max(0, activeTab - 1);
-        if (wasActive) { restoreWorld(tabs[activeTab].snap); applyWidgets(activeTab); }
+        if (wasActive) { restoreWorld(tabs[activeTab].snap); applyWidgets(activeTab); applyTabWall(tabs[activeTab]); }
         renderTabs(); reflectOmni(); updateNav(); scheduleSave();
       }
       const setActiveTabTitle = (t) => { if (tabs[activeTab]) { tabs[activeTab].title = String(t || "").split("  ·  ")[0].slice(0, 40); renderTabs(); scheduleSave(); } };
@@ -1657,6 +1709,10 @@
           }});
           aside.body.insertAdjacentHTML("beforeend", '<iframe class="wallet-frame" title="Holo Wallet"></iframe>');
           frame = aside.body.querySelector("iframe");
+          // The wallet carries its OWN top bar (◈ Holo Wallet · κ✓ · sites · settings · collapse), so the
+          // shared carriage header would just duplicate it as a second "Wallet »" strip. Suppress it for the
+          // wallet only — the iframe's bar becomes the single, full-bleed header and its » posts close-wallet.
+          try { if (aside.header) aside.header.style.display = "none"; } catch (e) {}
           return aside;
         }
         async function mount() {
@@ -1697,6 +1753,7 @@
           if (e.origin !== location.origin || !e.data || e.data.type !== "holo-identity") return;
           const a = e.data.action;
           if (a === "open-wallet") { try { window.HoloWallet && window.HoloWallet.open(); } catch (_) {} }   // Money
+          else if (a === "close-wallet") { try { window.HoloWallet && window.HoloWallet.close(); } catch (_) {} }   // wallet's own » collapse (it owns the single bar)
           else if (a === "open-q") { const o = $("#holo-orb"); if (o) o.click(); }                            // Intelligence (Holo Q)
           else if (a === "open-network") { const s = $("#share-btn"); if (s) s.click(); }                     // Network (peer-to-peer share)
           else if (a === "signed-in" || a === "signed-out") { setTimeout(() => location.reload(), 200); }
@@ -1892,11 +1949,11 @@
         document.addEventListener("pointerup", onTabUp, true);
       });
       // Chrome's tab context-menu actions (native to the substrate: "new window" = a window on your desktop)
-      function newTabAt(idx) { exitStudio(true); tabs[activeTab].snap = snapshotWorld(); const t = { id: "t" + tabs.length + Math.random().toString(36).slice(2, 5), title: "New Tab", addr: "", snap: null }; tabs.splice(Math.max(1, Math.min(idx, tabs.length)), 0, t); activeTab = tabs.indexOf(t); restoreWorld(null); applyWidgets(activeTab); renderTabs(); reflectOmni(); recordNav(); }
+      function newTabAt(idx) { exitStudio(true); tabs[activeTab].snap = snapshotWorld(); const t = { id: "t" + tabs.length + Math.random().toString(36).slice(2, 5), title: "New Tab", addr: "", snap: null }; tabs.splice(Math.max(1, Math.min(idx, tabs.length)), 0, t); activeTab = tabs.indexOf(t); restoreWorld(null); applyWidgets(activeTab); applyTabWall(t); renderTabs(); reflectOmni(); recordNav(); }
       function reflowPins() { const a = tabs[activeTab]; const home = tabs.filter((t) => t.home), pin = tabs.filter((t) => !t.home && t.pinned), rest = tabs.filter((t) => !t.home && !t.pinned); tabs.length = 0; tabs.push(...home, ...pin, ...rest); activeTab = Math.max(0, tabs.indexOf(a)); }
       function togglePin(i) { if (!tabs[i] || tabs[i].home) return; tabs[i].pinned = !tabs[i].pinned; reflowPins(); renderTabs(); reflectOmni(); }
-      function closeOthers(i) { const keep = tabs[i]; if (!keep) return; tabs[activeTab].snap = snapshotWorld(); for (let j = tabs.length - 1; j >= 1; j--) if (tabs[j] !== keep && !tabs[j].home) tabs.splice(j, 1); activeTab = Math.max(0, tabs.indexOf(keep)); restoreWorld(tabs[activeTab].snap); applyWidgets(activeTab); renderTabs(); reflectOmni(); }
-      function closeRight(i) { tabs[activeTab].snap = snapshotWorld(); const wasRight = activeTab > i; for (let j = tabs.length - 1; j > i; j--) if (!tabs[j].home) tabs.splice(j, 1); if (wasRight) { activeTab = i; restoreWorld(tabs[i].snap); applyWidgets(activeTab); } renderTabs(); reflectOmni(); }
+      function closeOthers(i) { const keep = tabs[i]; if (!keep) return; tabs[activeTab].snap = snapshotWorld(); for (let j = tabs.length - 1; j >= 1; j--) if (tabs[j] !== keep && !tabs[j].home) tabs.splice(j, 1); activeTab = Math.max(0, tabs.indexOf(keep)); restoreWorld(tabs[activeTab].snap); applyWidgets(activeTab); applyTabWall(tabs[activeTab]); renderTabs(); reflectOmni(); }
+      function closeRight(i) { tabs[activeTab].snap = snapshotWorld(); const wasRight = activeTab > i; for (let j = tabs.length - 1; j > i; j--) if (!tabs[j].home) tabs.splice(j, 1); if (wasRight) { activeTab = i; restoreWorld(tabs[i].snap); applyWidgets(activeTab); applyTabWall(tabs[activeTab]); } renderTabs(); reflectOmni(); }
       $("#tabstrip").addEventListener("contextmenu", (e) => {
         const tabEl = e.target.closest(".tab"); if (!tabEl) return; e.preventDefault();
         const i = tabEls().indexOf(tabEl); if (i < 0) return;
@@ -2524,8 +2581,28 @@
         }
         stopLive(); applyStatic(item, null);   // gradient / Original → the native CSS desktop
       }
-      async function setWall(item, s) { s.current = item.k; wallWrite(s); await applyWall(item); }
-      async function initWall() { try { const s = await ensureWall(); await applyWall(s.items.find((i) => i.k === s.current) || s.items[0]); } catch (e) { console.warn("wallpaper:", e); } }
+      let _curWallK = null;   // κ currently painted on #wallpaper — lets applyTabWall skip redundant repaints
+      async function setWall(item, s) {
+        const t = tabs[activeTab];
+        if (t && t.dev) { t.wallK = item.k; scheduleSave(); }   // a dev tab keeps its OWN wallpaper (per-tab), the desktop default is untouched
+        else { s.current = item.k; wallWrite(s); }
+        _curWallK = item.k; await applyWall(item);
+      }
+      // applyTabWall(t) — paint the wallpaper this tab should wear: a dev tab is pinned to the canonical
+      // default ("Original") on birth, then remembers any pick of its own (t.wallK); every other tab wears
+      // the desktop-wide selection. Dedup via _curWallK so a same-wallpaper tab switch never repaints.
+      async function applyTabWall(t) {
+        try {
+          const s = await ensureWall();
+          let k = t && t.wallK;
+          if (!k && t && t.dev) { const o = s.items.find((i) => i.seed && i.name === "Original") || s.items[0]; if (o) { k = o.k; t.wallK = k; } }
+          k = k || s.current;
+          const item = s.items.find((i) => i.k === k) || s.items.find((i) => i.k === s.current) || s.items[0];
+          if (!item || item.k === _curWallK) return;
+          _curWallK = item.k; await applyWall(item);
+        } catch (e) {}
+      }
+      async function initWall() { try { const s = await ensureWall(); const it = s.items.find((i) => i.k === s.current) || s.items[0]; _curWallK = it && it.k; await applyWall(it); } catch (e) { console.warn("wallpaper:", e); } }
       async function addWallFile(file, s, after) {
         if (!file || !/^image\//.test(file.type || "")) { toast("Pick an image file"); return; }
         const k = await putWall(new Uint8Array(await file.arrayBuffer()));
@@ -3152,11 +3229,40 @@
         try { const cs = getComputedStyle(world); const bi = cs.backgroundImage, bc = cs.backgroundColor;
           if (bi && bi !== "none") bg = "background-color:" + (bc && bc !== "rgba(0, 0, 0, 0)" ? bc : "#02030a") + ";background-image:" + bi + ";background-size:cover;background-position:center;background-repeat:no-repeat;"; } catch (e) {}
         if (!bg) bg = "background:radial-gradient(130% 130% at 50% 0%,#0b1a3a,#060a14 55%,#02030a);";   // cosmos/gradient fallback
+        // No embedded "POWERED BY HOLOGRAM" credit — the shell's status bar (#holo-credit, pinned just
+        // under the holospace) is the ONE persistent signature; a tab-filling preview must not duplicate it.
         return '<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><style>html,body{height:100%;margin:0}'
-          + 'body{' + bg + 'position:relative;font:14px ui-sans-serif,system-ui;color:#e8eef9}'
-          + '.cr{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);text-align:center;white-space:nowrap}'
-          + '.cr .pw{opacity:.62;color:#8b949e;letter-spacing:.22em;font-size:11px}.cr .hg{font-weight:800;letter-spacing:.26em;color:#fff;font-size:11px;margin-left:.6em}</style>'
-          + '<div class=cr><span class=pw>POWERED BY</span><span class=hg>HOLOGRAM</span></div>';
+          + 'body{' + bg + 'position:relative;font:14px ui-sans-serif,system-ui;color:#e8eef9}</style>';
+      }
+      // csCreatorDoc() — the FRESH dev tab's canvas: a calm, centred explainer of Creator mode (why → how
+      // → what, woven, not labelled). No "POWERED BY HOLOGRAM" credit — the shell's status bar already
+      // signs the machine, so a dev tab carries exactly one. The first build replaces this in place.
+      function csCreatorDoc() {
+        return '<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><style>'
+          + 'html,body{height:100%;margin:0}'
+          + 'body{background:radial-gradient(130% 130% at 50% 0%,#0b1a3a,#060a14 55%,#02030a);color:#e8eef9;'
+          + 'font:14px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;display:grid;place-content:center;text-align:center;padding:32px;-webkit-font-smoothing:antialiased}'
+          + '.w{max-width:600px;margin:0 auto;display:grid;gap:17px;justify-items:center}'
+          + '.ey{font-size:11.5px;letter-spacing:.34em;font-weight:700;color:#5b8cff;text-transform:uppercase}'
+          + 'h1{margin:0;font-size:clamp(24px,3.4vw,33px);font-weight:750;letter-spacing:-.01em;color:#fff;line-height:1.14}'
+          + '.lead{margin:0;font-size:15.5px;color:#c4cee0;max-width:30em}'
+          + '.lines{margin:1px 0 0;display:grid;gap:9px;font-size:13.5px;color:#8a94a8;max-width:35em}'
+          + '.lines b{color:#cdd6e6;font-weight:600}.k{color:#5b8cff}'
+          + '.chips{margin-top:7px;display:flex;flex-wrap:wrap;gap:9px;justify-content:center}'
+          + '.chip{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;color:#dbe3f2;font-size:12.5px;font-weight:600;'
+          + 'background:color-mix(in srgb,#5b8cff 9%,transparent);border:1px solid color-mix(in srgb,#5b8cff 30%,transparent)}'
+          + '.chip i{font-style:normal;color:#5b8cff;font-size:13px}'
+          + '</style>'
+          + '<div class=w>'
+          + '<div class=ey>✦ Creator mode</div>'
+          + '<h1>Describe it — it builds, live.</h1>'
+          + '<p class=lead>An idea becomes a real, running app in seconds. No servers, no setup, nothing to deploy.</p>'
+          + '<div class=lines>'
+          + '<div>Every change is a content-addressed <span class=k>κ</span> — <b>previewed instantly</b>, versioned for free, sealed when it’s yours.</div>'
+          + '<div>Then <b>build, run, share, and monetise</b> serverless apps — beautiful ones that just work, and run fast.</div>'
+          + '</div>'
+          + '<div class=chips><span class=chip><i>✦</i>Build</span><span class=chip><i>▶</i>Run</span><span class=chip><i>♥</i>Share</span><span class=chip><i>◆</i>Monetise</span></div>'
+          + '</div>';
       }
       function csResolve() {
         const h = activeHolospace(); const winEl = h ? mounted.get(h.id) : null;
@@ -3169,10 +3275,14 @@
         // home (current wallpaper + credit) and the lift FLIPs from the FULL desktop (winEl = world), so
         // the home shrinks continuously into the preview (and Done reverses back onto it). Editing
         // remixes into a Home holospace κ.
-        const home = csHomeDoc();
-        const obj = repo.publishSource({ name: "Home", source: home });
-        const id = addNode({ kind: "app", srcdoc: wrapDoc(home), sandbox: "allow-scripts allow-same-origin", content: home, editKind: "paste", name: "Home", title: "Home  ·  " + linkFor(obj.id), w: 760, h: 540, state: "max" });   // born MAXIMIZED → the Home preview fills the entire tab, not a 760×540 floating box
-        return { node: findNode(id), winEl: world, editable: true, src: home, mirror: { srcdoc: wrapDoc(home) }, name: "Home", fromDesktop: true };
+        // A DEV tab opens on the Creator-mode explainer (the build canvas before the first prompt); the
+        // bare desktop opens on a faithful Home clone. Either way the first build replaces it in place.
+        const isDev = !!(tabs[activeTab] && tabs[activeTab].dev);
+        const home = isDev ? csCreatorDoc() : csHomeDoc();
+        const nm0 = isDev ? "Untitled" : "Home";
+        const obj = repo.publishSource({ name: nm0, source: home });
+        const id = addNode({ kind: "app", srcdoc: wrapDoc(home), sandbox: "allow-scripts allow-same-origin", content: home, editKind: "paste", name: nm0, title: nm0 + "  ·  " + linkFor(obj.id), w: 760, h: 540, state: "max" });   // born MAXIMIZED → the preview fills the entire tab, not a 760×540 floating box
+        return { node: findNode(id), winEl: world, editable: true, src: home, mirror: { srcdoc: wrapDoc(home) }, name: nm0, fromDesktop: true };
       }
       function csEnsureStyle() {
         if (document.getElementById("cs-style")) return;
@@ -3374,6 +3484,9 @@
       function openCreate() {
         if (studio) return;
         try { dispatchEvent(new CustomEvent("holo-journey", { detail: { kind: "cue", cue: "create-open" } })); } catch (e) {}   // Q Companion: the build moment (Stage 2 invite, once)
+        // Create always builds in its OWN fresh dev tab (never an overlay on the originating tab) — an
+        // isolated, default-wallpaper canvas that stays `dev` until Publish seals it to a κ holo app.
+        newDevTab("Untitled");
         csEnsureStyle();
         const r = csResolve(); const node = r.node; const name = r.name;
         // The preview IS this holospace, rendered in its OWN tab window: maximize the target so every edit
@@ -4138,7 +4251,7 @@
         // ── chrome actions ──
         $$("cs-refresh").onclick = function () { const f = fa.classList.contains("on") ? fa : fb; if (r.mirror.url) f.src = f.src; else { studio.lastK = null; render(studio.applyLive ? ta.value : r.src); } toast("↻ reloaded"); };
         $$("cs-ext").onclick = function () { const u = r.mirror.url || linkFor(studio.lastSavedK); if (u) window.open(u, "_blank", "noopener"); };
-        $$("cs-done").onclick = function () { closeCreate(true); };
+        $$("cs-done").onclick = function () { closeCreate(true, true); };   // Publish → seal the dev tab to its κ holo app
         // ── Import (left of Publish): paste a GitHub URL · holo:// κ · did:holo app/object id → it loads
         //    LIVE into the studio (preview + editable source), ready to remix or Publish. Seamless: one
         //    field, Enter, done — auto-detects + runs the governed pipeline via window.HoloImportAny. ──
@@ -4206,7 +4319,7 @@
         setTimeout(go, 240);   // fallback + cap for an already-painted or heavy mirror
         setTimeout(function () { ask.focus(); }, 360);
       }
-      function closeCreate(apply) {
+      function closeCreate(apply, publish) {
         if (!studio) return; const s = studio; studio = null;
         document.body.classList.remove("cs-active");   // leaving Create mode → desktop Privacy shield may return
         // disarm point-and-edit on the surface so the preview never lingers in Select mode after Create closes
@@ -4222,7 +4335,8 @@
         s.ov.classList.remove("on"); syncDockWidth();   // release the dock squeeze → the desktop reflows back to full width
         setTimeout(function () { try { s.ov.remove(); } catch (e) {} }, 520);
         if (apply && s.editable && s.lastSavedK) {
-          toast("✦ saved · holo://" + String(s.lastSavedK).split(":").pop().slice(0, 12) + "…");
+          if (publish) publishDevTab(s.lastSavedK);   // Publish seals the dev tab → an isolated κ holo app (drops the dev cue + forced wallpaper, adopts the κ address)
+          toast((publish ? "✦ published · holo://" : "✦ saved · holo://") + String(s.lastSavedK).split(":").pop().slice(0, 12) + "…");
           // every published app auto-joins the agent fabric: MCP for agents + the unified REST API for
           // gated, metered, monetizable cross-app calls (ADR-0093). The action lives on the studio (where
           // registerLiveAgent is in scope). Non-blocking — the κ is already committed.
@@ -4356,6 +4470,7 @@
       // Tor (9050/9150) and routes there; an explicit transport (gateway / custom SOCKS) overrides if set. If
       // nothing is reachable, the SERVED page itself explains how to start Tor (honest, never a fake render).
       async function openOnionSite(input) {
+        await ensureOmniLegs();
         if (!parseOnionRef(input)) return false;
         if (typeof closeSpot === "function") closeSpot();
         const p = parseOnionRef(input);
@@ -4377,6 +4492,7 @@
       // via the validated onion path (every byte re-derived, L5). Onion services aren't in DNS, so this is the
       // "find, then browse" half — same spirit as Holo Find, scoped to Tor.
       async function openOnionSearch(query) {
+        await ensureOmniLegs();
         const q = String(query || "").trim(); if (!q) return false;
         if (typeof closeSpot === "function") closeSpot();
         toast("🧅 searching the onion web…");
@@ -4466,6 +4582,7 @@
       // A platform URL (YouTube/Vimeo/…) has no in-tab extractor yet, so we DON'T fake a stream — we open the
       // real page faithfully in the Holo Browser (honest, Law L5). The yt-dlp seam lives in resolveMediaSource.
       async function openMedia(input, opts = {}) {
+        await ensureOmniLegs();
         let r; try { r = await resolveMediaSource(input, opts); } catch { r = null; }
         if (!r || !r.playable) {
           if (r && r.fallback === "browser") { toast(`▶ ${r.platform || "media"} · no in-tab extractor yet — opening the page`); return openHoloBrowser(input); }
@@ -4507,6 +4624,7 @@
       // leg of the one omnibar: an ENS name, a 0x account/token, a tx hash, a Solana address or a CAIP id
       // resolves into one sealed, content-addressed card — read-only, governed, receipted (Law L4/L5).
       async function openWeb3(input) {
+        await ensureOmniLegs();
         if (!parseWeb3Ref(input)) return false;
         toast("⌕ resolving across web3…");
         let out; try { out = await resolveWeb3(input, { timeoutMs: 20000 }); } catch { out = null; }
@@ -4544,6 +4662,7 @@
       });
       async function omniGo(input) {
         const v = String(input || "").trim(); if (!v) return;
+        await ensureOmniLegs();                               // web3/onion/media legs are lazy — ensure ready before dispatch (idempotent; usually already warm from focus)
         let pr; try { pr = parseRef(v); } catch { }
         if (pr && pr.kind === "kappa" && pr.axis && pr.axis !== "sha256") { toast(`${pr.axis} objects resolve on the substrate · mesh, not the open web not reachable here`); return; }   // e.g. did:holo:blake3 → a clean message, not a confusing search/app attempt
         if (pr && pr.kind === "kappa") { if (await openContentAddress(v)) return; }   // sha256 κ → verified inline (handles its own clean "couldn't locate" message)
@@ -4557,7 +4676,7 @@
         if (r.kind === "holo") { if (await openContentAddress(v)) return; return openWeb(r); }   // holo://κ content address → inline verified render
         const a = matches(v, catalog)[0];                                // else prefer a holospace app match
         if (a) return launch(a);
-        const lf = bestLocalFile(v); if (lf) return void openObjectByKappa(lf);   // a typed local filename/path (exact substrate match) → OPEN the verified local file, not a web search
+        await loadSubstrate(); const lf = bestLocalFile(v); if (lf) return void openObjectByKappa(lf);   // a typed local filename/path (exact substrate match) → OPEN the verified local file (ensure the lazy index is ready first), not a web search
         openFind(v);                                                     // free text → Holo Find: a corroborated, self-verifying answer over the open web (no AI)
       }
       // ── omnibox suggestions — Chrome-style. As you type, ONE ranked list fuses every corpus:
@@ -4595,22 +4714,30 @@
       // ── the substrate object universe — every content-addressed object (etc/substrate-index.json),
       //    lazily loaded so your OWN universe is searchable INSTANTLY + OFFLINE. Each hit opens by its
       //    identity (did:holo:sha256) through the canonical κ-route, RE-DERIVED on receipt (Law L1/L5).
-      let SUBSTRATE = null, substrateLoading = false;
+      let SUBSTRATE = null, _substrateP = null;
       const SUB_SKIP = /\.(gz|whl|tar|m4s|wsz|map|metadata|woff2?|ttf|wasm|bin|lock|sig|br|zip|pack|ico)$/i;
-      async function loadSubstrate() {
-        if (SUBSTRATE || substrateLoading) return; substrateLoading = true;
-        try {
-          const si = await (await fetch("/etc/substrate-index.json", { cache: "force-cache" })).json();
-          const out = [];
-          for (const [path, v] of Object.entries(si.objects || {})) {
-            if (SUB_SKIP.test(path)) continue;
-            const hex = String((v && (v.sha256 || v.did)) || "").split(":").pop();
-            if (!/^[0-9a-f]{64}$/.test(hex || "")) continue;
-            const segs = path.split("/"); const name = segs[segs.length - 1];
-            out.push({ path, name, hex, ext: (name.match(/\.[a-z0-9]+$/i) || [""])[0], dir: segs.slice(Math.max(0, segs.length - 3), segs.length - 1).join("/"), nl: name.toLowerCase(), pl: path.toLowerCase() });
-          }
-          SUBSTRATE = out;
-        } catch { /* offline / not served → substrate rows simply absent */ } finally { substrateLoading = false; }
+      // PERF: the 4.5MB substrate object index is warmed on first omnibar FOCUS, not at boot — it ONLY powers
+      // omnibar object suggestions, so it no longer sits on the shell's boot path. Promise-memoized so a resolve
+      // can await it (bestLocalFile); searchSubstrate/bestLocalFile already no-op gracefully until it resolves.
+      function loadSubstrate() {
+        if (SUBSTRATE) return Promise.resolve(SUBSTRATE);
+        if (_substrateP) return _substrateP;
+        _substrateP = (async () => {
+          try {
+            const si = await (await fetch("/etc/substrate-index.json", { cache: "force-cache" })).json();
+            const out = [];
+            for (const [path, v] of Object.entries(si.objects || {})) {
+              if (SUB_SKIP.test(path)) continue;
+              const hex = String((v && (v.sha256 || v.did)) || "").split(":").pop();
+              if (!/^[0-9a-f]{64}$/.test(hex || "")) continue;
+              const segs = path.split("/"); const name = segs[segs.length - 1];
+              out.push({ path, name, hex, ext: (name.match(/\.[a-z0-9]+$/i) || [""])[0], dir: segs.slice(Math.max(0, segs.length - 3), segs.length - 1).join("/"), nl: name.toLowerCase(), pl: path.toLowerCase() });
+            }
+            SUBSTRATE = out;
+          } catch { /* offline / not served → substrate rows simply absent */ }
+          return SUBSTRATE;
+        })();
+        return _substrateP;
       }
       function searchSubstrate(q, limit = 4) {
         if (!SUBSTRATE) return [];
@@ -4645,6 +4772,7 @@
         return `${css}${head}<div class="bd">${inner}</div>`;
       }
       async function openObjectByKappa(o) {
+        await ensureOmniLegs();
         if (mediaMime(o.name)) {   // a local media file → stream it through the κ-anchored player (re-derived on the wire, seekable via Range/206), not the static object viewer
           return void openMedia("/.holo/sha256/" + o.hex + (o.ext || ""), { title: o.name, mime: mediaMime(o.name), kappa: "did:holo:sha256:" + o.hex });
         }
@@ -4668,7 +4796,7 @@
           toast(`✓ verified · ${o.name} · ${bytes.length.toLocaleString()} B · did:holo:sha256`);
         } catch { toast("failed to resolve " + o.name); }
       }
-      loadSubstrate();   // warm the index so the first keystroke already searches your universe
+      // (substrate index is warmed on first omnibar focus — see the focus/input handlers — not at boot)
       // holo-rank — personal PageRank authority over κ (trust eigenvector × relation-weight × decay). Loaded once
       // (same source as find.html); the omnibar's memory uses it so canonical/high-authority objects rank above
       // dupes in your "recent" rows. On-device, private; absent file → graceful {} (no boost).
@@ -4679,7 +4807,7 @@
         const items = [], seen = new Set();
         const add = (it, key) => { if (key) { if (seen.has(key)) return; seen.add(key); } items.push(it); };
         let pr = { kind: "unknown" }; try { pr = parseRef(q); } catch {}
-        let w3 = null; try { w3 = parseWeb3Ref(q); } catch {}
+        let w3 = null; try { w3 = parseWeb3Ref && parseWeb3Ref(q); } catch {}   // null until the lazy web3 leg loads (preloaded on omnibar focus)
         const cls = classify(q, catalog);
         const isAddr = pr.kind === "kappa" || pr.kind === "cid" || cls.kind === "web" || cls.kind === "holo" || !!w3;
         if (w3) {                                                         // a web3 address → "Open, verified" at the top, ahead of the open-web guess
@@ -4691,7 +4819,7 @@
           const ic = { kappa: "◆", ipfs: "⬡", eth: "◈", web: "🌐" }[k] || "○";
           add({ icon: ic, title: "Open  " + q, sub: SUG_SUB[k] || "open", run: () => omniGo(q) });
         }
-        const cm = classifyMedia(q);                                      // a media address → a dedicated play affordance
+        const cm = (classifyMedia ? classifyMedia(q) : { isMedia: false });   // media leg is lazy (preloaded on omnibar focus) → no media row until it's warm
         if (cm.isMedia) add({ icon: cm.media === "audio" ? "♪" : "▶",
           title: (cm.kind === "platform" ? "Open  " : "Play  ") + q,
           sub: cm.kind === "platform" ? cm.platform + " · opens the page faithfully (no in-tab extractor yet)" : cm.label + " · κ-anchored player · seekable",
@@ -4704,7 +4832,7 @@
           add({ iconUrl: (a.landing || "").replace(/[^/]+$/, "icon.svg"), title: a.name, sub: "holospace", run: () => launch(a) }, "app:" + a.id);
         for (const o of searchSubstrate(q, 4))                            // YOUR universe — every content-addressed object, opened by κ (re-derived)
           add({ icon: "◆", title: o.name, sub: o.dir || "object · verified", run: () => openObjectByKappa(o) }, "obj:" + o.hex);
-        for (const e of searchDirectory(q).slice(0, 6)) {                 // the federated directory: knowledge · ENS · dapps · apps (one object graph)
+        for (const e of (searchDirectory ? searchDirectory(q) : []).slice(0, 6)) {                 // the federated directory: knowledge · ENS · dapps · apps (one object graph; lazy — empty until warm)
           const isApp = e.section === "Apps" || e.kind === "app";
           add({ icon: isApp ? "◆" : (DIR_IC[e.kind] || "🌐"), title: e.name, sub: isApp ? "holospace" : (DIR_SUB[e.kind] || e.kind),
             run: () => { const app = catalog.find((a) => a.id === e.id); if (app) return launch(app); omniGo(e.target || e.name); } }, e.id ? "app:" + e.id : e.kind + ":" + e.target);
@@ -4727,10 +4855,11 @@
         showSug();
       }
       let sugT;
-      $("#omni-addr").addEventListener("input", (e) => { const q = e.target.value; clearTimeout(sugT);
+      $("#omni-addr").addEventListener("input", (e) => { ensureOmniLegs(); loadSubstrate(); const q = e.target.value; clearTimeout(sugT);
         if (inTabSearch(q)) { forwardSearch(q); hideSug(); return; }   // plain text → filter the app you're in
         sugT = setTimeout(() => { sug.items = buildSuggestions(q); sug.sel = 0; renderSug(); }, 100); });
-      $("#omni-addr").addEventListener("focus", (e) => { if (e.target.value.trim() && !inTabSearch(e.target.value)) { sug.items = buildSuggestions(e.target.value); sug.sel = 0; renderSug(); } });
+      $("#omni-addr").addEventListener("focus", (e) => { ensureOmniLegs(); loadSubstrate();   // preload the heavy resolver legs + the substrate object index the moment the bar is focused — warm before you finish typing
+        if (e.target.value.trim() && !inTabSearch(e.target.value)) { sug.items = buildSuggestions(e.target.value); sug.sel = 0; renderSug(); } });
       $("#omni-addr").addEventListener("blur", () => setTimeout(hideSug, 160));
       $("#omni-addr").addEventListener("keydown", (e) => {
         if (e.key === "ArrowDown" && sug.open) { e.preventDefault(); sug.sel = Math.min(sug.sel + 1, sug.items.length - 1); paintSel(); }
@@ -5557,8 +5686,9 @@
          the device. -->
     <style> html.booting #holo-voice-btn, html.booting #holo-voice-hud, html.booting #holo-voice-menu { display: none; } </style>
     <!-- Q's 3D orb (VapiBlocks) → Three.js r134, MIT, vendored same-origin (UMD global THREE).
-         Classic+defer so it executes in order before holo-voice.js loads the orb module. -->
-    <script defer src="/_shared/voice/lib/three.min.js" data-holo-shared="three.min.js"></script>
+         PERF: three.min.js (616KB) is no longer loaded eagerly here — holo-voice.js's loadThree() injects it
+         on demand the first time an orb actually mounts (async=false preserves the "three before the orb
+         module" ordering). Keeps the 616KB off this shell's boot critical path; the orb still renders in WebGL. -->
     <!-- Q Companion journey state (sovereign, on-device) — load BEFORE holo-voice so the first meeting reads it. -->
     <script defer src="/_shared/holo-journey.js" data-holo-shared="holo-journey.js"></script>
     <script defer src="/_shared/holo-voice.js" data-holo-shared="holo-voice.js"></script>

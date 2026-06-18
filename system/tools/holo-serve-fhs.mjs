@@ -184,23 +184,32 @@ try {
 // top-level (the readRel below then tries the Apps repo / original-os gap fallback).
 export function fhsOf(rel) { const p = fhsMap(rel); return p ? join(OS2, p) : null; }
 
+// DEV-ONLY: the dev server is the explicit, deliberate dev action — it (and ONLY it) enables the
+// Service Worker's dev-fresh path by flipping the sealed default ALLOW_DEV_FRESH=false→true as it
+// serves holo-fhs-sw.js. A dumb static host (prod) serves the file verbatim, so prod keeps full L5
+// (re-derive + refuse) even on a localhost origin. The on-disk byte stays false (what reseal-drift
+// pins), so this rewrite never desyncs the prod closure — it lives only in the dev response.
+const devEnableFresh = (buf) => Buffer.from(String(buf).replace("const ALLOW_DEV_FRESH = false;", "const ALLOW_DEV_FRESH = true; /* dev-server enabled */"));
+
 // resolve an os-relative path to bytes: OS2 first, else original. {buf, src} | null
 function readRel(rel, stats) {
   const isApp = rel.startsWith("apps/");
   // apps resolve from the separate Hologram Apps repo (a holospace boots from anywhere by κ)
   if (isApp) { const a = join(APPS, rel); if (existsSync(a) && statSync(a).isFile()) { stats.apps++; return { buf: readFileSync(a), rel }; } }
   const f = fhsOf(rel);
-  if (f && existsSync(f) && statSync(f).isFile()) { stats.os2++; return { buf: readFileSync(f), rel }; }
+  if (f && existsSync(f) && statSync(f).isFile()) { stats.os2++; let buf = readFileSync(f); if (rel === "holo-fhs-sw.js") buf = devEnableFresh(buf); return { buf, rel }; }
   // Law L1 (content, not location): an app resolves ONLY from its own content-addressed image
   // (Hologram Apps + the OS2 vendored holospaces), NEVER by path-borrowing from the legacy os/ —
   // so a retired app is truly gone (404), not silently served from the old monolith. The legacy
   // gap-fallback survives only for OS-spine files OS2 hasn't vendored yet.
   if (!isApp) { const o = join(ORIG, rel); if (existsSync(o) && statSync(o).isFile()) { stats.orig.add(rel); return { buf: readFileSync(o), rel }; } }
   // repo-root static assets that live OUTSIDE the os/ FHS space (e.g. system/vendor/vanta/* — the gateway's
-  // vendored WebGL cloud sky). On GitHub Pages the whole repo is served statically so these resolve directly;
-  // this dev server roots assets under os/, so without this fallback they 404. Confined to the FHS prefixes the
-  // gateway actually references, never a path escape (no "..").
-  if (!isApp && /^system\/vendor\//.test(rel) && !rel.includes("..")) { const r = join(REPO, rel); if (existsSync(r) && statSync(r).isFile()) { stats.os2++; return { buf: readFileSync(r), rel }; } }
+  // vendored WebGL cloud sky; docs/* — the generated Astro site incl. the gateway's docs/download.html door;
+  // CONSTITUTION.md — the full-text conscience the gateway + .well-known link at repo root, ADR-033).
+  // On GitHub Pages the whole repo is served statically so these resolve directly; this dev server roots assets
+  // under os/, so without this fallback they 404. Confined to the prefixes/files the gateway actually references,
+  // never a path escape (no "..").
+  if (!isApp && /^(?:(?:system\/vendor|docs)\/|CONSTITUTION\.md$)/.test(rel) && !rel.includes("..")) { const r = join(REPO, rel); if (existsSync(r) && statSync(r).isFile()) { stats.os2++; return { buf: readFileSync(r), rel }; } }
   return null;
 }
 

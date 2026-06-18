@@ -1,0 +1,48 @@
+{
+  "witnessed": true,
+  "passed": 6,
+  "failed": 0,
+  "webgpu": false,
+  "renderPath": "WebGL2 (WebGPU absent in test browser)",
+  "covers": [
+    "every point-cloud chunk's κ pin is REAL — on-disk bytes re-deriv",
+    "every κ-chunk verified to its declared κ BEFORE its points rende",
+    "the full point cloud materialized — all points rendered",
+    "the cloud actually RENDERS in WebGL2 — lit pixels on the canvas ",
+    "bytes-rendered-before-verified = 0 (no points upload until their",
+    "no fatal page errors"
+  ],
+  "results": [
+    {
+      "name": "every point-cloud chunk's κ pin is REAL — on-disk bytes re-derive to declared sha256 (L5, oracle)",
+      "ok": true,
+      "detail": "6/6 chunks"
+    },
+    {
+      "name": "every κ-chunk verified to its declared κ BEFORE its points render — verified all, refused none",
+      "ok": true,
+      "detail": "verified 6/6 · mismatches 0"
+    },
+    {
+      "name": "the full point cloud materialized — all points rendered",
+      "ok": true,
+      "detail": "82,944 / 82,944 points"
+    },
+    {
+      "name": "the cloud actually RENDERS in WebGL2 — lit pixels on the canvas (render path real)",
+      "ok": true,
+      "detail": "19593 lit pixels · 22 frames"
+    },
+    {
+      "name": "bytes-rendered-before-verified = 0 (no points upload until their chunk's κ re-derives)",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "name": "no fatal page errors",
+      "ok": true,
+      "detail": "clean"
+    }
+  ],
+  "spec": "Holo Hub Phase 2b render path: the 4K BBB frame re-expressed as a κ-addressed point cloud streams chunk by chunk; each chunk re-derives to its declared κ (L5) before its points render; verified bytes persist in the OpfsKappaStore; the cloud materializes in WebGL2 and orbits. WebGPU compute-verify is the slot-in upgrade (absent in headless test browsers, so the WebGL2 Tier-B path is witnessed here)."
+}

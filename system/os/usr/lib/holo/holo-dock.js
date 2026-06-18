@@ -247,6 +247,8 @@
   }
   function launch(id) {
     closeFlyout();
+    // The NAV opens every app as its OWN focused holospace tab (never hijacks the current surface).
+    if (W.HoloShell && W.HoloShell.openTab) { try { W.HoloShell.openTab(id, appInfo(id).name); setTimeout(updateRunning, 60); return; } catch (e) {} }
     // Holo Browser is the universal navigator: a dock tap opens that object in a browser tab.
     if (W.HoloBrowser && W.HoloBrowser.openApp) { var bi = appInfo(id); try { W.HoloBrowser.openApp(bi.landing, bi.name, "holo://" + id); } catch (e) {} return; }
     if (inSdk()) { try { W.__world.launchById(id); } catch (e) {} setTimeout(updateRunning, 60); return; }
@@ -400,23 +402,26 @@
     (holo.pins || []).forEach(function (entry) { list.appendChild(isGroup(entry) ? groupTile(entry) : item(entry)); });
     inner.appendChild(list);
 
-    inner.appendChild(el("span", { "class": "holo-dock-sep" }));
-
-    var tray = el("div", { "class": "holo-dock-tray" });
-    if (sdk) {
-      // Build · (Run = the home/start button) · Share — the three native holospace verbs, ubiquitous.
-      var actions = el("div", { "class": "holo-dock-actions" });
-      actions.appendChild(actionBtn("Create — author a component", NEW_SVG, function () { clickEl("author"); }));
-      actions.appendChild(actionBtn("Share — a link anyone can open instantly (no sign-in)", SHARE_SVG, function () { clickEl("share-btn"); }));
-      actions.appendChild(actionBtn("Component library", LIB_SVG, function () { clickEl("library"); }));
-      actions.appendChild(actionBtn("Virtual keyboard", KBD_SVG, function () { clickEl("keyboard-btn"); }));
-      tray.appendChild(actions);
+    // The left NAV stays a clean, scroll-free sidebar: NO bottom tray (Create · Share · Library ·
+    // Keyboard · Add · clock). Those verbs belong to the floating / bottom dock, not the navigator.
+    if (STATE.orient === "bottom" || STATE.orient === "top") {
+      inner.appendChild(el("span", { "class": "holo-dock-sep" }));
+      var tray = el("div", { "class": "holo-dock-tray" });
+      if (sdk) {
+        // Build · (Run = the home/start button) · Share — the three native holospace verbs, ubiquitous.
+        var actions = el("div", { "class": "holo-dock-actions" });
+        actions.appendChild(actionBtn("Create — author a component", NEW_SVG, function () { clickEl("author"); }));
+        actions.appendChild(actionBtn("Share — a link anyone can open instantly (no sign-in)", SHARE_SVG, function () { clickEl("share-btn"); }));
+        actions.appendChild(actionBtn("Component library", LIB_SVG, function () { clickEl("library"); }));
+        actions.appendChild(actionBtn("Virtual keyboard", KBD_SVG, function () { clickEl("keyboard-btn"); }));
+        tray.appendChild(actions);
+      }
+      var add = el("button", { "class": "holo-dock-add", title: "Add an app", "aria-label": "Add an app", text: "+" });
+      add.addEventListener("click", function (e) { openAddMenu(e); });
+      tray.appendChild(add);
+      if (holo.showClock !== false) { var clock = el("time", { "class": "holo-dock-clock" }); tray.appendChild(clock); }
+      inner.appendChild(tray);
     }
-    var add = el("button", { "class": "holo-dock-add", title: "Add an app", "aria-label": "Add an app", text: "+" });
-    add.addEventListener("click", function (e) { openAddMenu(e); });
-    tray.appendChild(add);
-    if (holo.showClock !== false) { var clock = el("time", { "class": "holo-dock-clock" }); tray.appendChild(clock); }
-    inner.appendChild(tray);
 
     dock.appendChild(inner);
     if (prev) prev.replaceWith(dock); else DOC.body.appendChild(dock);
@@ -526,16 +531,24 @@
   //    each opening its real κ-addressed holospace/app via window.HoloShell. Only shown when expanded. ──
   // a Perplexity-style sidebar mapped to Hologram's REAL κ-addressed surfaces via window.HoloShell —
   // every row opens a live holospace/app; "New" fires the dock's start action (a fresh holospace tab).
-  // CORE only — one flat, header-less list that fits the rail without scrolling. Every row maps to a
-  // real κ-addressed surface via window.HoloShell ("New" fires the dock's start action).
+  // CORE only — one flat, header-less list that fits the rail without scrolling. Every row opens its
+  // target as a NEW, focused holospace tab via the shell's new-tab openers (graceful no-op off-shell).
+  function shellCall(method) { var s = W.HoloShell; if (s && typeof s[method] === "function") { try { s[method](); return true; } catch (e) {} } return false; }
+  function shellTab(appId, title) { var s = W.HoloShell; if (s && typeof s.openTab === "function") { try { s.openTab(appId, title); return true; } catch (e) {} } return false; }
   var NAV = [
     { h: null, rows: [
-      { id: "new", t: "New", g: G.create, act: startAction, primary: true },
-      { id: "home", t: "Home", g: G.home },
-      { id: "search", t: "Search", g: G.search, kbd: true },
-      { id: "apps", t: "Spaces", g: G.apps },
-      { id: "files", t: "Files", g: G.files },
-      { id: "settings", t: "Settings", g: G.settings },
+      // New — a fresh empty holospace tab (omnibar focused). Off-shell, fall back to the dock start action.
+      { id: "new", t: "New", g: G.create, primary: true, act: function () { if (!shellCall("newTab")) startAction(); } },
+      // Home — the permanent Home tab (a holospace singleton; a duplicate Home would just be "New").
+      { id: "home", t: "Home", g: G.home, act: function () { shellCall("home"); } },
+      // Search — a fresh tab ready to search (omnibar focused); falls back to focusing the current bar.
+      { id: "search", t: "Search", g: G.search, kbd: true, act: function () { if (!shellCall("searchTab")) shellCall("search"); } },
+      // Spaces — the holospace switcher (the native "all your spaces" surface; an overlay, not a tab).
+      { id: "apps", t: "Spaces", g: G.apps, act: function () { shellCall("apps"); } },
+      // Files — Holo Files, in a new tab.
+      { id: "files", t: "Files", g: G.files, act: function () { shellTab("org.hologram.HoloFiles", "Holo Files"); } },
+      // Settings — Holo Control, in a new tab.
+      { id: "settings", t: "Settings", g: G.settings, act: function () { shellTab("org.hologram.HoloControl", "Settings"); } },
     ] },
   ];
   var activeNav = "home";
@@ -548,7 +561,7 @@
   }
   function navRow(r) {
     var li = el("li", { "class": "holo-dock-item holo-dock-nav" + (r.primary ? " holo-dock-nav-primary" : ""), "data-nav": r.id });
-    if (r.id === activeNav && !r.act) li.setAttribute("data-active", "");
+    if (r.id === activeNav) li.setAttribute("data-active", "");
     var kids = [el("span", { "class": "holo-dock-icon", html: r.g }), el("span", { "class": "holo-dock-label", text: r.t })];
     if (r.kbd) kids.push(el("kbd", { "class": "holo-dock-kbd", text: (STATE.profile && STATE.profile.apple) ? "⌘ K" : "Ctrl K" }));
     var tile = el("button", { "class": "holo-dock-tile", title: r.t, "aria-label": r.t }, kids);

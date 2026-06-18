@@ -85,6 +85,7 @@ export async function resolve(k) {
   } else {                                                        // standalone fallback: one source, same law
     bytes = await originSource(k);
     if (!bytes || await sha256hex(bytes) !== id) { stats.refused++; throw new Error(`L5 REFUSED: ${id.slice(0, 12)}… not served as a κ-verified copy`); }
+    try { await opfsPut(id, bytes); } catch {}                    // PERSIST verified bytes (content-addressed) → next navigation resolves from OPFS, network-free (durable arena, Law L3)
   }
   ARENA.set(id, bytes); stats.resolved++;
   return bytes;
@@ -147,7 +148,7 @@ async function kindOf(k) {
       const text = new TextDecoder().decode(b.length > 65536 ? b.slice(0, 65536) : b);
       const head = text.trimStart();
       if (head.startsWith("<svg") || head.startsWith("<?xml")) kind = "svg";
-      else if (head[0] === "{" || head[0] === "[") { try { const j = JSON.parse(new TextDecoder().decode(b)); kind = (j && j["@type"] === "holo:Bundle") ? "bundle" : "json"; } catch { kind = isEsm(text) ? "module" : "text"; } }
+      else if (head[0] === "{" || head[0] === "[") { try { const j = JSON.parse(new TextDecoder().decode(b)); kind = (j && j["@type"] === "holo:Bundle") ? "bundle" : (j && j["@type"] === "holo:Surface") ? "surface" : "json"; } catch { kind = isEsm(text) ? "module" : "text"; } }
       else if (isEsm(text)) kind = "module";
       else kind = "text";
     }
@@ -190,6 +191,7 @@ export async function render(target, kOrSpec, ctx = {}) {
     kind = await kindOf(spec);
     if (kind === "module") node = await element({ kappa: spec, export: ctx.export, props: ctx.props, children: ctx.children });
     else if (kind === "bundle") node = await bundleElement(spec);
+    else if (kind === "surface") { await mountSurface(el, await resolve(spec), ctx); return done(el, kind, t0); }
     else { mountRaw(el, kind, await resolve(spec)); return done(el, kind, t0); }
   } else { kind = "spec"; node = await element(spec); }            // an inline composition spec
   const { createRoot } = await react();
@@ -198,6 +200,21 @@ export async function render(target, kOrSpec, ctx = {}) {
   return done(el, kind, t0);
 }
 function done(el, kind, t0) { return { kind, ms: +(performance.now() - t0).toFixed(2), arena: ARENA.size, mods: MODS.size }; }
+
+// ── surface: a holo:Surface κ-object renders on the WebGPU backend (DOM-reference fallback) ──────
+// Additive, opt-in BY KIND: only an object whose @type is "holo:Surface" takes the GPU path; every
+// other object (React component, bundle, image, text) renders exactly as before — DOM stays the
+// default, ZERO app changes. L5 holds via the render spine: resolve() has ALREADY re-derived and
+// verified the bytes before they reach the GPU (verify-before-GPU). The backend choice (GPU vs DOM)
+// and the HoloMemo pipeline cache live inside holo-surface.mjs, lazily imported only when a surface
+// is actually drawn (the lean rule — an image/text/component view never loads it).
+let HSURF = null;
+async function holoSurface() { return HSURF || (HSURF = await import(/* @vite-ignore */ "./holo-surface.mjs")); }
+async function mountSurface(el, bytes, ctx) {
+  const spec = JSON.parse(new TextDecoder().decode(bytes));   // L5-verified bytes → backend-agnostic spec
+  const { renderSurface } = await holoSurface();
+  return renderSurface(el, spec, ctx || {});
+}
 
 function mountRaw(el, kind, bytes) {
   if (kind === "png" || kind === "jpeg") { const u = URL.createObjectURL(new Blob([bytes], { type: "image/" + kind })); el.innerHTML = `<img src="${u}" style="max-width:100%">`; }

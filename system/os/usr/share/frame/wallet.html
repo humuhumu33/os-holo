@@ -21,15 +21,21 @@
         --surface2: color-mix(in srgb, var(--holo-ink) 8%, transparent);
         --r: var(--holo-radius, 14px); --r-sm: var(--holo-radius-sm, 10px); --r-lg: var(--holo-radius-lg, 18px); --pill: 999px;
         /* golden-ratio scale (φ = 1.618), mirroring the OS holo-phi tokens — proportions throughout */
-        --phi: 1.618; --s-3xs: .236rem; --s-2xs: .382rem; --s-xs: .618rem; --s-s: 1rem; --s-m: 1.618rem; --s-l: 2.618rem; --s-xl: 4.236rem; }
+        --phi: 1.618; --s-3xs: .236rem; --s-2xs: .382rem; --s-xs: .618rem; --s-s: 1rem; --s-m: 1.618rem; --s-l: 2.618rem; --s-xl: 4.236rem;
+        /* type — bound to the Hologram-OS theme: the OS sans/mono families and the --holo-text ramp
+           (16px floor, ADR-0057), so the whole wallet scales from the one --holo-font-scale lever and
+           reads in the same voice as the shell. No sub-floor px/rem literals leak through. */
+        --font: var(--holo-font-sans, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+        --font-mono: var(--holo-font-mono, ui-monospace, "Cascadia Code", Menlo, Consolas, monospace);
+        --t: var(--holo-text, 1rem); --t-sm: var(--holo-text-sm, .9rem); --t-lg: var(--holo-text-lg, 1.3rem); --t-xl: var(--holo-text-xl, 2rem); }
       * { box-sizing: border-box; }
       html, body { height: 100%; margin: 0; }
       body { background: radial-gradient(130% 90% at 50% -12%, color-mix(in srgb, var(--acc) 20%, var(--bg)) 0%, var(--bg) 52%);
         transition: background .42s ease;
         color: var(--ink); display: flex; flex-direction: column; overflow: hidden;
-        font: var(--holo-text-sm, 1rem)/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        font: var(--t)/1.55 var(--font); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
       a { color: var(--acc); text-decoration: none; } a:hover { text-decoration: underline; }
-      .mono { font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace; }
+      .mono { font-family: var(--font-mono); }
       .muted { color: var(--dim); font-size: .85rem; } .hidden { display: none !important; }
       h1 { font-size: 1.5rem; margin: 0; } h2 { font-size: 1.1rem; margin: 0; }
       h3 { font: 600 .72rem ui-sans-serif; color: var(--dim); text-transform: uppercase; letter-spacing: .09em; margin: 0 0 .5rem; }
@@ -270,6 +276,58 @@
 
       .toast { position: fixed; left: 50%; bottom: 1.4rem; transform: translateX(-50%); background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm); padding: .55rem .9rem; color: var(--ink); opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 95; }
       .toast.on { opacity: 1; }
+
+      /* ═══════════════════════════════════════════════════════════════════════════════════════════
+         HOLOGRAM-OS ALIGNMENT — one cohesive surface with the shell. Three moves, layered last so the
+         cascade lifts the whole wallet without touching the wiring:
+           1. TYPE   → adopt the OS sans/mono + the --holo-text ramp (16px floor); kill the bespoke
+                       sub-floor sizes so every label reads at the same scale as the rest of the OS.
+           2. SPACE  → fill the entire carriage box (the shell hides its duplicate header), so the
+                       wallet is one immersive surface, not a narrow column with dead gutters.
+           3. FEEL   → crisper hovers, accent focus rings, a calm lift on press — sharp and delightful.
+         ═══════════════════════════════════════════════════════════════════════════════════════════ */
+
+      /* 1 · TYPE — everything inherits the OS families; the font shorthands below only re-assert size,
+         so weights authored above (600/700/800) are preserved. Mono stays mono. */
+      h1 { font-size: var(--t-xl); letter-spacing: -.02em; line-height: 1.1; }
+      h2, .cat-head h2 { font-family: var(--font); font-size: var(--t-lg); }
+      h3, .eco-h { font-family: var(--font); font-size: var(--t-sm); }
+      /* readable body / values → --holo-text */
+      .btn, input, textarea, select, .kv, .stat .sl b, .tok .meta b, .acctpill .anm b,
+      .netrow .nm, .explain, .cat-head p, .actitem .m b, .empty-pane b, .empty-pane p,
+      .mm-bal .iconbtn { font-family: var(--font); font-size: var(--t); }
+      /* secondary / labels → --holo-text-sm (the OS floor, never below) */
+      .muted, .warn, .lede, .pill, .pill-ok, .chip, .cat, .mm-tab, .netpill, .acctpill .did,
+      .kchip, .kbadge, .eco-nm, .stat .sl span, .stat .sv .u, .mmact, .act, .actitem .m .sub,
+      .agentlane .tool, .risk, .kstamp .lbl, .seedgrid .w i, .tok .meta .sub, .tok .bal .amt,
+      .site .m .muted, .appmeta .m1 { font-family: var(--font); font-size: var(--t-sm); }
+      /* content-address text → OS mono, floored */
+      .kchip, .kstamp .val, .tok .rank, .netchip, .eco-k, .seedgrid .w, .actitem .m .sub.mono {
+        font-family: var(--font-mono); font-size: var(--t-sm); }
+      .muted { font-size: var(--t-sm); }            /* fold the old .85rem .muted into the ramp */
+
+      /* 2 · SPACE — the wallet owns the whole box. Widen the column to the carriage, trim gutters. */
+      main { scroll-behavior: smooth; }
+      .wrap { max-width: 40rem; padding: 1.05rem 1.15rem 4.5rem; }
+      @media (min-width: 30rem) { .wrap { padding-inline: 1.5rem; } }
+      /* the ONE top bar — full-bleed OS chrome; the shell suppresses its carriage header for the wallet,
+         so this is the only header. The » collapse lives here when docked (wired in script). */
+      #bar { padding: .55rem .65rem .55rem 1rem; gap: .5rem; }
+      #bar .brand { font-size: var(--t); }
+      #collapseBtn { display: none; }
+
+      /* 3 · FEEL — sharp, responsive, alive. One transition vocabulary; a hairline focus ring; press lift. */
+      .tok, .stat, .cat, .chip, .mmact, .act, .netpill, .acctpill, .eco-ic, .iconbtn, .netrow,
+      .btn, .mm-tab, .cat-act, .switch, .site { transition: background-color .16s ease, border-color .16s ease,
+        color .16s ease, transform .14s ease, box-shadow .16s ease, filter .12s ease; }
+      .mmact:hover, .act:hover { transform: translateY(-2px); }
+      .tok:hover { transform: translateX(2px); }
+      .mmact:active, .act:active, .btn:active, .cat:active, .chip:active, .cat-act:active { transform: translateY(0) scale(.985); }
+      .iconbtn:active { transform: scale(.92); }
+      :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; border-radius: 6px; }
+      input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none; }
+      /* let the dense surfaces breathe a touch at full carriage width */
+      @media (min-width: 34rem) { .mm-actions { gap: var(--s-xs); } .eco-strip { gap: var(--s-m); } }
     </style>
   </head>
   <body>
@@ -280,6 +338,7 @@
       <button class="iconbtn hidden" id="sitesBtn" title="Connected sites who can ask my wallet to sign"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg></button>
       <button class="iconbtn hidden" id="settingsBtn" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       <button class="iconbtn" id="fsBtn" title="Fullscreen (f)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+      <button class="iconbtn" id="collapseBtn" title="Collapse panel" aria-label="Collapse panel" style="font-size:1.2rem; line-height:1">»</button>
     </div>
 
     <main>
@@ -1033,8 +1092,16 @@
       addEventListener("keydown", (e) => { if (e.key === "f" && !/INPUT|TEXTAREA/.test(document.activeElement?.tagName || "")) $("fsBtn").click(); if (e.key === "Escape") { if ($("view-approve").classList.contains("on")) closeGate(false); else closeSheet(); } });
       $("refreshBtn").onclick = () => { delete ecoCache[activeEco]; loadPrices().then(() => selectEco(activeEco)); };
 
-      // docked in the shell's right-edge wallet panel → fullscreen is meaningless; hide it for a clean dock.
-      if (new URLSearchParams(location.search).get("panel")) $("fsBtn").classList.add("hidden");
+      // docked in the shell's right-edge wallet panel → fullscreen is meaningless; swap it for the ONE
+      // collapse control (the shell hides its own carriage header for the wallet, so this bar is the only
+      // header — no duplicate "Wallet" strip above it). The » posts up to the shell to slide the panel away.
+      if (new URLSearchParams(location.search).get("panel")) {
+        $("fsBtn").classList.add("hidden");
+        $("collapseBtn").style.display = "grid";
+        $("collapseBtn").onclick = () => { try { parentWin()?.postMessage({ type: "holo-identity", action: "close-wallet" }, location.origin); } catch {} };
+      } else {
+        $("collapseBtn").style.display = "none";   // standalone page → fullscreen button stays, no collapse
+      }
 
       // ── THE SIX SOVEREIGN CATEGORIES — one κ owns them all; each wired to a REAL Hologram source ──
       const svgI = (p) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + p + "</svg>";

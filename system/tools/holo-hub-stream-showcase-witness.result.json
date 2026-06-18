@@ -31,12 +31,12 @@
     {
       "name": "verified bytes persisted to the OpfsKappaStore (κ-store resident)",
       "ok": true,
-      "detail": "13.1 MB resident"
+      "detail": "26.9 MB resident"
     },
     {
       "name": "the 4K video actually DECODES — 3840×2160, frames advancing",
       "ok": true,
-      "detail": "3840×2160 · t=2.06s · 25 fps"
+      "detail": "3840×2160 · t=2.42s · ? fps"
     },
     {
       "name": "pin-to-own — κ pinned in the OpfsKappaStore (instant, zero re-download)",

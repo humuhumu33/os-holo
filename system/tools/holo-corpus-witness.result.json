@@ -2,7 +2,7 @@
   "witnessed": false,
   "passed": 2,
   "failed": 3,
-  "files": 28557,
+  "files": 29177,
   "objects": 13399,
   "sampled": 12655,
   "covers": [
@@ -13,7 +13,7 @@
     {
       "name": "every first-party file in both folders is a first-class addressed object (full coverage)",
       "ok": false,
-      "detail": "13307/28557 files indexed · 15250 live-churn: commitlint.yml, CHANGELOG.md, LICENSE"
+      "detail": "13307/29177 files indexed · 15870 live-churn: commitlint.yml, CHANGELOG.md, LICENSE"
     },
     {
       "name": "no orphan objects — every index entry exists on disk",
@@ -28,7 +28,7 @@
     {
       "name": "a bounded sample RE-DERIVES to both κ — content addresses, not arbitrary (Law L5)",
       "ok": false,
-      "detail": "12155/12655 re-derive · 500 live-churn: launch.json, settings.local.json, pages.yml"
+      "detail": "12148/12655 re-derive · 507 live-churn: launch.json, settings.local.json, pages.yml"
     },
     {
       "name": "the index is deterministic (sorted keys, no timestamps) → re-derives byte-for-byte",

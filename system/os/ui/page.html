@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" class="dark"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hologram</title>
+<link rel="stylesheet" href="/ui/holo-ui.css">
+<style>
+  :root{ --phi:1.618; } *{ box-sizing:border-box; } html,body{ margin:0; min-height:100%; }
+  body{ background:radial-gradient(1100px 560px at 82% -8%, color-mix(in oklch, var(--primary) 9%, transparent), transparent 60%), var(--background);
+        color:var(--foreground); font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; }
+  #boot{ position:fixed; inset:0; display:grid; place-items:center; color:var(--muted-foreground); font:14px ui-monospace; transition:opacity .4s; }
+  [data-holo-motion="reduced"] *, [data-holo-motion="reduced"] *::before, [data-holo-motion="reduced"] *::after{ animation-duration:.001ms!important; animation-iteration-count:1!important; transition-duration:.001ms!important; }
+</style>
+</head><body>
+  <div id="boot">streaming page…</div>
+  <div id="root"></div>
+<script type="module">
+// The GENERIC page host. No per-page code: it streams a page κ-object by name and mounts it. Every
+// visible thing — chrome, components, content — comes from content-addressed κ-objects, verified on load.
+const [HR, F] = await Promise.all([ import("/_shared/holo-render.js"), import("/_shared/holo-fidelity.mjs").catch(() => null) ]);
+const fid = (F && F.current && F.current()) || { prefetch: "eager" };   // auto-applies data-holo-motion + CSS vars on import
+const reg   = await fetch("/ui/vendor/registry.json").then(r=>r.json());
+const bare  = await fetch("/ui/vendor/bare.json").then(r=>r.json());
+const pages = await fetch("/ui/pages/pages.json").then(r=>r.json());
+// every κ-UI component is bare-linkable from a page as holo:<name>
+for (const [n, k] of Object.entries(reg)) bare["holo:" + n] = k;
+await HR.configure({ bare });
+
+const name = new URLSearchParams(location.search).get("p") || Object.keys(pages)[0];
+const pageK = pages[name];
+if (!pageK) { document.getElementById("boot").textContent = "no such page: " + name; }
+else {
+  // adaptive prefetch: full runtime on fast devices; criticals-only on a slow/save-data link
+  if (fid.prefetch === "off") await HR.warm([bare["react"], reg.card, reg.button, reg.badge, reg.input, reg.separator].filter(Boolean));
+  else await HR.warm(Object.values(bare));
+  const t0 = performance.now();
+  await HR.render(document.getElementById("root"), pageK);
+  console.log("page '" + name + "' rendered in " + (performance.now()-t0).toFixed(0) + "ms");
+  const boot = document.getElementById("boot"); boot.style.opacity = "0"; setTimeout(()=>boot.remove(), 450);
+}
+</script>
+</body></html>

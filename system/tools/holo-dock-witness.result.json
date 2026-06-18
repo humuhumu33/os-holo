@@ -45,7 +45,9 @@
     "translucenttb accent model is faithfully adopted (5 states + blur_radius 0–750 /3 + token map)": true
   },
   "rawPx": [
-    "424: height:18px"
+    "250: gap:6px",
+    "300: gap:6px",
+    "462: height:18px"
   ],
   "subFloor": [],
   "zErrs": []

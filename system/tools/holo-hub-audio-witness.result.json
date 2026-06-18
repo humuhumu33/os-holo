@@ -1,0 +1,46 @@
+{
+  "witnessed": true,
+  "passed": 6,
+  "failed": 0,
+  "covers": [
+    "every FLAC chunk's κ pin is REAL — on-disk bytes re-derive to de",
+    "every FLAC chunk verified to its declared κ BEFORE decode — veri",
+    "the lossless FLAC κ-object decodes to real audio — 48 kHz · ster",
+    "SPATIAL (HRTF binaural) is real — a source placed right renders ",
+    "bytes-decoded-before-verified = 0 (no chunk decodes until its κ ",
+    "no fatal page errors"
+  ],
+  "results": [
+    {
+      "name": "every FLAC chunk's κ pin is REAL — on-disk bytes re-derive to declared sha256 (L5, oracle)",
+      "ok": true,
+      "detail": "6/6 chunks"
+    },
+    {
+      "name": "every FLAC chunk verified to its declared κ BEFORE decode — verified all, refused none",
+      "ok": true,
+      "detail": "verified 6/6 · mismatches 0"
+    },
+    {
+      "name": "the lossless FLAC κ-object decodes to real audio — 48 kHz · stereo · ~10 s · non-silent",
+      "ok": true,
+      "detail": "48000 Hz · 2ch · 10.03s · rms 3.93"
+    },
+    {
+      "name": "SPATIAL (HRTF binaural) is real — a source placed right renders the right channel louder (offline-proven)",
+      "ok": true,
+      "detail": "L 2.1 vs R 2.8 → binaural true"
+    },
+    {
+      "name": "bytes-decoded-before-verified = 0 (no chunk decodes until its κ re-derives)",
+      "ok": true,
+      "detail": "0"
+    },
+    {
+      "name": "no fatal page errors",
+      "ok": true,
+      "detail": "clean"
+    }
+  ],
+  "spec": "Holo Hub Phase 2b audio: the BBB audio as a lossless FLAC κ-object streams chunk by chunk; each re-derives to its declared κ (L5) before decode; persists in the OpfsKappaStore; Web Audio decodes it (48kHz stereo); a deterministic OfflineAudioContext render through an HRTF panner proves binaural spatial output. Lossless FLAC; source master is AAC (lossless-of-a-lossy-source)."
+}

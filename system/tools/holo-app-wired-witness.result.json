@@ -14,10 +14,14 @@
     "holo-ui-kernel.js",
     "holo-ui.js"
   ],
-  "appsScanned": 42,
+  "appsScanned": 46,
   "vendoredExempt": [],
   "unwired": [
     "cosmos",
-    "hub"
+    "holo-3d",
+    "holo-linux",
+    "holo-x86",
+    "hub",
+    "surfacedemo"
   ]
 }

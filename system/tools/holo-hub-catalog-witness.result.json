@@ -1,0 +1,52 @@
+{
+  "witnessed": true,
+  "passed": 7,
+  "failed": 0,
+  "covers": [
+    "both catalog assets' κ pins are REAL — on-disk bytes re-derive t",
+    "tile A streams + verifies from origin (4K decodes)",
+    "DEDUP-INSTANT — tile B (same κ) materializes from the κ-store wi",
+    "a DIFFERENT κ (tile C) streams fresh from origin — no false dedu",
+    "SHOW-ME-THE-κ — the panel re-derives the resident bytes to the d",
+    "OFFLINE-EVERYTHING — origin cut, a streamed tile still plays fro",
+    "no fatal page errors"
+  ],
+  "results": [
+    {
+      "name": "both catalog assets' κ pins are REAL — on-disk bytes re-derive to their declared sha256 (L5, oracle)",
+      "ok": true,
+      "detail": "4/4"
+    },
+    {
+      "name": "tile A streams + verifies from origin (4K decodes)",
+      "ok": true,
+      "detail": "3840×2160 · 26.9 MB from origin"
+    },
+    {
+      "name": "DEDUP-INSTANT — tile B (same κ) materializes from the κ-store with ZERO origin bytes (O(1), Law L1)",
+      "ok": true,
+      "detail": "dedupHits 2/2 · origin 0 B"
+    },
+    {
+      "name": "a DIFFERENT κ (tile C) streams fresh from origin — no false dedup",
+      "ok": true,
+      "detail": "dedupHits 0 · 13.1 MB from origin"
+    },
+    {
+      "name": "SHOW-ME-THE-κ — the panel re-derives the resident bytes to the declared κ (L5)",
+      "ok": true,
+      "detail": "init.mp4 → sha256:26a7d3621bacca0fe410434a… seg_000.m4s → sh"
+    },
+    {
+      "name": "OFFLINE-EVERYTHING — origin cut, a streamed tile still plays from the κ-store (L3 + serverless)",
+      "ok": true,
+      "detail": "cut:true source:κ-store"
+    },
+    {
+      "name": "no fatal page errors",
+      "ok": true,
+      "detail": "clean"
+    }
+  ],
+  "spec": "Holo Hub Phase 2a: a real catalog of live κ-streaming tiles. Each tile is a real κ-object verified to its declared κ before decode and persisted in the OpfsKappaStore. Witnessed live: stream+verify (4K), DEDUP-INSTANT (shared κ ⇒ zero origin bytes, O(1)), distinct κ streams fresh, show-me-the-κ re-derivation, and offline-everything (origin cut ⇒ still plays from the κ-store)."
+}

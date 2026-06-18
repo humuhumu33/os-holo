@@ -1,9 +1,10 @@
 {
-  "witnessed": false,
-  "passed": 6,
-  "failed": 1,
+  "witnessed": true,
+  "passed": 7,
+  "failed": 0,
   "covers": [
     "every OS object carries its substrate σ-axis",
+    "every OS object RE-DERIVES to its substrate ",
     "every dual-axis app re-derives on the substr",
     "the κ-route resolves an OS object by /.holo/",
     "the κ-route resolves an APP object by /.holo",
@@ -14,22 +15,22 @@
     {
       "name": "every OS object carries its substrate σ-axis κ (did:holo:blake3)",
       "ok": true,
-      "detail": "465/465 anchored"
+      "detail": "459/459 anchored"
     },
     {
       "name": "every OS object RE-DERIVES to its substrate κ via OS2 BLAKE3 (≡ hologram kappa(), Law L5)",
-      "ok": false,
-      "detail": "450/454 sampled re-derive · 0 large anchored · 15 live-drift (reseal): holo-capture.js, holo-git.js"
+      "ok": true,
+      "detail": "458/459 sampled re-derive · 0 large anchored · 1 live-drift (reseal): holo-surface.mjs"
     },
     {
       "name": "every dual-axis app re-derives on the substrate σ-axis (each lock entry)",
       "ok": true,
-      "detail": "42/42 stable apps · 7792/8411 entries"
+      "detail": "42/42 stable apps · 8058/8766 entries"
     },
     {
       "name": "the κ-route resolves an OS object by /.holo/blake3/<κ> + re-derives",
       "ok": true,
-      "detail": "OS:shell.html 45aded07b516…"
+      "detail": "OS:shell.html 0775734b6889…"
     },
     {
       "name": "the κ-route resolves an APP object by /.holo/blake3/<κ> + re-derives",
@@ -47,7 +48,7 @@
       "detail": "holo-fhs-sw.js"
     }
   ],
-  "osObjects": 465,
-  "appObjects": 8411,
+  "osObjects": 459,
+  "appObjects": 8766,
   "spec": "Hologram OS — the whole OS + every app is dual-axis content-addressed: the OS serving key (did:holo:sha256) AND the unified-substrate σ-axis κ (did:holo:blake3 ≡ hologram kappa()), resolvable on the κ-route by either, re-derived (Law L5)"
 }

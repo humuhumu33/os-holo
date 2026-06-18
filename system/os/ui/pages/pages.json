@@ -1,0 +1,14 @@
+{
+  "ask": "did:holo:sha256:b973c6eba6081b15785ab8817fff19be062b7e8df601b4a35f62952051f9166b",
+  "finance": "did:holo:sha256:f403079bf2d126196ddf47ce064ded05a87955f1b2d0fe2ac9dafd9de97d64b4",
+  "health": "did:holo:sha256:8bfd8ec0699bbdd16e59f8ff967c35df545704df48f0f16921f8c82537a38701",
+  "home": "did:holo:sha256:e3cfd4ffe8a6c2db9e8356bf80ee2b6fc1b3164a480735c6e023df9c730c8cbe",
+  "mail": "did:holo:sha256:09ebb2bb3e0f1831c95003d9501aa0b86075b1ab9759b9cc8319547a490708cc",
+  "markets": "did:holo:sha256:ca08d8c29f0a735fcc624f8edf1af7f40e6c8e0ed88263245b801ecfde7e3b3c",
+  "news": "did:holo:sha256:9e6a360253b095f6ac5628aecb69d1ae4b91c28defe11a6479dfcd6cff5222ce",
+  "spaces": "did:holo:sha256:2c6135dce815f02158e53a63b5e7aa91adcab3f7629ff6629f80fa7297ef002b",
+  "style": "did:holo:sha256:1bfc067e493a143fc3762a1a6c7792f2cfb11d115716889962d5deeaadf81068",
+  "tech": "did:holo:sha256:774e949e5c9fa6d6441d110f59bff88747e849206239cb69dcac39fb3587ddd5",
+  "travel": "did:holo:sha256:c89eb24678b43116fc7c96392b79b2150e305e367e0614383c2fadbec9609387",
+  "weather": "did:holo:sha256:f411d4086d13b7474d4a02765416ad3ea616b02ce9ea3716a74feb199f99ff44"
+}

@@ -1,0 +1,40 @@
+{
+  "witnessed": true,
+  "passed": 5,
+  "failed": 0,
+  "covers": [
+    "the real Holo Hub loads and a self-verifying κ-stream listing is",
+    "clicking it opens Hub's real player (watch view, #pFrame ← strea",
+    "the 4K κ-object streams + verifies (verify→OPFS→MSE) inside Hub'",
+    "Hub's player reports it ready + verified (boot → ready, '0 serve",
+    "no fatal page errors (catalog-dep 404s ignored)"
+  ],
+  "results": [
+    {
+      "name": "the real Holo Hub loads and a self-verifying κ-stream listing is present in the catalog",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "clicking it opens Hub's real player (watch view, #pFrame ← stream-embed)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the 4K κ-object streams + verifies (verify→OPFS→MSE) inside Hub's player",
+      "ok": true,
+      "detail": "verified 2/2 · source origin"
+    },
+    {
+      "name": "Hub's player reports it ready + verified (boot → ready, '0 servers')",
+      "ok": true,
+      "detail": "verified · first render 23ms · 0 servers"
+    },
+    {
+      "name": "no fatal page errors (catalog-dep 404s ignored)",
+      "ok": true,
+      "detail": "clean"
+    }
+  ],
+  "spec": "The κ-streaming pipeline wired into the REAL Holo Hub (apps/hub/index.html, additive injector): a self-verifying κ-stream listing appears in the catalog; clicking it opens Hub's real player and streams the 4K κ-object (verify→OPFS→MSE) inside the player iframe, which Hub marks verified + ready. Standalone demos are now a genuine Hub listing."
+}

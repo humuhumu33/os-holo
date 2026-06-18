@@ -202,7 +202,7 @@
       "earl:result": {
         "@type": "earl:TestResult",
         "earl:outcome": {
-          "@id": "earl:failed"
+          "@id": "earl:passed"
         }
       },
       "earl:mode": {
@@ -1444,7 +1444,7 @@
       "earl:result": {
         "@type": "earl:TestResult",
         "earl:outcome": {
-          "@id": "earl:passed"
+          "@id": "earl:failed"
         }
       },
       "earl:mode": {
@@ -1467,7 +1467,7 @@
       "earl:result": {
         "@type": "earl:TestResult",
         "earl:outcome": {
-          "@id": "earl:passed"
+          "@id": "earl:failed"
         }
       },
       "earl:mode": {
@@ -1490,7 +1490,7 @@
       "earl:result": {
         "@type": "earl:TestResult",
         "earl:outcome": {
-          "@id": "earl:passed"
+          "@id": "earl:failed"
         }
       },
       "earl:mode": {

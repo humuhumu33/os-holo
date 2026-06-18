@@ -894,7 +894,8 @@
 
   // ── PROGRESSIVE BRAIN (cold-start) — Q must feel alive the instant the desktop paints, not after a 1.7GB
   //    download. Conversation is served in TIERS: the lightweight STARTER (SmolLM2-360M, already vendored) is
-  //    warmed at boot and bound to the QVAC completion seam so the FIRST turn lands in ~1s; the FULL brain
+  //    warmed the moment you OPEN Q (openQPanel/resolveBrain) — NOT at boot, so this shell (which hosts every
+  //    app) stays lean — and is bound to the QVAC completion seam so the FIRST turn lands in ~1s; the FULL brain
   //    (1.5B Coder) upgrades SILENTLY in the background and rebinds when ready. DO (the command router) needs
   //    no model and works at t=0. Honest: until a real model is bound Q says it's waking — never word-salad.
   //    Respectful: the heavy tier auto-upgrades only on capable (WebGPU), non-metered devices — so a WASM-only
@@ -1889,12 +1890,30 @@
     if (s === "speaking") { var ah = accentHue(); return { hue: ah + Math.sin(t * 5) * level * 34, spread: 38, sat: 80, light: 60 + level * 24 }; }
     return { hue: accentHue(), spread: 28, sat: 70, light: 60 };       // idle
   }
-  // ── the 3D orb bridge: load the VapiBlocks port lazily, feed it Q's live voice level + mood palette ──
+  // three.min.js (UMD global THREE) is loaded ON DEMAND — the first time an orb actually mounts — rather than
+  // eagerly at parse via a <script defer>. The orb still renders in WebGL exactly as before; this just moves
+  // the 616KB off the boot critical path of a shell that hosts every app, and a session that never shows an
+  // orb (reduced-motion, no-WebGL, orb never summoned) never fetches it. async=false preserves the original
+  // "three executes before the orb module" ordering the VapiBlocks port relies on (global THREE).
+  var _threeP = null;
+  function loadThree() {
+    if (W.THREE) return Promise.resolve(W.THREE);
+    if (_threeP) return _threeP;
+    _threeP = new Promise(function (resolve, reject) {
+      var s = DOC.createElement("script");
+      s.src = BASE + "voice/lib/three.min.js"; s.async = false; s.setAttribute("data-holo-shared", "three.min.js");
+      s.onload = function () { resolve(W.THREE); };
+      s.onerror = function () { reject(new Error("three.min.js failed to load")); };
+      DOC.head.appendChild(s);
+    });
+    return _threeP;
+  }
+  // ── the 3D orb bridge: load three + the VapiBlocks port lazily, feed it Q's live voice level + mood palette ──
   function ensureOrbMod() {
     if (_orbMod) return Promise.resolve(_orbMod);
     if (_orbModTried) return Promise.resolve(null);
     _orbModTried = true;
-    return import(BASE + "voice/holo-voice-orb.mjs").then(function (m) { _orbMod = m; return m; },
+    return loadThree().then(function () { return import(BASE + "voice/holo-voice-orb.mjs"); }).then(function (m) { _orbMod = m; return m; },
       function (e) { console.warn("[HoloVoice] 3D orb module unavailable — using the 2D orb:", e && e.message || e); return null; });
   }
   // lazy-load the WebGPU raymarched orb module (Tier 3). Null on failure → caller uses the WebGL orb.
@@ -2216,8 +2235,11 @@
           qWhisper("Hello — I'm Q. I'm yours, and I learn as you do. Ask me anything, anytime.",
             { ms: 10000, onTap: function () { try { openQPanel(); } catch (e) {} } });
         };
-        try { warmStarter().then(greet); } catch (e) { greet(); }       // bloom when the starter is ready
-        setTimeout(greet, 6000);                                        // …but never wait on the model to say hello
+        // Say hello promptly — do NOT warm the ~348MB starter just to TIME the greeting. That put the model
+        // on the first-meeting boot of a shell that hosts every app, for a hello that never needed it. Q still
+        // warms its brain the moment you OPEN it (this whisper's onTap → openQPanel → resolveBrain), so nothing
+        // is lost; the hello simply no longer waits on a model download.
+        setTimeout(greet, 1200);
       } catch (e) {}
     }, 1600);
   }
@@ -2599,10 +2621,12 @@
     try {
       var pq = new URLSearchParams(location.search), deep = pq.has("app") || pq.has("open") || pq.has("run");
       if (!deep && !localStorage.getItem("holo.voice.welcomed")) setTimeout(welcome, 1400);
-      // COLD-START: warm the conversational STARTER now so Q's first turn lands the moment you open it — the
-      // boot film masks the load; the full brain upgrades silently later. Skipped on shared deep links (run the
-      // shared space first) and on metered links (don't burn mobile data on first touch).
-      if (!deep && !metered()) setTimeout(function () { try { warmStarter(); } catch (e) {} }, 300);
+      // COLD-START is now LAZY (perf: this shell hosts EVERY app — keep its boot path clean). The ~348MB
+      // starter LLM (+ transformers + tokenizer) used to warm here on every boot. It no longer does: Q warms
+      // its brain the moment you OPEN it — openQPanel() calls resolveBrain(), and a voice turn awaits
+      // resolveBrain() too — so the first turn still lands fast, while a user who never opens Q pays nothing.
+      // The L0 seed κ-memo still answers common first questions with zero model. To pre-warm anyway (e.g. a
+      // kiosk), call HoloVoice.warmStarter() explicitly.
     } catch (e) {}
   }
   try { registerQWidget(); } catch (e) {}   // register the "q" widget TYPE at eval — before the board restores, so a saved Q remounts (shell loads widgets first)

@@ -148,6 +148,12 @@
     /* MD3 minimum touch target (Accessibility → Touch target) — every primary control clears 48dp on
        a coarse pointer; this is the conformance floor the mobile media block below enforces. */
     --tap: 48px;
+    /* ONE shared control height. The search box, the Star-on-GitHub pill, the appearance toggle and the
+       social link all render at EXACTLY this height, so the whole bar reads as a single row and every
+       enclosed control lines up with the hero's star pill. max() pins it to the MD3 48dp touch floor on a
+       phone while tracking the golden unit on a desktop — so it is pointer-independent (a wide touchscreen
+       desktop no longer inflates the toggle). */
+    --ctl: max(48px, calc(var(--u) * 2.6));
     color-scheme:dark;
   }
   /* light theme — flipped by the sun/moon switch (persisted); a LibreChat-style inverse palette */
@@ -285,14 +291,14 @@
     font-size:var(--u-phi); letter-spacing:-.01em; }                          /* u·φ */
   .brand .mk{ width:1.2em; height:1.2em; display:block; color:var(--fg); }
   .links{ display:flex; align-items:center; gap:var(--u-phi); margin-left:var(--u-phi); }
-  .links a{ color:var(--muted); font-size:calc(var(--u) * 1.08); font-weight:450; transition:color .15s; } /* ≈ reference 22px */
+  .links a{ color:var(--muted); font-size:var(--u); font-weight:450; transition:color .15s; }   /* one bar font size (var(--u)) — same as search · star pill · CTAs */
   .links a:hover{ color:var(--fg); }
   .grow{ flex:1; }
   .right{ display:flex; align-items:center; gap:calc(var(--u) * 1.05); }   /* roomier rhythm between search · toggle · github (scales with --u) */
 
   .search{ position:relative; display:flex; align-items:center; gap:.72em;
     background:var(--panel); border:1px solid var(--line); border-radius:calc(var(--u) * .73);
-    height:calc(var(--u) * 2.72); padding:0 .8em; color:var(--muted-2); cursor:text;   /* matched to reference */
+    height:var(--ctl); padding:0 .8em; color:var(--muted-2); cursor:text;
     width:clamp(190px, 19vw, 380px); font-size:var(--u); transition:border-color .15s; }
   .search:hover{ border-color:var(--line-strong); }
   .search:focus-within{ border-color:var(--line-strong); }
@@ -330,16 +336,16 @@
     padding:.12em .5em; font:600 .82em/1.4 inherit; color:var(--muted); }
 
   .toggle{ display:flex; align-items:center; gap:calc(var(--u) * .26); background:var(--panel);
-    border:1px solid var(--line); border-radius:999px; padding:calc(var(--u) * .28); }
+    border:1px solid var(--line); border-radius:999px; height:var(--ctl); padding:0 calc(var(--u) * .28); }
   .toggle button{ -webkit-appearance:none; appearance:none; border:0; cursor:pointer; padding:0;
-    width:calc(var(--u) * 2.05); height:calc(var(--u) * 2.05); border-radius:999px; display:grid; place-items:center;
+    height:100%; aspect-ratio:1; border-radius:999px; display:grid; place-items:center;
     background:none; color:var(--muted); transition:background .14s ease, color .14s ease, transform .14s ease; }
   .toggle button svg{ width:calc(var(--u) * 1.18); height:calc(var(--u) * 1.18); }
   .toggle button:not([aria-pressed="true"]):hover{ background:var(--panel-hover); color:var(--fg); }   /* live feedback on the inactive modes */
   .toggle button:active{ transform:scale(.92); }                                                       /* crisp press */
   .toggle button[aria-pressed="true"]{ background:var(--panel-2); color:var(--fg); }
 
-  .ghlink{ display:grid; place-items:center; width:calc(var(--u) * 2.05); height:calc(var(--u) * 2.05); border-radius:.5em;
+  .ghlink{ display:grid; place-items:center; width:var(--ctl); height:var(--ctl); border-radius:.5em;
     color:var(--muted); transition:color .15s,background .15s; }
   .ghlink{ transition:color .14s ease, background .14s ease, transform .14s ease; }
   .ghlink:hover{ color:var(--fg); background:var(--panel); }
@@ -357,7 +363,7 @@
 
   .pill-star{ display:inline-flex; align-items:center; gap:.7em;
     background:var(--panel); border:1px solid var(--line); border-radius:999px;
-    padding:.52em 1em; font-size:var(--u); color:var(--fg-soft);                /* matched to reference */
+    padding:0 1em; height:var(--ctl); font-size:var(--u); color:var(--fg-soft);   /* height == --ctl → identical to the bar controls */
     transition:border-color .15s, background .15s; }
   .pill-star:hover{ border-color:var(--line-strong); background:var(--panel-hover); }
   .pill-star svg{ width:1.15em; height:1.15em; }
@@ -595,14 +601,11 @@
   @media (max-width: 600px), (pointer: coarse){
     /* inputs ≥16px → no focus-zoom on iOS */
     .search input, #lq{ font-size:max(16px, var(--u)); }
-    /* the appearance toggle: each mode button reaches 48dp */
-    .toggle button{ width:var(--tap); height:var(--tap); }
-    .toggle button svg{ width:calc(var(--u) * 1.18); height:calc(var(--u) * 1.18); }
-    /* search pill + hero pill + CTAs + github reach the 48dp tap floor */
-    .search{ min-height:var(--tap); }
-    .pill-star{ min-height:var(--tap); }
+    /* The bar controls (search · star pill · appearance toggle · social link) already share --ctl, which
+       is floored at 48dp — so they meet the touch target with NO per-element overrides here (overriding
+       them again would re-introduce the height mismatch this block used to cause). Only the hero CTAs,
+       which size from their own padding, still need the explicit floor. */
     .btn{ min-height:var(--tap); }
-    .ghlink{ width:var(--tap); height:var(--tap); }
     /* launcher: list rows, find field, controls all reach 48dp */
     .lx-item{ min-height:var(--tap); }
     .lx-find{ min-height:var(--tap); }
@@ -612,10 +615,15 @@
     .lx-kappa{ min-height:var(--tap); }
     .lx-bar .lights i.c{ position:relative; }                       /* the back ⌫ light — enlarge its hit area without resizing the dot */
     .lx-bar .lights i.c::after{ content:""; position:absolute; inset:-14px; border-radius:50%; }
-    /* ── MOBILE BOOT — one clean action ───────────────────────────────────────────────────────────
-       The native Free Download is a desktop-gateway affordance (no side-load on a phone here); on touch
-       the boot screen is just the headline and a single, centred Power-up pill — never a full-bleed
-       stretch or a stacked pair. Slightly tighter hero rhythm so it sits balanced, never cramped. */
+  }
+  /* ── MOBILE BOOT LAYOUT — keyed on WIDTH ONLY (never pointer) ──────────────────────────────────
+     The stripped boot face (hide the native Free Download, collapse the two CTAs to ONE centred
+     Power-up pill, tighter hero rhythm) is a NARROW-SCREEN affordance — it must depend on how much
+     ROOM the screen has, not on what KIND of pointer is primary. Keying it on `pointer:coarse` (as the
+     48dp touch-target block above rightly does) wrongly handed the full phone face to a WIDE touchscreen
+     DESKTOP: a 2-in-1, an all-in-one, any large touch panel reports a coarse primary pointer yet has
+     full desktop room. So the layout collapse lives here under width alone; tap targets stay on coarse. */
+  @media (max-width: 600px){
     #download{ display:none; }
     .cta{ width:auto; max-width:100%; grid-auto-flow:row; justify-items:center; gap:0; }
     .cta .btn{ width:min(78vw, 19rem); min-width:0; }
@@ -1524,7 +1532,7 @@
     {n:"Hologram Meet",f:"meet",c:"Communication",d:"Serverless, end to end encrypted video conferencing."},
     {n:"Holo Music",f:"music",c:"Multimedia",d:"A content addressed music library, and the whole internet as one."},
     {n:"Holo Notepad",f:"notepad",c:"Business",d:"Your second brain, a networked, private outliner and always on memory bank."},
-    {n:"Hologram OS",f:"os",c:"Utilities",d:"A real Debian GNU/Linux system, booted in a browser tab."},
+    {n:"Holo Linux",f:"os",c:"Utilities",d:"A real Debian GNU/Linux system, booted in a browser tab."},
     {n:"Plasma Desktop",f:"plasma",c:"System",d:"Your real KDE Plasma desktop, mounted live in a holospace over VNC."},
     {n:"Holo Player",f:"player",c:"Multimedia",d:"A content addressed media library for your movies and shows."},
     {n:"Holo Privacy",f:"privacy",c:"Security",d:"Control what an AI agent may learn about you. Minimum disclosure, for a stated purpose."},
@@ -1543,7 +1551,7 @@
   ];
   const CAT_HUE = { Multimedia:349, Developer:222, Communication:170, Educational:42, Social:288,
     Business:158, Utilities:225, Reference:28, Productivity:265, Finance:145, Security:18, System:205 };
-  const FEATURED = ["homepage","trade","jypyter","q","wallet","browser","code","files","music"];
+  const FEATURED = ["os","homepage","trade","jypyter","q","wallet","browser","code","files","music"];
   const Q = $("q"), RES = $("results");
   const badgeColor = c => `hsl(${CAT_HUE[c] ?? 220} 55% 47%)`;
   const initial = n => (n.replace(/^(Holo|Hologram)\s+/, "").trim()[0] || n[0]).toUpperCase();

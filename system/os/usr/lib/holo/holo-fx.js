@@ -12,6 +12,8 @@
 //   HoloFX.bar(pct)              → "███████░░░░░░" progress string
 //   HoloFX.scramble(el, text)    → decode/glitch text into place (Promise)
 //   HoloFX.type(el, text)        → typewriter (Promise)
+//   HoloFX.ascii(text, {font})   → text→ASCII art (FIGlet/TAAG), 328 κ-fonts, lazy (Promise<string>)
+//   HoloFX.asciiFonts()          → the full list of available font names (Promise<string[]>)
 //   HoloFX.BANNER.HOLOGRAM       → the ANSI-Shadow wordmark (string)
 //
 // House vocabulary (the "Instrument" set — sharp & precise):
@@ -23,6 +25,11 @@
 (function () {
   "use strict";
   if (window.HoloFX) return;
+
+  // This script's own URL, captured synchronously — so the lazy ASCII engine import
+  // resolves relative to /usr/lib/holo/, not the host document.
+  const FX_SRC = (document.currentScript && document.currentScript.src) || "";
+  const ASCII_URL = FX_SRC ? new URL("holo-ascii.mjs", FX_SRC).href : "./holo-ascii.mjs";
 
   // ── unicode-animations@1.0.3 — vendored frame data & generators (verbatim) ──────────
   const BRAILLE_DOT_MAP = [[1, 8], [2, 16], [4, 32], [64, 128]];
@@ -653,5 +660,16 @@
   if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", autoBoot); document.addEventListener("DOMContentLoaded", bootKappa); }
   else { autoBoot(); bootKappa(); }
 
-  window.HoloFX = { FRAMES, spinners: SPINNERS, spin, loader, gridToBraille, makeGrid, bar, scramble, type, BANNER, kappa, kappaScan, hexToBraille, meter, progress, graph, scope, audioScope };
+  // ── native text→ASCII (FIGlet / TAAG) ───────────────────────────────────────────────────
+  // The κ-addressable encoder lives in holo-ascii.mjs (vendored figlet core + 328 .flf fonts,
+  // byte-identical to patorjk.com/software/taag). Lazy-imported once on first use so HoloFX
+  // stays light. ascii() resolves to the art string; asciiFonts() to the full font list.
+  let _asciiMod = null;
+  const asciiMod = () => (_asciiMod || (_asciiMod = import(ASCII_URL)));
+  function ascii(text, opts) { return asciiMod().then((m) => m.renderAscii(text, opts)); }       // → Promise<string>
+  function asciiFonts() { return asciiMod().then((m) => m.listFonts()); }                          // → Promise<string[]>
+  ascii.fonts = asciiFonts;
+  ascii.module = asciiMod;
+
+  window.HoloFX = { FRAMES, spinners: SPINNERS, spin, loader, gridToBraille, makeGrid, bar, scramble, type, BANNER, ascii, asciiFonts, kappa, kappaScan, hexToBraille, meter, progress, graph, scope, audioScope };
 })();

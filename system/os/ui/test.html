@@ -1,6 +1,7 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>κ-UI render proof</title>
-<style>body{background:#09090B;color:#fff;font:16px system-ui;padding:40px}#out{margin-top:20px;display:flex;gap:12px;flex-wrap:wrap}#log{margin-top:24px;font:13px ui-monospace;white-space:pre-wrap;color:#a1a1aa}</style>
+<html lang="en" class="dark"><head><meta charset="utf-8"><title>κ-UI render proof</title>
+<link rel="stylesheet" href="/ui/holo-ui.css">
+<style>body{background:#09090B;color:#fff;font:16px system-ui;padding:40px}#out{margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}#log{margin-top:24px;font:13px ui-monospace;white-space:pre-wrap;color:#a1a1aa}</style>
 </head><body>
 <h1>Render a shadcn Button as a κ-object</h1>
 <div id="out"></div>
@@ -13,14 +14,20 @@ try {
   const reg = await (await fetch("/ui/vendor/registry.json")).json();
   log("registry:", Object.keys(reg).length, "components");
   await HR.configure({});                       // auto-loads /ui/vendor/importmap.json
-  log("button κ:", reg.button);
+  // warm() the scene's κ-objects → next render is a zero-fetch, zero-compile rebind (sub-ms)
+  const want = ["button","card","input","badge","switch","tabs","label"];
   const t0 = performance.now();
-  const r = await HR.render(document.getElementById("out"), reg.button, { props: { variant: "default" }, children: "Verified κ button" });
-  log("render ok:", JSON.stringify(r), "(" + (performance.now()-t0).toFixed(1) + "ms)");
-  // mount a second variant to prove props stream through
-  const slot = document.createElement("span"); document.getElementById("out").append(slot);
-  await HR.render(slot, reg.button, { props: { variant: "outline" }, children: "Outline" });
-  log("second variant ok");
+  await HR.warm(want.map(n=>reg[n]));
+  log("warmed", want.length, "κ-components in", (performance.now()-t0).toFixed(0)+"ms");
+  const out = document.getElementById("out");
+  const mount = async (k, spec) => { const s=document.createElement("span"); out.append(s); const t=performance.now(); await HR.render(s,k,spec); return performance.now()-t; };
+  const t1 = await mount(reg.button, { props:{variant:"default"}, children:"Primary" });
+  await mount(reg.button, { props:{variant:"outline"}, children:"Outline" });
+  await mount(reg.button, { props:{variant:"secondary"}, children:"Secondary" });
+  await mount(reg.badge, { children:"κ badge" });
+  await mount(reg.input, { props:{ placeholder:"streamed input" } });
+  await mount(reg.switch, {});
+  log("first warm render:", t1.toFixed(2)+"ms (zero-fetch rebind)");
 } catch (e) { log("ERROR:", e && e.message || e); console.error(e); }
 </script>
 </body></html>

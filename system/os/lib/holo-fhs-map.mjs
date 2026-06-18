@@ -26,7 +26,7 @@ export function fhsMap(rel) {
   if (rel === "apps-witness.result.json") return "srv/apps-witness.result.json";
   // The boot chain: rEFInd (boot.html at root) → Plymouth (splash.html) → SDDM (login.html)
   // → shell (home.html) → editor (workspace.html). All in /usr/share/frame.
-  if (["shell.html", "holospace.html", "home.html", "homepage.html", "find.html", "splash.html", "login.html", "identity.html", "wallet.html", "workspace.html", "pair.html", "omni.html"].includes(rel)) return "usr/share/frame/" + rel;   // shell.html = the ONE canonical holospace shell (in OS2); identity.html + wallet.html = the unified Holo Identity surface (the sovereign vault) — core, always served; omni.html = the κ-resolve lab
+  if (["shell.html", "holospace.html", "home.html", "home-screen.html", "homepage.html", "find.html", "splash.html", "login.html", "identity.html", "wallet.html", "workspace.html", "pair.html", "omni.html"].includes(rel)) return "usr/share/frame/" + rel;   // shell.html = the ONE canonical holospace shell (in OS2); identity.html + wallet.html = the unified Holo Identity surface (the sovereign vault) — core, always served; omni.html = the κ-resolve lab
   if (rel === "boot.html") return "boot/index.html";                  // the bootloader, served at the root
   // …the bootloader's OWN asset subdir is physically boot/boot/, so `boot/<x>` maps one level deeper.
   if (/^boot\/(refind\.conf|boot-manifest\.json|icons\/|themes\/|make-boot\.mjs)/.test(rel)) return "boot/boot/" + rel.slice(5);
@@ -42,3 +42,12 @@ export function fhsMap(rel) {
   if (/^(usr|etc|var|boot|bin|sbin|lib|lib64|opt|srv|mnt|media|home|root|dev|proc|sys|run|tmp)\//.test(rel)) return rel;
   return null;
 }
+
+// devFreshAllowed — THE dev-fresh gate, shared by the Service Worker (os/holo-fhs-sw.js) and its
+// witness so dev and the gate agree on one rule (Law L2). dev-fresh (serve PATH bytes without the
+// stale closure's L5 refusal, so live edits show) requires BOTH an EXPLICIT opt-in (`allow`, flipped
+// only by the dev server when it serves the SW) AND a loopback hostname. Hostname ALONE never enables
+// it — so a production build served from a localhost origin still re-derives + refuses (Law L5).
+// Pure + dependency-free (string-only; node + SW + DOM).
+export const devFreshAllowed = (allow, hostname) =>
+  allow === true && /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(String(hostname));

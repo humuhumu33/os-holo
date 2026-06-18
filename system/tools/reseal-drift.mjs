@@ -53,9 +53,16 @@ for (const [key, old] of Object.entries(closure)) {
   const abs = join(OS, phys);
   if (!existsSync(abs) || !statSync(abs).isFile()) continue;     // missing → not served → never 409
   const e = entry(readFileSync(abs), old);
-  if (e.kappa === old.kappa) continue;
+  // Drift on EITHER axis: the did:holo:sha256 serve key OR the did:holo:blake3 substrate anchor
+  // (alsoKnownAs). A file resealed for sha256 but not blake3 (or carrying a blake3 anchor from an
+  // older byte-state) leaves the σ-axis stale — which the substrate witness rejects (Law L5 on the
+  // unified axis). Reseal when either differs so both axes always describe the SAME current bytes.
+  const ob = (old.alsoKnownAs || []).find((a) => /blake3/.test(String(a))) || null;
+  const nb = (e.alsoKnownAs || []).find((a) => /blake3/.test(String(a))) || null;
+  if (e.kappa === old.kappa && ob === nb) continue;
   drifted++;
-  console.log(`  ↻ ${key}\n      ${old.kappa.slice(0, 30)}… → ${e.kappa.slice(0, 30)}…`);
+  const axis = e.kappa !== old.kappa ? (ob !== nb ? "sha256+blake3" : "sha256") : "blake3";
+  console.log(`  ↻ ${key} [${axis}]\n      ${old.kappa.slice(0, 30)}… → ${e.kappa.slice(0, 30)}…`);
   if (!checkOnly) { closure[key] = e; resealed++; }
 }
 if (!checkOnly && resealed) writeFileSync(CLOSURE, JSON.stringify(doc, null, 2) + "\n");

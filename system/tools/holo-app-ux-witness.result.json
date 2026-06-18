@@ -13,7 +13,7 @@
     "sacred-resources",
     "strict-conformance"
   ],
-  "appsScanned": 42,
+  "appsScanned": 46,
   "doctrineKappa": "did:holo:sha256:7ef6698b17a4db2783004b65eba0a6177ad5cf3ed479d1db3fe219b512592daf",
   "checks": {
     "the carrier is intact — holo-theme.js bootstraps holo-ux.js (every engine-loading app inherits the doctrine)": true,
@@ -26,7 +26,11 @@
   },
   "unwired": [
     "cosmos",
-    "hub"
+    "holo-3d",
+    "holo-linux",
+    "holo-x86",
+    "hub",
+    "surfacedemo"
   ],
   "jargonApps": [],
   "reducedMotion": {

@@ -17,7 +17,7 @@ import { dirname, join } from "node:path";
 const here = dirname(fileURLToPath(import.meta.url));
 const PAGE = join(here, "../../../holo-apps/apps/hub/stream-showcase.html");
 const MOD = join(here, "../os/usr/lib/holo/holo-opfs-kappastore.mjs");
-const ASSET = join(here, "../../../holo-apps/apps/video/video/dev/dev-bbb-2160");
+const ASSET = join(here, "../../../holo-apps/apps/video/video/dev/dev-bbb-2160-hq");
 const results = []; let passed = 0, failed = 0;
 const rec = (n, ok, d = "") => { results.push({ name: n, ok, detail: d }); ok ? passed++ : failed++; console.log(`${ok ? "PASS" : "FAIL"} — ${n}${d ? "  (" + d + ")" : ""}`); };
 const sha = (buf) => createHash("sha256").update(buf).digest("hex");
@@ -57,7 +57,7 @@ try {
   const page = await browser.newContext().then((c) => c.newPage());
   const perr = []; page.on("pageerror", (e) => perr.push(String(e)));
   await page.goto(`${base}/`, { waitUntil: "load", timeout: 30000 });
-  await page.click("#btnStart");
+  // page auto-starts the pipeline on load — no click needed.
 
   // wait until the pipeline has STARTED (total set) AND both chunks verify (or an error surfaces).
   await page.waitForFunction(() => { const m = window.__holo && window.__holo.metrics(); return m && m.total > 0 && (m.verified >= m.total || m.unverified > 0); }, { timeout: 45000 });

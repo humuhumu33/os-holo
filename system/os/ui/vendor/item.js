@@ -1,0 +1,219 @@
+// ../../ui-main/ui-main/apps/v4/registry/new-york-v4/ui/item.tsx
+import { cva } from "class-variance-authority";
+import { Slot } from "radix-ui";
+
+// ../../ui-main/ui-main/apps/v4/lib/utils.ts
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+function cn(...inputs) {
+  return twMerge(clsx(inputs));
+}
+
+// ../../ui-main/ui-main/apps/v4/registry/new-york-v4/ui/separator.tsx
+import { Separator as SeparatorPrimitive } from "radix-ui";
+import { jsx } from "react/jsx-runtime";
+function Separator({
+  className,
+  orientation = "horizontal",
+  decorative = true,
+  ...props
+}) {
+  return /* @__PURE__ */ jsx(
+    SeparatorPrimitive.Root,
+    {
+      "data-slot": "separator",
+      decorative,
+      orientation,
+      className: cn(
+        "shrink-0 bg-border data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px",
+        className
+      ),
+      ...props
+    }
+  );
+}
+
+// ../../ui-main/ui-main/apps/v4/registry/new-york-v4/ui/item.tsx
+import { jsx as jsx2 } from "react/jsx-runtime";
+function ItemGroup({ className, ...props }) {
+  return /* @__PURE__ */ jsx2(
+    "div",
+    {
+      role: "list",
+      "data-slot": "item-group",
+      className: cn("group/item-group flex flex-col", className),
+      ...props
+    }
+  );
+}
+function ItemSeparator({
+  className,
+  ...props
+}) {
+  return /* @__PURE__ */ jsx2(
+    Separator,
+    {
+      "data-slot": "item-separator",
+      orientation: "horizontal",
+      className: cn("my-0", className),
+      ...props
+    }
+  );
+}
+var itemVariants = cva(
+  "group/item flex flex-wrap items-center rounded-md border border-transparent text-sm transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:transition-colors [a]:hover:bg-accent/50",
+  {
+    variants: {
+      variant: {
+        default: "bg-transparent",
+        outline: "border-border",
+        muted: "bg-muted/50"
+      },
+      size: {
+        default: "gap-4 p-4",
+        sm: "gap-2.5 px-4 py-3"
+      }
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default"
+    }
+  }
+);
+function Item({
+  className,
+  variant = "default",
+  size = "default",
+  asChild = false,
+  ...props
+}) {
+  const Comp = asChild ? Slot.Root : "div";
+  return /* @__PURE__ */ jsx2(
+    Comp,
+    {
+      "data-slot": "item",
+      "data-variant": variant,
+      "data-size": size,
+      className: cn(itemVariants({ variant, size, className })),
+      ...props
+    }
+  );
+}
+var itemMediaVariants = cva(
+  "flex shrink-0 items-center justify-center gap-2 group-has-[[data-slot=item-description]]/item:translate-y-0.5 group-has-[[data-slot=item-description]]/item:self-start [&_svg]:pointer-events-none",
+  {
+    variants: {
+      variant: {
+        default: "bg-transparent",
+        icon: "size-8 rounded-sm border bg-muted [&_svg:not([class*='size-'])]:size-4",
+        image: "size-10 overflow-hidden rounded-sm [&_img]:size-full [&_img]:object-cover"
+      }
+    },
+    defaultVariants: {
+      variant: "default"
+    }
+  }
+);
+function ItemMedia({
+  className,
+  variant = "default",
+  ...props
+}) {
+  return /* @__PURE__ */ jsx2(
+    "div",
+    {
+      "data-slot": "item-media",
+      "data-variant": variant,
+      className: cn(itemMediaVariants({ variant, className })),
+      ...props
+    }
+  );
+}
+function ItemContent({ className, ...props }) {
+  return /* @__PURE__ */ jsx2(
+    "div",
+    {
+      "data-slot": "item-content",
+      className: cn(
+        "flex flex-1 flex-col gap-1 [&+[data-slot=item-content]]:flex-none",
+        className
+      ),
+      ...props
+    }
+  );
+}
+function ItemTitle({ className, ...props }) {
+  return /* @__PURE__ */ jsx2(
+    "div",
+    {
+      "data-slot": "item-title",
+      className: cn(
+        "flex w-fit items-center gap-2 text-sm leading-snug font-medium",
+        className
+      ),
+      ...props
+    }
+  );
+}
+function ItemDescription({ className, ...props }) {
+  return /* @__PURE__ */ jsx2(
+    "p",
+    {
+      "data-slot": "item-description",
+      className: cn(
+        "line-clamp-2 text-sm leading-normal font-normal text-balance text-muted-foreground",
+        "[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
+        className
+      ),
+      ...props
+    }
+  );
+}
+function ItemActions({ className, ...props }) {
+  return /* @__PURE__ */ jsx2(
+    "div",
+    {
+      "data-slot": "item-actions",
+      className: cn("flex items-center gap-2", className),
+      ...props
+    }
+  );
+}
+function ItemHeader({ className, ...props }) {
+  return /* @__PURE__ */ jsx2(
+    "div",
+    {
+      "data-slot": "item-header",
+      className: cn(
+        "flex basis-full items-center justify-between gap-2",
+        className
+      ),
+      ...props
+    }
+  );
+}
+function ItemFooter({ className, ...props }) {
+  return /* @__PURE__ */ jsx2(
+    "div",
+    {
+      "data-slot": "item-footer",
+      className: cn(
+        "flex basis-full items-center justify-between gap-2",
+        className
+      ),
+      ...props
+    }
+  );
+}
+export {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemFooter,
+  ItemGroup,
+  ItemHeader,
+  ItemMedia,
+  ItemSeparator,
+  ItemTitle
+};
