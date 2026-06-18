@@ -48,6 +48,7 @@ automatically from [Conventional Commits](https://www.conventionalcommits.org/) 
 
 ### Fixed
 
+- Vendor the holospaces wasm runtime so apps boot on the deploy
 - Apply flat→FHS mapping to the app-lock fetch so apps heal by κ on static hosts
 - Restore docs-reference-witness.mjs (orphaned by 0a2092a, still called by pages.yml)
 - Use absolute vendor paths in importmap
