@@ -224,7 +224,11 @@ async function ensureAppLock(rel) {
   const id = (rel.match(/^apps\/([^/]+)\//) || [])[1];
   if (!id || APPLOCK.has(id)) return;
   APPLOCK.add(id);   // mark first → a missing/!ok lock just leaves those bytes unpinned (still served), never retried in a loop
-  try { const r = await fetch(`${BASE}apps/${id}/holospace.lock.json`, { cache: "no-store" }); if (r.ok) foldClosure((await r.json()).closure); }
+  // SW-initiated fetches BYPASS our own fetch handler, so they don't get the flat→FHS mapping. Apply it
+  // here, else on a static host (GitHub Pages) the flat lock path 404s, the app's closure never folds, and
+  // its bytes can't heal by κ — the exact reason apps couldn't stream on the deploy.
+  const lockRel = `apps/${id}/holospace.lock.json`;
+  try { const r = await fetch(`${BASE}${fhsMap(lockRel) || lockRel}`, { cache: "no-store" }); if (r.ok) foldClosure((await r.json()).closure); }
   catch { /* unpinned → serve unverified, as before */ }
 }
 const sha256hex = async (buf) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", buf))].map((b) => b.toString(16).padStart(2, "0")).join("");
