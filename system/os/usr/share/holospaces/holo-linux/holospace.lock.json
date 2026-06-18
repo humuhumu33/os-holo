@@ -3,18 +3,18 @@
     "dcterms": "http://purl.org/dc/terms/",
     "holo": "https://hologram.os/ns#"
   },
-  "root": "did:holo:sha256:620abb6dba9447915f76834007b371f642e3ed0d3ee08f4bfff22728e20eff91",
+  "root": "did:holo:sha256:c1eaa9779103122b045e69bdc50c542b9cfaac3e790dbed44bc6019bd352c228",
   "identifier": "org.hologram.HoloLinux",
   "algo": "sha256",
   "holo:within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
   "holo:atlasCoordinate": {
     "space": "Φ-Atlas-12288",
     "within": "did:holo:sha256:f82435dab0215aa6695797d5e9ef4809f1905c015c419f085b2d42346441aad0",
-    "cell": 12177,
-    "page": 47,
-    "byte": 145,
-    "r96": 49,
-    "phi": 12177
+    "cell": 4648,
+    "page": 18,
+    "byte": 40,
+    "r96": 40,
+    "phi": 4648
   },
   "files": 28,
   "closure": {
@@ -37,12 +37,12 @@
       ]
     },
     "apps/holo-linux/holo-linux-worker.js": {
-      "kappa": "did:holo:sha256:61c5746b2e2e6d1b6889e77a2e9854042be623565cd585fc0a9746c7292f7e58",
-      "sri": "sha256-YcV0ay4ubRtoied6LphUBCvmI1Zc1YX8CpdGxykvflg=",
-      "multibase": "uEiBhxXRrLi5tG2iJ53oumFQEK-YjVlzVhfwKl0bHKS9-WA",
-      "bytes": 14728,
+      "kappa": "did:holo:sha256:a7f8e1b9adc2252734a8b02b650d7f8958ee5be76e11182c7eac266047021129",
+      "sri": "sha256-p/jhua3CJSc0qLArZQ1/iVjuW+duERgsfqwmYEcCESk=",
+      "multibase": "uEiCn-OG5rcIlJzSosCtlDX-JWO5b524RGCx-rCZgRwIRKQ",
+      "bytes": 15719,
       "alsoKnownAs": [
-        "did:holo:blake3:fc056b419c698a025b69187c3dc6032f8c1052558bdaac1a4dc4fae96b9895f4"
+        "did:holo:blake3:46f2d859d15a405871cb401c65256a91be5ba481fc3e246c632726a8bbf7a222"
       ]
     },
     "apps/holo-linux/holo-splash.js": {
@@ -82,12 +82,12 @@
       ]
     },
     "apps/holo-linux/kappa.json": {
-      "kappa": "did:holo:sha256:2c718e1e1f3d77141fdd3f6fe5ebcf2bd16b6f478b55640ab2d1d46b28b45e8f",
-      "sri": "sha256-LHGOHh89dxQf3T9v5evPK9Frb0eLVWQKstHUayi0Xo8=",
-      "multibase": "uEiAscY4eHz13FB_dP2_l688r0WtvR4tVZAqy0dRrKLRejw",
-      "bytes": 1255,
+      "kappa": "did:holo:sha256:634b6569fbe15549db47ea11f43974f8c1e5145c7482b3d167f213df3e452fe4",
+      "sri": "sha256-Y0tlafvhVUnbR+oR9Dl0+MHlFFx0grPRZ/IT3z5FL+Q=",
+      "multibase": "uEiBjS2Vp--FVSdtH6hH0OXT4weUUXHSCs9Fn8hPfPkUv5A",
+      "bytes": 1405,
       "alsoKnownAs": [
-        "did:holo:blake3:4294ca57e10490212f1519d0dd49542ef914aa6c12f7eefa53e4dcc65ce22f8e"
+        "did:holo:blake3:4c3cfb4598607c4de31a9a6bfe1b2de3ecac4a3cc9d347449913ae3c22299fe6"
       ]
     },
     "apps/holo-linux/os-kernel.gz": {
