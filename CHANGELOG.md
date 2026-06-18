@@ -11,6 +11,16 @@ automatically from [Conventional Commits](https://www.conventionalcommits.org/) 
 
 ### Added
 
+- RDF/graph services, pages workflow + docs rebuild
+- Complete the κ-native W3C Semantic-Web → Agentic-Web stack (S4-S6) + holospaces bundle
+- Graph/render-contract/pointer services + docs rebuild
+- Semantic discover/index/render tooling + docs rebuild
+- M1 stretch — select an element as chat context, target it by NL
+- M2 iterate-with-memory — version history + context-aware refine
+- M1 point-and-edit — select any element in the live preview
+- Every published app auto-exposes MCP + the unified REST API
+- Full-tab immersive Create studio toward real-time rendered AI apps
+- Scrollable in embed, wider readable measure, reading progress + reveals
 - Scrollable in embed, wider readable measure, reading progress + reveals
 - First-run immersive default, dock polish, notify action labels
 - Dedup notifications by sender/title/body key
@@ -30,8 +40,14 @@ automatically from [Conventional Commits](https://www.conventionalcommits.org/) 
 - Swap the top-right GitHub icon for a Discord link
 - Add a live, self-updating, self-verifying changelog with Atom feed
 
+### Changed
+
+- Lazy-load Q models, omnibar resolvers, dweb + 4.5MB substrate index off the boot path
+
 ### Fixed
 
+- Use absolute vendor paths in importmap
+- Make Astro base deployment-relative so project-page docs aren't unstyled
 - Make Astro base deployment-relative so project-page docs aren't unstyled
 - Raise the horizon so the dark sky is narrower and the blue taller
 - Remove the strange white halo at the top of the landing
