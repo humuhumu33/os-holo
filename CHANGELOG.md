@@ -46,6 +46,7 @@ automatically from [Conventional Commits](https://www.conventionalcommits.org/) 
 
 ### Fixed
 
+- Restore docs-reference-witness.mjs (orphaned by 0a2092a, still called by pages.yml)
 - Use absolute vendor paths in importmap
 - Make Astro base deployment-relative so project-page docs aren't unstyled
 - Make Astro base deployment-relative so project-page docs aren't unstyled
